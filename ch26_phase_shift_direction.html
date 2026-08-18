@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #BE123C;
+  --part-accent-light: #FFE4E6;
+  --part-highlight: #0369A1;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part05-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FFF1F2; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">"x − φ" Shifts RIGHT — The Counterintuitive Sign</div>
+  <div class="mb-sub">y = sin(x − φ). Feels like subtracting should move things left. Click to see exactly why it's the opposite.</div>
+
+  <div class="mb-stage">
+    <svg id="phaseSvg" viewBox="0 0 300 140" style="width:100%; height:140px; max-width:320px; display:block; margin:0 auto;"></svg>
+    <input type="range" min="0" max="90" value="0" id="phiSlider" class="mb-slider" style="width:85%; display:block; margin:8px auto;">
+    <div style="text-align:center; font-family:var(--font-mono); font-size:0.85rem;" id="phiOut"></div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">The shifted function reproduces the ORIGINAL's starting behavior not at x=0, but at x=φ — precisely where (x−φ) equals zero. If φ is positive, that "starting point" has been delayed to a later, more rightward x-value. The subtraction is what accomplishes the delay.</div>
+</div>
+
+<script>
+function draw(){
+  const phi = parseInt(document.getElementById('phiSlider').value);
+  const phiRad = phi*Math.PI/180;
+  document.getElementById('phiOut').textContent = `φ = ${phi}° → y = sin(x − ${phi}°)`;
+  const svg = document.getElementById('phaseSvg');
+  svg.innerHTML = '';
+  const cx=10, cy=70, scaleX=0.7, scaleY=50;
+  const xAxis = document.createElementNS('http://www.w3.org/2000/svg','line');
+  xAxis.setAttribute('x1',cx);xAxis.setAttribute('y1',cy);xAxis.setAttribute('x2',290);xAxis.setAttribute('y2',cy);
+  xAxis.setAttribute('stroke','var(--line)');
+  svg.appendChild(xAxis);
+
+  let path0='M', pathShift='M';
+  for(let d=0;d<=360;d+=2){
+    const rad = d*Math.PI/180;
+    path0 += `${cx+d*scaleX},${cy-Math.sin(rad)*scaleY} L`;
+    pathShift += `${cx+d*scaleX},${cy-Math.sin(rad-phiRad)*scaleY} L`;
+  }
+  const orig = document.createElementNS('http://www.w3.org/2000/svg','path');
+  orig.setAttribute('d',path0.slice(0,-1)); orig.setAttribute('fill','none'); orig.setAttribute('stroke','var(--line)'); orig.setAttribute('stroke-width','1.5'); orig.setAttribute('stroke-dasharray','3,2');
+  svg.appendChild(orig);
+  const shifted = document.createElementNS('http://www.w3.org/2000/svg','path');
+  shifted.setAttribute('d',pathShift.slice(0,-1)); shifted.setAttribute('fill','none'); shifted.setAttribute('stroke','var(--part-accent)'); shifted.setAttribute('stroke-width','2.5');
+  svg.appendChild(shifted);
+
+  const marker = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  marker.setAttribute('cx',cx+phi*scaleX); marker.setAttribute('cy',cy); marker.setAttribute('r',4); marker.setAttribute('fill','var(--part-highlight)');
+  svg.appendChild(marker);
+
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show info';
+  fb.innerHTML = phi===0
+    ? `φ=0: no shift, the pink curve overlaps the dashed original exactly.`
+    : `The pink curve's "starting point" (where it crosses zero going up, matching the original's own behavior at x=0) has moved to x=${phi}° — marked with the highlighted dot. That's a RIGHTWARD shift of ${phi}°, caused by SUBTRACTING φ inside the function.`;
+}
+document.getElementById('phiSlider').addEventListener('input', draw);
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #BE123C;
+  --part-accent-light: #FFE4E6;
+  --part-highlight: #0369A1;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part05-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FFF1F2; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Law of Cosines: Pythagoras, With a Correction Term</div>
+  <div class="mb-sub">c² = a² + b² − 2ab·cos(C). Drag angle C toward 90° in the actual triangle — watch the correction term vanish, leaving pure Pythagoras.</div>
+
+  <div class="mb-stage">
+    <svg id="lawSvg" viewBox="0 0 260 180" style="width:100%; height:208px; max-width:280px; display:block; margin:0 auto;"></svg>
+    <input type="range" min="30" max="150" value="90" id="angleCSlider" class="mb-slider" style="width:85%; display:block; margin:8px auto;">
+    <div style="text-align:center; font-family:var(--font-mono); font-size:0.82rem;" id="lawOut"></div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">When C=90°, cos(C)=0, so the correction term −2ab·cos(C) vanishes entirely, leaving exactly c²=a²+b² — the ordinary Pythagorean theorem. Watch the triangle itself become a right triangle exactly at C=90°.</div>
+</div>
+
+<script>
+function draw(){
+  const C = parseInt(document.getElementById('angleCSlider').value);
+  const a=60, b=80; // pixel-scale side lengths for drawing (a from vertex to p2, b from vertex to p3)
+  const Crad = C*Math.PI/180;
+  const vertex=[40,140];
+  const p2=[vertex[0]+a,vertex[1]];
+  const p3=[vertex[0]+b*Math.cos(Crad), vertex[1]-b*Math.sin(Crad)];
+
+  const svg = document.getElementById('lawSvg');
+  svg.innerHTML='';
+  const tri = document.createElementNS('http://www.w3.org/2000/svg','path');
+  tri.setAttribute('d',`M${vertex} L${p2} L${p3} Z`);
+  tri.setAttribute('fill','var(--part-accent-light)'); tri.setAttribute('stroke','var(--part-accent)'); tri.setAttribute('stroke-width','2');
+  svg.appendChild(tri);
+
+  // right-angle marker if C is close to 90
+  if(Math.abs(C-90)<2){
+    const marker = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    marker.setAttribute('x',vertex[0]);marker.setAttribute('y',vertex[1]-12);marker.setAttribute('width',12);marker.setAttribute('height',12);
+    marker.setAttribute('fill','none');marker.setAttribute('stroke','var(--good)');marker.setAttribute('stroke-width','2');
+    svg.appendChild(marker);
+  }
+
+  const labels = [[vertex[0]+30,vertex[1]+15,'a'],[vertex[0]+(p3[0]-vertex[0])/2-15,vertex[1]+(p3[1]-vertex[1])/2,'b'],[vertex[0]-15,vertex[1]-8,`C=${C}°`]];
+  labels.forEach(([x,y,t])=>{
+    const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',x);lbl.setAttribute('y',y);lbl.setAttribute('font-size','11');lbl.setAttribute('fill','var(--ink)');lbl.setAttribute('font-weight','700');
+    lbl.textContent = t;
+    svg.appendChild(lbl);
+  });
+
+  const realA=5, realB=7;
+  const cSquared = realA*realA+realB*realB-2*realA*realB*Math.cos(Crad);
+  const c = Math.sqrt(cSquared);
+  const correction = -2*realA*realB*Math.cos(Crad);
+  document.getElementById('lawOut').innerHTML = `a=${realA}, b=${realB}, C=${C}°<br>c² = ${realA}²+${realB}² + (${correction.toFixed(2)}) = ${cSquared.toFixed(2)}, c=${c.toFixed(3)}`;
+
+  const fb = document.getElementById('fb');
+  if(Math.abs(C-90)<2){
+    fb.className = 'mb-feedback show good';
+    fb.innerHTML = `C≈90° — notice the right-angle marker appears in the triangle. Correction term ≈0 (cos(90°)=0). c²=a²+b² EXACTLY — pure Pythagoras, visible in the shape itself.`;
+  } else {
+    fb.className = 'mb-feedback show info';
+    fb.innerHTML = `C=${C}° (not a right angle, no marker shown) — the correction term (${correction.toFixed(2)}) is doing real work adjusting for how "open" or "closed" this angle is.`;
+  }
+}
+document.getElementById('angleCSlider').addEventListener('input', draw);
+draw();
+</script>
+</body>
+</html>

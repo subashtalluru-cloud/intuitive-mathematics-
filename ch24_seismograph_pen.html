@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #BE123C;
+  --part-accent-light: #FFE4E6;
+  --part-highlight: #0369A1;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part05-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FFF1F2; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">The Seismograph Pen — Watch the Wave Draw Itself</div>
+  <div class="mb-sub">A pen attached to a rotating clock hand traces its height onto paper pulled steadily past it. Click to start the animation.</div>
+
+  <div class="mb-stage">
+    <svg id="seismoSvg" viewBox="0 0 320 200" style="width:100%; height:188px; max-width:340px; display:block; margin:0 auto;"></svg>
+  </div>
+  <button class="mb-btn primary" onclick="animate()" id="animBtn">Start the clock hand</button>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">The wave's height (amplitude) and repetition speed (frequency) become visible as independently adjustable "knobs" the moment you see this physical picture — before any formula is even written down.</div>
+</div>
+
+<script>
+let angle = 0;
+let running = false;
+function draw(){
+  const svg = document.getElementById('seismoSvg');
+  svg.innerHTML='';
+  const cx=50, cy=100, r=40;
+  const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  circle.setAttribute('cx',cx);circle.setAttribute('cy',cy);circle.setAttribute('r',r);circle.setAttribute('fill','none');circle.setAttribute('stroke','var(--line)');
+  svg.appendChild(circle);
+  const rad = angle*Math.PI/180;
+  const px = cx+r*Math.cos(rad), py=cy-r*Math.sin(rad);
+  const hand = document.createElementNS('http://www.w3.org/2000/svg','line');
+  hand.setAttribute('x1',cx);hand.setAttribute('y1',cy);hand.setAttribute('x2',px);hand.setAttribute('y2',py);
+  hand.setAttribute('stroke','var(--part-highlight)'); hand.setAttribute('stroke-width','2');
+  svg.appendChild(hand);
+
+  let path='M';
+  for(let a=0; a<=angle; a+=2){
+    const ar = a*Math.PI/180;
+    const wx = 90 + a*0.6;
+    const wy = cy - r*Math.sin(ar);
+    path += `${wx},${wy} L`;
+  }
+  if(angle>0){
+    const wave = document.createElementNS('http://www.w3.org/2000/svg','path');
+    wave.setAttribute('d',path.slice(0,-1)); wave.setAttribute('fill','none'); wave.setAttribute('stroke','var(--part-accent)'); wave.setAttribute('stroke-width','2');
+    svg.appendChild(wave);
+  }
+  const trace = document.createElementNS('http://www.w3.org/2000/svg','line');
+  trace.setAttribute('x1',px);trace.setAttribute('y1',py);trace.setAttribute('x2',90+angle*0.6);trace.setAttribute('y2',py);
+  trace.setAttribute('stroke','var(--ink-soft)'); trace.setAttribute('stroke-dasharray','2,2');
+  svg.appendChild(trace);
+}
+function animate(){
+  running = true;
+  document.getElementById('animBtn').disabled = true;
+  const interval = setInterval(()=>{
+    angle += 4;
+    draw();
+    if(angle >= 720){
+      clearInterval(interval);
+      const fb = document.getElementById('fb');
+      fb.className='mb-feedback show good';
+      fb.innerHTML = `Two full rotations traced — notice the wave repeats identically every 360°. This periodic, self-repeating shape is the entire content of "sine wave," made visible through nothing but a rotating pen and moving paper.`;
+    }
+  }, 30);
+}
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #BE123C;
+  --part-accent-light: #FFE4E6;
+  --part-highlight: #0369A1;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part05-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FFF1F2; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Does This Wheelchair Ramp Meet Code?</div>
+  <div class="mb-sub">ADA guidelines require ramps at most ~4.8° (1:12 slope). Enter a rise and run — see the actual ramp drawn to scale, and check compliance with arctangent.</div>
+
+  <div class="mb-stage">
+    <svg id="rampSvg" viewBox="0 0 260 140" style="width:100%; height:162px; max-width:280px; display:block; margin:0 auto;"></svg>
+    <label>Rise: <input type="number" id="riseIn" value="3" style="width:60px;"> ft</label>
+    <label style="margin-left:10px;">Run: <input type="number" id="runIn" value="36" style="width:60px;"> ft</label>
+    <button class="mb-btn primary" onclick="checkRamp()" style="margin-left:10px;">Check angle</button>
+  </div>
+  <div id="rampResult" style="font-family:var(--font-mono); font-size:0.85rem; text-align:center; margin-top:10px;"></div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">This computed angle is genuinely meaningful because ramps, by physical nature, always incline strictly between 0° (flat) and 90° (a wall) — a range that coincides exactly with arctangent's own conventional restricted range.</div>
+</div>
+
+<script>
+function draw(rise,run,angleDeg,compliant){
+  const svg = document.getElementById('rampSvg');
+  svg.innerHTML='';
+  const baseX=20, baseY=120, scaleRun=180/Math.max(run,10), scaleRise=60/Math.max(rise,1);
+  const topX = baseX + run*scaleRun*0.8;
+  const topY = baseY - rise*scaleRise*0.8;
+
+  const ground = document.createElementNS('http://www.w3.org/2000/svg','line');
+  ground.setAttribute('x1',10);ground.setAttribute('y1',baseY);ground.setAttribute('x2',250);ground.setAttribute('y2',baseY);
+  ground.setAttribute('stroke','var(--ink-soft)');
+  svg.appendChild(ground);
+
+  const ramp = document.createElementNS('http://www.w3.org/2000/svg','path');
+  ramp.setAttribute('d',`M${baseX},${baseY} L${topX},${topY} L${topX},${baseY} Z`);
+  ramp.setAttribute('fill', compliant ? 'var(--part-accent-light)' : '#FEF2F2');
+  ramp.setAttribute('stroke', compliant ? 'var(--part-accent)' : 'var(--bad)');
+  ramp.setAttribute('stroke-width','2');
+  svg.appendChild(ramp);
+
+  const angleLabel = document.createElementNS('http://www.w3.org/2000/svg','text');
+  angleLabel.setAttribute('x',baseX+25);angleLabel.setAttribute('y',baseY-8);angleLabel.setAttribute('font-size','11');angleLabel.setAttribute('fill', compliant?'var(--part-accent)':'var(--bad)');angleLabel.setAttribute('font-weight','700');
+  angleLabel.textContent = `${angleDeg.toFixed(1)}°`;
+  svg.appendChild(angleLabel);
+}
+function checkRamp(){
+  const rise = parseFloat(document.getElementById('riseIn').value);
+  const run = parseFloat(document.getElementById('runIn').value);
+  const angleRad = Math.atan(rise/run);
+  const angleDeg = angleRad*180/Math.PI;
+  const compliant = angleDeg <= 4.8;
+  draw(rise,run,angleDeg,compliant);
+  document.getElementById('rampResult').innerHTML = `arctan(${rise}/${run}) = ${angleDeg.toFixed(2)}°`;
+  const fb = document.getElementById('fb');
+  fb.className = `mb-feedback show ${compliant?'good':'bad'}`;
+  fb.innerHTML = compliant
+    ? `${angleDeg.toFixed(2)}° is within the ~4.8° ADA guideline — this ramp COMPLIES (shown in the diagram above).`
+    : `${angleDeg.toFixed(2)}° EXCEEDS the ~4.8° ADA guideline — this ramp does NOT comply (shown in red above) and would need a longer run to meet code.`;
+}
+checkRamp();
+</script>
+</body>
+</html>

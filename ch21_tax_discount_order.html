@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #7C3AED;
+  --part-accent-light: #EDE9FE;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part04-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FAF5FF; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Discount Then Tax, or Tax Then Discount?</div>
+  <div class="mb-sub">$100 item, 20% discount, 8% tax. Try both order combinations — first with a percentage discount, then a flat $10 discount. Watch the bars.</div>
+
+  <div class="mb-stage">
+    <svg id="barCompareSvg" viewBox="0 0 260 160" style="width:100%; height:185px; max-width:280px; display:block; margin:0 auto;"></svg>
+    <div style="text-align:center;">
+      <button class="mb-btn" onclick="runCase('percent')">Case A: 20% discount + 8% tax</button>
+      <button class="mb-btn" onclick="runCase('flat')">Case B: $10 flat discount + 8% tax</button>
+    </div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">A retailer who concludes "order never matters" from Case A alone would be systematically wrong on every Case-B-style flat-discount transaction. The bars make it visible directly: identical heights mean order truly doesn't matter; different heights mean it does.</div>
+</div>
+
+<script>
+function draw(discountFirst, taxFirst, kind){
+  const svg = document.getElementById('barCompareSvg');
+  svg.innerHTML='';
+  const baseline=130, scale=1.1;
+  const bars = [['Discount first', discountFirst, 'var(--part-accent)'],['Tax first', taxFirst, 'var(--part-highlight)']];
+  bars.forEach(([label,val,color],i)=>{
+    const x = 50+i*100;
+    const h = val*scale;
+    const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('x',x);rect.setAttribute('y',baseline-h);rect.setAttribute('width',50);rect.setAttribute('height',h);
+    rect.setAttribute('fill',color);
+    svg.appendChild(rect);
+    const valLbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    valLbl.setAttribute('x',x+25);valLbl.setAttribute('y',baseline-h-6);valLbl.setAttribute('text-anchor','middle');valLbl.setAttribute('font-size','11');valLbl.setAttribute('font-weight','700');valLbl.setAttribute('fill',color);
+    valLbl.textContent = '$'+val.toFixed(2);
+    svg.appendChild(valLbl);
+    const nameLbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    nameLbl.setAttribute('x',x+25);nameLbl.setAttribute('y',baseline+16);nameLbl.setAttribute('text-anchor','middle');nameLbl.setAttribute('font-size','9');
+    nameLbl.textContent = label;
+    svg.appendChild(nameLbl);
+  });
+}
+function runCase(kind){
+  const price = 100;
+  let discountFirst, taxFirst;
+  if(kind==='percent'){
+    discountFirst = (price*0.8)*1.08;
+    taxFirst = (price*1.08)*0.8;
+  } else {
+    discountFirst = (price-10)*1.08;
+    taxFirst = (price*1.08)-10;
+  }
+  draw(discountFirst, taxFirst, kind);
+  const fb = document.getElementById('fb');
+  const same = Math.abs(discountFirst-taxFirst) < 0.001;
+  fb.className = `mb-feedback show ${same?'info':'bad'}`;
+  fb.innerHTML = same
+    ? `Both bars are the SAME height ($${discountFirst.toFixed(2)}) — IDENTICAL. This is a coincidence specific to percentage-based scaling: multiplying by 0.8 then 1.08 is the same as 1.08 then 0.8, since ordinary multiplication commutes.`
+    : `The bars are DIFFERENT heights: $${discountFirst.toFixed(2)} vs $${taxFirst.toFixed(2)}. The moment one step ADDS or SUBTRACTS a fixed amount (rather than pure scaling), commutativity breaks and order genuinely matters.`;
+}
+runCase('percent');
+</script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #BE123C;
+  --part-accent-light: #FFE4E6;
+  --part-highlight: #0369A1;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part05-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FFF1F2; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Where 30-60-90's "Nice" Values Actually Come From</div>
+  <div class="mb-sub">sin(30°)=1/2 looks like it was just handed down. Click to see the equilateral-triangle construction that actually produces it.</div>
+
+  <div class="mb-stage">
+    <svg id="equilSvg" viewBox="0 0 260 200" style="width:100%; height:231px; max-width:280px; display:block; margin:0 auto;"></svg>
+  </div>
+  <button class="mb-btn primary" onclick="revealSplit()" style="display:block; margin:10px auto;">Split the equilateral triangle in half</button>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">An equilateral triangle (all sides equal, all angles 60°) splits perfectly in half via its own altitude, creating a 30-60-90 triangle where the short leg is EXACTLY half the hypotenuse — that's where sin(30°)=1/2 comes from. Not arbitrary — geometrically forced.</div>
+</div>
+
+<script>
+let split = false;
+function draw(){
+  const svg = document.getElementById('equilSvg');
+  svg.innerHTML='';
+  const p1=[30,170],p2=[230,170],p3=[130,20];
+  const tri = document.createElementNS('http://www.w3.org/2000/svg','path');
+  tri.setAttribute('d',`M${p1} L${p2} L${p3} Z`);
+  tri.setAttribute('fill','none'); tri.setAttribute('stroke','var(--part-accent)'); tri.setAttribute('stroke-width','2');
+  svg.appendChild(tri);
+  ['2', '2', '2'].forEach((lbl,i)=>{
+    const positions = [[130,185],[195,95],[65,95]];
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',positions[i][0]);t.setAttribute('y',positions[i][1]);t.setAttribute('font-size','11');t.setAttribute('fill','var(--ink-soft)');
+    t.textContent = lbl;
+    svg.appendChild(t);
+  });
+  if(split){
+    const alt = document.createElementNS('http://www.w3.org/2000/svg','line');
+    alt.setAttribute('x1',130);alt.setAttribute('y1',170);alt.setAttribute('x2',130);alt.setAttribute('y2',20);
+    alt.setAttribute('stroke','var(--part-highlight)'); alt.setAttribute('stroke-width','2'); alt.setAttribute('stroke-dasharray','4,2');
+    svg.appendChild(alt);
+    const t2 = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t2.setAttribute('x',100);t2.setAttribute('y',185);t2.setAttribute('font-size','11');t2.setAttribute('fill','var(--part-highlight)');
+    t2.textContent = '1 (half of base)';
+    svg.appendChild(t2);
+  }
+}
+function revealSplit(){
+  split = true;
+  draw();
+  const fb = document.getElementById('fb');
+  fb.className='mb-feedback show good';
+  fb.innerHTML = `Splitting the equilateral triangle (all sides = 2) along its altitude creates a right triangle with hypotenuse=2, short leg=1 (half the base), and angles 30-60-90. sin(30°) = opposite/hypotenuse = 1/2 — EXACTLY, and this is why: it's a direct geometric consequence of bisecting an equilateral triangle, not an arbitrary "nice" number someone chose.`;
+}
+draw();
+</script>
+</body>
+</html>

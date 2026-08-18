@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #BE123C;
+  --part-accent-light: #FFE4E6;
+  --part-highlight: #0369A1;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part05-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FFF1F2; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Amplitude and Frequency — Two Genuinely Independent Knobs</div>
+  <div class="mb-sub">y = A·sin(Bx). Adjust A and B separately — watch how changing one never affects the other.</div>
+
+  <div class="mb-stage">
+    <svg id="knobsSvg" viewBox="0 0 300 160" style="width:100%; height:160px; max-width:320px; display:block; margin:0 auto;"></svg>
+    <label>Amplitude A: <input type="range" min="1" max="5" value="2" id="aSlider" class="mb-slider" style="width:130px;"></label><br>
+    <label>Frequency B: <input type="range" min="1" max="4" value="1" id="bSlider" class="mb-slider" style="width:130px;"></label>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">A appears OUTSIDE the sine function, scaling only vertical height. B appears INSIDE, scaling only how fast the angle accumulates. Because they occupy structurally different positions in the formula, adjusting either one provably cannot affect the other — confirmed directly from the formula's structure, not just from observing a few examples.</div>
+</div>
+
+<script>
+function draw(){
+  const A = parseInt(document.getElementById('aSlider').value);
+  const B = parseInt(document.getElementById('bSlider').value);
+  const svg = document.getElementById('knobsSvg');
+  svg.innerHTML = '';
+  const cx=10, cy=80, scaleX=8, scaleY=12;
+  const xAxis = document.createElementNS('http://www.w3.org/2000/svg','line');
+  xAxis.setAttribute('x1',cx);xAxis.setAttribute('y1',cy);xAxis.setAttribute('x2',290);xAxis.setAttribute('y2',cy);
+  xAxis.setAttribute('stroke','var(--line)');
+  svg.appendChild(xAxis);
+  let path='M';
+  for(let x=0;x<=36;x+=0.3){
+    const y = A*Math.sin(B*x*Math.PI/180*10);
+    path += `${cx+x*scaleX},${cy-y*scaleY} L`;
+  }
+  const curve = document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve.setAttribute('d',path.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke','var(--part-accent)'); curve.setAttribute('stroke-width','2.5');
+  svg.appendChild(curve);
+
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show info';
+  fb.innerHTML = `A=${A} (peak height = ${A}), B=${B} (${B}× as many cycles in the same span as B=1). Try changing ONLY A, then ONLY B — notice the peak height changes without altering cycle count, and vice versa.`;
+}
+document.getElementById('aSlider').addEventListener('input', draw);
+document.getElementById('bSlider').addEventListener('input', draw);
+draw();
+</script>
+</body>
+</html>

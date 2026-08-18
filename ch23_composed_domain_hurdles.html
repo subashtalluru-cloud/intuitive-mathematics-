@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #7C3AED;
+  --part-accent-light: #EDE9FE;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part04-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FAF5FF; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Two Hurdles, Not One — Composed Domain Restrictions</div>
+  <div class="mb-sub">f(x) = x−4 (accepts everything). g(x) = √x (rejects negatives). Click x-values on the number line and watch which ones clear BOTH hurdles.</div>
+
+  <div class="mb-stage">
+    <svg id="hurdleSvg" viewBox="0 0 300 110" style="width:100%; height:110px; max-width:320px; display:block; margin:0 auto;"></svg>
+    <div id="testOut" style="font-family:var(--font-mono); font-size:0.85rem; text-align:center; margin-top:8px;"></div>
+    <div style="text-align:center; margin-top:8px;">
+      <button class="mb-btn" onclick="test(2)">x=2</button>
+      <button class="mb-btn" onclick="test(4)">x=4</button>
+      <button class="mb-btn" onclick="test(6)">x=6</button>
+      <button class="mb-btn" onclick="test(10)">x=10</button>
+    </div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">f(x)=x−4 alone accepts EVERY real number (green line, full domain). But g(f(x))=√(x−4) only works when x≥4 (shrunk domain) — because the SECOND machine rejects whatever negative output the first hands it, even though the first never complained.</div>
+</div>
+
+<script>
+function toX(v){ return 30+(v+2)*15; }
+function draw(highlightX){
+  const svg = document.getElementById('hurdleSvg');
+  svg.innerHTML = '';
+  // full domain of f (all reals) - top line
+  const fLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+  fLine.setAttribute('x1',10);fLine.setAttribute('y1',30);fLine.setAttribute('x2',290);fLine.setAttribute('y2',30);
+  fLine.setAttribute('stroke','var(--good)'); fLine.setAttribute('stroke-width','4');
+  svg.appendChild(fLine);
+  const fLabel = document.createElementNS('http://www.w3.org/2000/svg','text');
+  fLabel.setAttribute('x',150);fLabel.setAttribute('y',18);fLabel.setAttribute('text-anchor','middle');fLabel.setAttribute('font-size','10');fLabel.setAttribute('fill','var(--good)');
+  fLabel.textContent = "f's domain: everything";
+  svg.appendChild(fLabel);
+
+  // restricted domain of g∘f (x>=4) - bottom line
+  const gfLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+  gfLine.setAttribute('x1',toX(4));gfLine.setAttribute('y1',75);gfLine.setAttribute('x2',290);gfLine.setAttribute('y2',75);
+  gfLine.setAttribute('stroke','var(--part-highlight)'); gfLine.setAttribute('stroke-width','4');
+  svg.appendChild(gfLine);
+  const gfDim = document.createElementNS('http://www.w3.org/2000/svg','line');
+  gfDim.setAttribute('x1',10);gfDim.setAttribute('y1',75);gfDim.setAttribute('x2',toX(4));gfDim.setAttribute('y2',75);
+  gfDim.setAttribute('stroke','var(--bad)'); gfDim.setAttribute('stroke-width','4'); gfDim.setAttribute('stroke-dasharray','4,3');
+  svg.appendChild(gfDim);
+  const gfLabel = document.createElementNS('http://www.w3.org/2000/svg','text');
+  gfLabel.setAttribute('x',150);gfLabel.setAttribute('y',95);gfLabel.setAttribute('text-anchor','middle');gfLabel.setAttribute('font-size','10');gfLabel.setAttribute('fill','var(--part-highlight)');
+  gfLabel.textContent = "g(f(x))'s domain: only x≥4";
+  svg.appendChild(gfLabel);
+
+  const tick4 = document.createElementNS('http://www.w3.org/2000/svg','text');
+  tick4.setAttribute('x',toX(4));tick4.setAttribute('y',55);tick4.setAttribute('text-anchor','middle');tick4.setAttribute('font-size','9');
+  tick4.textContent = 'x=4';
+  svg.appendChild(tick4);
+
+  if(highlightX !== undefined){
+    [30,75].forEach(y=>{
+      const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      dot.setAttribute('cx',toX(highlightX));dot.setAttribute('cy',y);dot.setAttribute('r',5);dot.setAttribute('fill','#1F2937');
+      svg.appendChild(dot);
+    });
+  }
+}
+function test(x){
+  const fx = x-4;
+  draw(x);
+  const out = document.getElementById('testOut');
+  const fb = document.getElementById('fb');
+  if(fx < 0){
+    out.textContent = `f(${x}) = ${x}−4 = ${fx}. g(${fx}) = √(${fx}) → UNDEFINED`;
+    fb.className = 'mb-feedback show bad';
+    fb.innerHTML = `f accepted x=${x} without complaint — but g rejected the RESULT, ${fx}. The belt jammed at the SECOND machine, even though the first worked fine. See the dashed red segment on the bottom line: x=${x} is below the g∘f cutoff at x=4.`;
+  } else {
+    out.textContent = `f(${x}) = ${x}−4 = ${fx}. g(${fx}) = √(${fx}) = ${Math.sqrt(fx).toFixed(3)}`;
+    fb.className = 'mb-feedback show good';
+    fb.innerHTML = `Both hurdles cleared: f accepted x=${x}, and g accepted f's output (${fx}≥0). x=${x} sits on the solid pink segment — within g∘f's shrunk domain.`;
+  }
+}
+draw();
+</script>
+</div>
+</body>
+</html>

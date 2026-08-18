@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #BE123C;
+  --part-accent-light: #FFE4E6;
+  --part-highlight: #0369A1;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part05-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FFF1F2; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Same Wave, Offset by a Quarter-Turn</div>
+  <div class="mb-sub">Watch sine and cosine graphed side by side as the angle sweeps. Notice: they're the EXACT same shape, just shifted.</div>
+
+  <div class="mb-stage">
+    <svg id="waveSvg" viewBox="0 0 320 160" style="width:100%; height:150px; max-width:340px; display:block; margin:0 auto;"></svg>
+    <input type="range" min="0" max="720" value="0" id="sweepSlider" class="mb-slider" style="width:85%; display:block; margin:10px auto;">
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Cosine's horizontal position at any angle is exactly what sine's vertical position will be one quarter-turn LATER — because a quarter-turn rotation of the circle swaps horizontal and vertical extent completely. This isn't coincidence to memorize; it's the direct seed of Chapter 25's phase-shift identities.</div>
+</div>
+
+<script>
+function draw(){
+  const sweepDeg = parseInt(document.getElementById('sweepSlider').value);
+  const svg = document.getElementById('waveSvg');
+  svg.innerHTML = '';
+  const cy=80, scaleY=50, scaleX=0.4;
+  const xAxis = document.createElementNS('http://www.w3.org/2000/svg','line');
+  xAxis.setAttribute('x1',10);xAxis.setAttribute('y1',cy);xAxis.setAttribute('x2',310);xAxis.setAttribute('y2',cy);
+  xAxis.setAttribute('stroke','var(--line)');
+  svg.appendChild(xAxis);
+
+  let sinPath='M', cosPath='M';
+  for(let d=0; d<=Math.min(sweepDeg,720); d+=2){
+    const rad = d*Math.PI/180;
+    const x = 10+d*scaleX;
+    sinPath += `${x},${cy-Math.sin(rad)*scaleY} L`;
+    cosPath += `${x},${cy-Math.cos(rad)*scaleY} L`;
+  }
+  const sinCurve = document.createElementNS('http://www.w3.org/2000/svg','path');
+  sinCurve.setAttribute('d',sinPath.slice(0,-1)); sinCurve.setAttribute('fill','none'); sinCurve.setAttribute('stroke','var(--part-highlight)'); sinCurve.setAttribute('stroke-width','2');
+  svg.appendChild(sinCurve);
+  const cosCurve = document.createElementNS('http://www.w3.org/2000/svg','path');
+  cosCurve.setAttribute('d',cosPath.slice(0,-1)); cosCurve.setAttribute('fill','none'); cosCurve.setAttribute('stroke','var(--part-accent)'); cosCurve.setAttribute('stroke-width','2');
+  svg.appendChild(cosCurve);
+
+  const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+  label.setAttribute('x',160);label.setAttribute('y',15);label.setAttribute('text-anchor','middle');label.setAttribute('font-size','10');
+  label.innerHTML = '';
+  svg.appendChild(label);
+}
+document.getElementById('sweepSlider').addEventListener('input', draw);
+draw();
+</script>
+</body>
+</html>

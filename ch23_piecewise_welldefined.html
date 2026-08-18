@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #7C3AED;
+  --part-accent-light: #EDE9FE;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part04-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FAF5FF; }
+  .scheme-btn{ font-family:var(--font-mono); font-size:0.75rem; padding:6px 8px; margin:2px; border-radius:6px; border:1px solid var(--line); background:#fff; cursor:pointer; }
+  .scheme-btn.active{ border-color:var(--part-accent); background:var(--part-accent-light); }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Well-Defined or Broken? — Piecewise Rules</div>
+  <div class="mb-sub">A piecewise function needs mutually exclusive conditions (no overlap) AND collectively exhaustive conditions (no gaps). Click each scheme and watch the number line at x=5.</div>
+
+  <div class="mb-stage">
+    <svg id="schemeSvg" viewBox="0 0 300 90" style="width:100%; height:90px; max-width:320px; display:block; margin:0 auto;"></svg>
+    <div style="text-align:center; margin-top:8px;">
+      <button class="scheme-btn" onclick="showScheme(0,this)">A: x&lt;5 / x≥5</button>
+      <button class="scheme-btn" onclick="showScheme(1,this)">B: x≤5 / x≥5</button>
+      <button class="scheme-btn" onclick="showScheme(2,this)">C: x&lt;5 / x&gt;5</button>
+    </div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Software engineers building tiered-pricing systems explicitly test for exactly these two failure modes: overlapping conditions (ambiguous which rule applies) or gapped conditions (some input has no rule at all).</div>
+</div>
+
+<script>
+const schemes = [
+  {name:"A", cond1:"x < 5", cond2:"x ≥ 5", type:"good", explain:"WELL-DEFINED. Mutually exclusive and exhaustive — every x satisfies exactly one condition, with no overlap and no gap at x=5."},
+  {name:"B", cond1:"x ≤ 5", cond2:"x ≥ 5", type:"overlap", explain:"BROKEN — overlap! At exactly x=5, BOTH conditions are true (shown as overlapping bars below). Which rule applies? Ambiguous."},
+  {name:"C", cond1:"x < 5", cond2:"x > 5", type:"gap", explain:"BROKEN — gap! At exactly x=5, NEITHER condition is true (shown as a visible gap below). No rule applies at all."}
+];
+function drawScheme(s){
+  const svg = document.getElementById('schemeSvg');
+  svg.innerHTML='';
+  const toX = v => 30+(v)*24;
+  const axis = document.createElementNS('http://www.w3.org/2000/svg','line');
+  axis.setAttribute('x1',10);axis.setAttribute('y1',60);axis.setAttribute('x2',290);axis.setAttribute('y2',60);
+  axis.setAttribute('stroke','var(--ink-soft)');
+  svg.appendChild(axis);
+  const tick5 = document.createElementNS('http://www.w3.org/2000/svg','text');
+  tick5.setAttribute('x',toX(5));tick5.setAttribute('y',78);tick5.setAttribute('text-anchor','middle');tick5.setAttribute('font-size','10');
+  tick5.textContent = 'x=5';
+  svg.appendChild(tick5);
+
+  // bar 1: cond1 range
+  const bar1 = document.createElementNS('http://www.w3.org/2000/svg','line');
+  bar1.setAttribute('x1',toX(0));bar1.setAttribute('y1',30);bar1.setAttribute('x2', s.type==='overlap' ? toX(5) : (s.type==='gap'? toX(5)-3 : toX(5)));bar1.setAttribute('y2',30);
+  bar1.setAttribute('stroke','var(--part-accent)'); bar1.setAttribute('stroke-width','5');
+  svg.appendChild(bar1);
+  // bar 2: cond2 range
+  const bar2Start = s.type==='overlap' ? toX(5) : (s.type==='gap'? toX(5)+3 : toX(5));
+  const bar2 = document.createElementNS('http://www.w3.org/2000/svg','line');
+  bar2.setAttribute('x1',bar2Start);bar2.setAttribute('y1',45);bar2.setAttribute('x2',toX(10));bar2.setAttribute('y2',45);
+  bar2.setAttribute('stroke','var(--part-highlight)'); bar2.setAttribute('stroke-width','5');
+  svg.appendChild(bar2);
+
+  if(s.type==='overlap'){
+    const mark = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    mark.setAttribute('cx',toX(5));mark.setAttribute('cy',37);mark.setAttribute('r',6);mark.setAttribute('fill','none');mark.setAttribute('stroke','var(--bad)');mark.setAttribute('stroke-width','2');
+    svg.appendChild(mark);
+  }
+  if(s.type==='gap'){
+    const mark = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    mark.setAttribute('cx',toX(5));mark.setAttribute('cy',37);mark.setAttribute('r',6);mark.setAttribute('fill','none');mark.setAttribute('stroke','var(--bad)');mark.setAttribute('stroke-width','2');mark.setAttribute('stroke-dasharray','2,2');
+    svg.appendChild(mark);
+  }
+}
+function showScheme(i,btn){
+  document.querySelectorAll('.scheme-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const s = schemes[i];
+  drawScheme(s);
+  const fb = document.getElementById('fb');
+  fb.className = `mb-feedback show ${s.type==='good'?'good':'bad'}`;
+  fb.innerHTML = `<strong>Scheme ${s.name}:</strong> ${s.cond1} / ${s.cond2}. ${s.explain}`;
+}
+drawScheme(schemes[0]);
+document.addEventListener('DOMContentLoaded', ()=>{});
+</script>
+</body>
+</html>

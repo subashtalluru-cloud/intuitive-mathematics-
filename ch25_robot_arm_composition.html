@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #BE123C;
+  --part-accent-light: #FFE4E6;
+  --part-highlight: #0369A1;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part05-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FFF1F2; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Two Robot Joints, One Combined Formula</div>
+  <div class="mb-sub">Joint 1 rotates by θ₁. Joint 2, mounted at the end of segment 1, rotates by θ₂ MORE. Adjust both — the end position uses the angle-addition formula directly.</div>
+
+  <div class="mb-stage">
+    <svg id="armSvg" viewBox="0 0 260 200" style="width:100%; height:231px; max-width:280px; display:block; margin:0 auto;"></svg>
+    <label>θ₁: <input type="range" min="0" max="90" value="30" id="t1Slider" class="mb-slider" style="width:150px;"></label><br>
+    <label>θ₂: <input type="range" min="0" max="90" value="30" id="t2Slider" class="mb-slider" style="width:150px;"></label>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">The engineer never needs a fresh lookup table for every possible (θ₁,θ₂) combination — the angle-addition formula gives the end position for ANY combination directly, in one general expression. This exact decompose-then-recombine pattern is the direct conceptual ancestor of Chapter 31's vectors.</div>
+</div>
+
+<script>
+function draw(){
+  const t1 = parseInt(document.getElementById('t1Slider').value)*Math.PI/180;
+  const t2 = parseInt(document.getElementById('t2Slider').value)*Math.PI/180;
+  const svg = document.getElementById('armSvg');
+  svg.innerHTML = '';
+  const originX=30, originY=170, len=80;
+  const j1x = originX+len*Math.cos(t1), j1y = originY-len*Math.sin(t1);
+  const totalAngle = t1+t2;
+  const j2x = j1x+len*Math.cos(totalAngle), j2y = j1y-len*Math.sin(totalAngle);
+
+  [[originX,originY,j1x,j1y,'var(--part-accent)'],[j1x,j1y,j2x,j2y,'var(--part-highlight)']].forEach(([x1,y1,x2,y2,c])=>{
+    const seg = document.createElementNS('http://www.w3.org/2000/svg','line');
+    seg.setAttribute('x1',x1);seg.setAttribute('y1',y1);seg.setAttribute('x2',x2);seg.setAttribute('y2',y2);
+    seg.setAttribute('stroke',c); seg.setAttribute('stroke-width','5'); seg.setAttribute('stroke-linecap','round');
+    svg.appendChild(seg);
+  });
+  [[originX,originY],[j1x,j1y],[j2x,j2y]].forEach(([x,y])=>{
+    const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',x);dot.setAttribute('cy',y);dot.setAttribute('r',4);dot.setAttribute('fill','#1F2937');
+    svg.appendChild(dot);
+  });
+
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show info';
+  fb.innerHTML = `End effector position: (${j2x.toFixed(1)}, ${(200-j2y).toFixed(1)}) in arbitrary units. Combined angle θ₁+θ₂ = ${((t1+t2)*180/Math.PI).toFixed(0)}° — computed via the SAME angle-addition machinery Section 7 develops, not two independent, separately-measured rotations.`;
+}
+document.getElementById('t1Slider').addEventListener('input', draw);
+document.getElementById('t2Slider').addEventListener('input', draw);
+draw();
+</script>
+</body>
+</html>

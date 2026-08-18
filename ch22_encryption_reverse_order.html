@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #7C3AED;
+  --part-accent-light: #EDE9FE;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part04-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FAF5FF; }
+  .step-chain{ display:flex; align-items:center; justify-content:center; gap:6px; margin:10px 0; flex-wrap:wrap; }
+  .step-box{ font-family:var(--font-mono); font-size:0.78rem; background:#fff; border:2px solid var(--part-accent); border-radius:8px; padding:8px 10px; text-align:center; }
+  .arrow{ font-size:1.2rem; color:var(--part-highlight); }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Decryption Reverses BOTH the Functions AND Their Order</div>
+  <div class="mb-sub">Encrypt: shift letters +3, then reverse the string. Click through to see the encryption chain, then the decryption chain — and notice the order flips.</div>
+
+  <div class="mb-stage">
+    <div id="chainDisplay" style="text-align:center; font-family:var(--font-mono); font-size:1rem; margin-bottom:6px;">Message: "MATH"</div>
+    <div id="encryptChain"></div>
+    <div id="decryptChain"></div>
+  </div>
+  <div class="mb-controls" style="justify-content:center;">
+    <button class="mb-btn primary" onclick="encrypt()">Encrypt</button>
+    <button class="mb-btn" onclick="decrypt()" id="decryptBtn" disabled>Decrypt</button>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">If encryption is f then g (shift, then reverse), decryption must be g⁻¹ then f⁻¹ — reverse-order AND reverse-operation. This is exactly why (f∘g)⁻¹ = g⁻¹∘f⁻¹, not f⁻¹∘g⁻¹, made visible as two step-chains running in opposite directions.</div>
+</div>
+
+<script>
+function shift(s,n){ return s.split('').map(c=>String.fromCharCode(((c.charCodeAt(0)-65+n+26)%26)+65)).join(''); }
+let encrypted = '';
+function encrypt(){
+  const msg = 'MATH';
+  const shifted = shift(msg,3);
+  encrypted = shifted.split('').reverse().join('');
+  document.getElementById('encryptChain').innerHTML =
+    `<div style="font-size:0.78rem; color:var(--part-accent); font-weight:700; text-align:center;">ENCRYPT</div>
+     <div class="step-chain">
+       <div class="step-box">${msg}</div><div class="arrow">→ shift +3 →</div>
+       <div class="step-box">${shifted}</div><div class="arrow">→ reverse →</div>
+       <div class="step-box"><strong>${encrypted}</strong></div>
+     </div>`;
+  document.getElementById('decryptBtn').disabled = false;
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show info';
+  fb.innerHTML = `Encrypted message: "${encrypted}". Now decrypt — remember, you must undo the LAST step first.`;
+}
+function decrypt(){
+  const unreversed = encrypted.split('').reverse().join('');
+  const unshifted = shift(unreversed,-3);
+  document.getElementById('decryptChain').innerHTML =
+    `<div style="font-size:0.78rem; color:var(--part-highlight); font-weight:700; text-align:center; margin-top:10px;">DECRYPT (reverse order!)</div>
+     <div class="step-chain">
+       <div class="step-box">${encrypted}</div><div class="arrow">→ un-reverse →</div>
+       <div class="step-box">${unreversed}</div><div class="arrow">→ shift −3 →</div>
+       <div class="step-box"><strong>${unshifted}</strong></div>
+     </div>`;
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show good';
+  fb.innerHTML = `Recovered: "${unshifted}". Notice decryption applied the inverse operations in the OPPOSITE order from encryption — reverse was undone first (applied last during encryption), shift was undone last (applied first). This is exactly (f∘g)⁻¹ = g⁻¹∘f⁻¹.`;
+}
+encrypt();
+</script>
+</body>
+</html>

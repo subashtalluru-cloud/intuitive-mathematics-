@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #BE123C;
+  --part-accent-light: #FFE4E6;
+  --part-highlight: #0369A1;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part05-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FFF1F2; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">The #1 Calculator Trap: Degree Mode vs Radian Mode</div>
+  <div class="mb-sub">Compute sin(30) in both modes — watch the unit circle show why these give wildly different (and both "correct," for their own mode) answers.</div>
+
+  <div class="mb-stage">
+    <svg id="modeSvg" viewBox="0 0 260 160" style="width:100%; height:185px; max-width:280px; display:block; margin:0 auto;"></svg>
+    <div style="text-align:center;">
+      <button class="mb-btn" onclick="showMode('deg')">Calculator in DEGREE mode</button>
+      <button class="mb-btn" onclick="showMode('rad')">Calculator in RADIAN mode</button>
+    </div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Typing "sin(30)" means two completely different sweeps depending on mode — 30° is a small sweep near the start; 30 radians is nearly 5 full rotations. This single setting mismatch is one of the most common real errors in applied trigonometry.</div>
+</div>
+
+<script>
+function draw(mode){
+  const svg = document.getElementById('modeSvg');
+  svg.innerHTML='';
+  const cx=130,cy=90,r=60;
+  const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  circle.setAttribute('cx',cx);circle.setAttribute('cy',cy);circle.setAttribute('r',r);
+  circle.setAttribute('fill','none'); circle.setAttribute('stroke','var(--line)');
+  svg.appendChild(circle);
+
+  const angleRad = mode==='deg' ? 30*Math.PI/180 : 30; // 30 radians if rad mode
+  const effectiveAngle = angleRad % (2*Math.PI);
+  const px = cx+r*Math.cos(effectiveAngle), py = cy-r*Math.sin(effectiveAngle);
+  const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1',cx);line.setAttribute('y1',cy);line.setAttribute('x2',px);line.setAttribute('y2',py);
+  line.setAttribute('stroke','var(--part-highlight)'); line.setAttribute('stroke-width','2.5');
+  svg.appendChild(line);
+  const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  dot.setAttribute('cx',px);dot.setAttribute('cy',py);dot.setAttribute('r',5);dot.setAttribute('fill','var(--part-highlight)');
+  svg.appendChild(dot);
+
+  const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+  label.setAttribute('x',130);label.setAttribute('y',20);label.setAttribute('text-anchor','middle');label.setAttribute('font-size','10');
+  label.textContent = mode==='deg' ? '"30" interpreted as 30° — small sweep' : '"30" interpreted as 30 RADIANS — ~4.77 full turns';
+  svg.appendChild(label);
+
+  const valLabel = document.createElementNS('http://www.w3.org/2000/svg','text');
+  valLabel.setAttribute('x',130);valLabel.setAttribute('y',150);valLabel.setAttribute('text-anchor','middle');valLabel.setAttribute('font-size','12');valLabel.setAttribute('font-weight','700');valLabel.setAttribute('fill','var(--part-accent)');
+  valLabel.textContent = `sin(30) = ${Math.sin(angleRad).toFixed(4)}`;
+  svg.appendChild(valLabel);
+}
+function showMode(mode){
+  draw(mode);
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show info';
+  fb.innerHTML = mode==='deg'
+    ? `In degree mode, sin(30) = 0.5 exactly — the familiar value from the 30-60-90 triangle.`
+    : `In radian mode, sin(30) ≈ -0.988 — because 30 radians wraps almost 5 full times around the circle before landing near a completely different position. Same input "30," wildly different meaning.`;
+}
+draw('deg');
+</script>
+</body>
+</html>

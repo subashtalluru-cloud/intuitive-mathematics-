@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #BE123C;
+  --part-accent-light: #FFE4E6;
+  --part-highlight: #0369A1;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part05-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FFF1F2; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">SOH-CAH-TOA Is a Special Case, Not the Real Definition</div>
+  <div class="mb-sub">Right-triangle ratios (opposite/hypotenuse) and unit-circle coordinates should agree whenever BOTH apply. Click to verify.</div>
+
+  <div class="mb-stage">
+    <svg id="dualSvg" viewBox="0 0 260 200" style="width:100%; height:231px; max-width:280px; display:block; margin:0 auto;"></svg>
+    <input type="range" min="10" max="80" value="35" id="dualSlider" class="mb-slider" style="width:85%; display:block; margin:8px auto;">
+    <div style="text-align:center; font-family:var(--font-mono); font-size:0.82rem;" id="dualOut"></div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">"Sine/cosine only apply to angles 0-90°" is a genuine misconception — the unit-circle definition applies to ANY angle. Right-triangle ratios are a restricted special case that happens to agree with it, only where a legitimate triangle can actually be drawn.</div>
+</div>
+
+<script>
+function draw(){
+  const deg = parseInt(document.getElementById('dualSlider').value);
+  const rad = deg*Math.PI/180;
+  const opp = Math.sin(rad), adj = Math.cos(rad), hyp = 1;
+  document.getElementById('dualOut').innerHTML =
+    `Unit circle: sin(${deg}°)=${opp.toFixed(3)}, cos(${deg}°)=${adj.toFixed(3)}<br>Triangle ratio: opposite/hyp=${opp.toFixed(3)}, adjacent/hyp=${adj.toFixed(3)}`;
+  const svg = document.getElementById('dualSvg');
+  svg.innerHTML='';
+  const cx=40,cy=170,scale=150;
+  const px=cx+Math.cos(rad)*scale, py=cy-Math.sin(rad)*scale;
+  const tri = document.createElementNS('http://www.w3.org/2000/svg','path');
+  tri.setAttribute('d',`M${cx},${cy} L${px},${cy} L${px},${py} Z`);
+  tri.setAttribute('fill','var(--part-accent-light)'); tri.setAttribute('stroke','var(--part-accent)'); tri.setAttribute('stroke-width','2');
+  svg.appendChild(tri);
+  const fb = document.getElementById('fb');
+  fb.className='mb-feedback show good';
+  fb.innerHTML = `Identical values both ways — confirming the triangle ratio is exactly what the unit-circle coordinates give, whenever the angle is small enough for a real triangle to exist. Try dragging past what a "triangle" could represent (this slider caps at 80° precisely because triangles can't exceed 90°) — the unit circle keeps working long after triangles run out of road.`;
+}
+document.getElementById('dualSlider').addEventListener('input', draw);
+draw();
+</script>
+</body>
+</html>

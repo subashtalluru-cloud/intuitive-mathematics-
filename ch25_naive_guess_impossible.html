@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #BE123C;
+  --part-accent-light: #FFE4E6;
+  --part-highlight: #0369A1;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part05-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FFF1F2; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">The Naive Guess Is Mathematically Impossible</div>
+  <div class="mb-sub">Does sin(A+B) = sin(A) + sin(B)? Click to test at A=B=45° — and watch on the circle itself why the naive prediction can't be real.</div>
+
+  <div class="mb-stage">
+    <svg id="impossibleSvg" viewBox="0 0 260 200" style="width:100%; height:231px; max-width:280px; display:block; margin:0 auto;"></svg>
+    <button class="mb-btn primary" onclick="testNaive()" style="display:block; margin:10px auto;">Test the naive guess</button>
+    <div id="testOut" style="font-family:var(--font-mono); font-size:0.85rem; text-align:center;"></div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Sine values can NEVER exceed 1 — the circle's own radius is exactly 1, so no point on it can ever have a y-coordinate bigger than 1. The naive guess predicts a point OUTSIDE the circle entirely — a structural impossibility, visible directly.</div>
+</div>
+
+<script>
+function drawCircle(naiveY){
+  const svg = document.getElementById('impossibleSvg');
+  svg.innerHTML = '';
+  const cx=70, cy=100, r=70;
+  const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  circle.setAttribute('cx',cx);circle.setAttribute('cy',cy);circle.setAttribute('r',r);circle.setAttribute('fill','none');circle.setAttribute('stroke','var(--line)');
+  svg.appendChild(circle);
+  const axis = document.createElementNS('http://www.w3.org/2000/svg','line');
+  axis.setAttribute('x1',0);axis.setAttribute('y1',cy);axis.setAttribute('x2',200);axis.setAttribute('y2',cy);
+  axis.setAttribute('stroke','var(--ink-soft)');
+  svg.appendChild(axis);
+
+  // ceiling line at y=1 (top of circle)
+  const ceiling = document.createElementNS('http://www.w3.org/2000/svg','line');
+  ceiling.setAttribute('x1',0);ceiling.setAttribute('y1',cy-r);ceiling.setAttribute('x2',200);ceiling.setAttribute('y2',cy-r);
+  ceiling.setAttribute('stroke','var(--part-highlight)'); ceiling.setAttribute('stroke-dasharray','3,2');
+  svg.appendChild(ceiling);
+  const ceilLabel = document.createElementNS('http://www.w3.org/2000/svg','text');
+  ceilLabel.setAttribute('x',205);ceilLabel.setAttribute('y',cy-r+4);ceilLabel.setAttribute('font-size','10');ceilLabel.setAttribute('fill','var(--part-highlight)');
+  ceilLabel.textContent = 'y=1 max';
+  svg.appendChild(ceilLabel);
+
+  if(naiveY !== null){
+    // actual sin(90) = 1, exactly on circle
+    const actualPt = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    actualPt.setAttribute('cx',cx);actualPt.setAttribute('cy',cy-r);actualPt.setAttribute('r',5);actualPt.setAttribute('fill','var(--good)');
+    svg.appendChild(actualPt);
+    const actualLbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    actualLbl.setAttribute('x',cx+10);actualLbl.setAttribute('y',cy-r-5);actualLbl.setAttribute('font-size','10');actualLbl.setAttribute('fill','var(--good)');
+    actualLbl.textContent = 'actual: sin(90°)=1';
+    svg.appendChild(actualLbl);
+
+    // naive point, OUTSIDE circle
+    const naivePy = cy - naiveY*r;
+    const naivePt = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    naivePt.setAttribute('cx',cx);naivePt.setAttribute('cy',naivePy);naivePt.setAttribute('r',5);naivePt.setAttribute('fill','var(--bad)');
+    svg.appendChild(naivePt);
+    const naiveLbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    naiveLbl.setAttribute('x',cx+10);naiveLbl.setAttribute('y',naivePy+4);naiveLbl.setAttribute('font-size','10');naiveLbl.setAttribute('fill','var(--bad)');
+    naiveLbl.textContent = `naive guess: ${naiveY.toFixed(3)} — OUTSIDE circle!`;
+    svg.appendChild(naiveLbl);
+  }
+}
+function testNaive(){
+  const naive = Math.sin(45*Math.PI/180) + Math.sin(45*Math.PI/180);
+  const actual = Math.sin(90*Math.PI/180);
+  drawCircle(naive);
+  document.getElementById('testOut').innerHTML =
+    `Naive: sin(45°)+sin(45°) = ${naive.toFixed(3)}<br>Actual: sin(45°+45°) = sin(90°) = ${actual.toFixed(3)}`;
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show bad';
+  fb.innerHTML = `The naive guess predicts ${naive.toFixed(3)} — a point that would sit OUTSIDE the unit circle entirely (see the red dot above the y=1 ceiling). No sine value can ever do this. Combining rotations must genuinely mix both coordinates, not simply add independently — exactly what the real angle-addition formula's four-term structure captures.`;
+}
+drawCircle(null);
+</script>
+</body>
+</html>

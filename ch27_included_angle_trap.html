@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #BE123C;
+  --part-accent-light: #FFE4E6;
+  --part-highlight: #0369A1;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part05-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FFF1F2; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">The Law of Cosines Needs the INCLUDED Angle</div>
+  <div class="mb-sub">Triangle with sides 40m and 60m. Which angle can you legitimately use in the Law of Cosines formula?</div>
+
+  <div class="mb-stage">
+    <svg id="triSvg" viewBox="0 0 260 180" style="width:100%; height:208px; max-width:280px; display:block; margin:0 auto;"></svg>
+  </div>
+  <div class="mb-controls" style="justify-content:center;">
+    <button class="mb-btn" onclick="pick('included')">Use the angle BETWEEN the two known sides</button>
+    <button class="mb-btn" onclick="pick('other')">Use a DIFFERENT angle in the triangle</button>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">This is the chapter's own flagged common mistake: using an angle that isn't included between the two known sides. The Law of Cosines formula c²=a²+b²−2ab·cos(C) specifically requires C to be the angle BETWEEN sides a and b — using any other angle silently produces a wrong answer.</div>
+</div>
+
+<script>
+function draw(){
+  const svg = document.getElementById('triSvg');
+  svg.innerHTML = '';
+  const p1=[40,150], p2=[180,150], p3=[70,30];
+  const tri = document.createElementNS('http://www.w3.org/2000/svg','path');
+  tri.setAttribute('d',`M${p1} L${p2} L${p3} Z`);
+  tri.setAttribute('fill','var(--part-accent-light)'); tri.setAttribute('stroke','var(--part-accent)'); tri.setAttribute('stroke-width','2');
+  svg.appendChild(tri);
+  const labels = [[95,168,'60m (a)'],[125,90,'40m (b)'],[40,25,'?']];
+  labels.forEach(([x,y,t])=>{
+    const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',x);lbl.setAttribute('y',y);lbl.setAttribute('font-size','11');lbl.setAttribute('fill','var(--ink)');
+    lbl.textContent = t;
+    svg.appendChild(lbl);
+  });
+  const includedMark = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  includedMark.setAttribute('cx',p1[0]);includedMark.setAttribute('cy',p1[1]);includedMark.setAttribute('r',6);includedMark.setAttribute('fill','none');includedMark.setAttribute('stroke','var(--part-highlight)');includedMark.setAttribute('stroke-width','2');
+  svg.appendChild(includedMark);
+}
+function pick(choice){
+  const fb = document.getElementById('fb');
+  if(choice==='included'){
+    fb.className='mb-feedback show good';
+    fb.innerHTML = `Correct. The angle marked with the circle sits directly BETWEEN the 40m and 60m sides — this is the "included angle" the formula requires. c²=40²+60²−2(40)(60)cos(C) will give the correct third side.`;
+  } else {
+    fb.className='mb-feedback show bad';
+    fb.innerHTML = `This is exactly the trap. Plugging a NON-included angle into c²=a²+b²−2ab·cos(C) produces a confidently wrong number — the formula doesn't warn you when the geometry is mismatched. Surveyors sketch the triangle explicitly, labeling angle-side correspondence, precisely to catch this before it causes a real error.`;
+  }
+}
+draw();
+</script>
+</body>
+</html>

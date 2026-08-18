@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #BE123C;
+  --part-accent-light: #FFE4E6;
+  --part-highlight: #0369A1;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part05-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FFF1F2; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Cosine Doesn't Care About Sign. Sine Does.</div>
+  <div class="mb-sub">Drag the angle. Watch θ (blue) and −θ (orange) mirror across the x-axis — same x-coordinate, opposite y-coordinate.</div>
+
+  <div class="mb-stage">
+    <svg id="mirrorSvg" viewBox="0 0 260 220" style="width:100%; height:254px; max-width:280px; display:block; margin:0 auto;"></svg>
+    <input type="range" min="10" max="80" value="40" id="oeSlider" class="mb-slider" style="width:85%; display:block; margin:8px auto;">
+    <div id="oeOut" style="font-family:var(--font-mono); font-size:0.82rem; text-align:center;"></div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Flipping the angle's sign reflects the swept point across the x-axis. The x-coordinate (cosine) stays put — that's what "even" means. The y-coordinate (sine) flips — that's what "odd" means. This single symmetry derives every subtraction formula from the addition formula.</div>
+</div>
+
+<script>
+function draw(){
+  const deg = parseInt(document.getElementById('oeSlider').value);
+  const rad = deg*Math.PI/180;
+  const svg = document.getElementById('mirrorSvg');
+  svg.innerHTML = '';
+  const cx=130, cy=110, r=90;
+  const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  circle.setAttribute('cx',cx);circle.setAttribute('cy',cy);circle.setAttribute('r',r);circle.setAttribute('fill','none');circle.setAttribute('stroke','var(--line)');
+  svg.appendChild(circle);
+  const xAxis = document.createElementNS('http://www.w3.org/2000/svg','line');
+  xAxis.setAttribute('x1',10);xAxis.setAttribute('y1',cy);xAxis.setAttribute('x2',250);xAxis.setAttribute('y2',cy);
+  xAxis.setAttribute('stroke','var(--ink-soft)');
+  svg.appendChild(xAxis);
+
+  const pPos = [cx+r*Math.cos(rad), cy-r*Math.sin(rad)];
+  const pNeg = [cx+r*Math.cos(-rad), cy-r*Math.sin(-rad)];
+
+  [[pPos,'var(--part-highlight)',`+${deg}°`],[pNeg,'var(--part-accent)',`−${deg}°`]].forEach(([p,c,lbl])=>{
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',cx);line.setAttribute('y1',cy);line.setAttribute('x2',p[0]);line.setAttribute('y2',p[1]);
+    line.setAttribute('stroke',c); line.setAttribute('stroke-width','2');
+    svg.appendChild(line);
+    const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',p[0]);dot.setAttribute('cy',p[1]);dot.setAttribute('r',5);dot.setAttribute('fill',c);
+    svg.appendChild(dot);
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',p[0]+8);t.setAttribute('y',p[1]+(p[1]>cy?12:-6));t.setAttribute('font-size','10');t.setAttribute('fill',c);
+    t.textContent = lbl;
+    svg.appendChild(t);
+  });
+  // dashed vertical showing same x-coordinate
+  const vline = document.createElementNS('http://www.w3.org/2000/svg','line');
+  vline.setAttribute('x1',pPos[0]);vline.setAttribute('y1',pPos[1]);vline.setAttribute('x2',pNeg[0]);vline.setAttribute('y2',pNeg[1]);
+  vline.setAttribute('stroke','#9CA3AF'); vline.setAttribute('stroke-dasharray','3,2');
+  svg.appendChild(vline);
+
+  document.getElementById('oeOut').innerHTML =
+    `cos(${deg}°)=${Math.cos(rad).toFixed(3)}, cos(−${deg}°)=${Math.cos(-rad).toFixed(3)} — SAME<br>sin(${deg}°)=${Math.sin(rad).toFixed(3)}, sin(−${deg}°)=${Math.sin(-rad).toFixed(3)} — OPPOSITE`;
+  const fb = document.getElementById('fb');
+  fb.className='mb-feedback show good';
+  fb.innerHTML = `Both points sit on the SAME vertical dashed line (identical x-coordinate = cosine) but mirror above/below the x-axis (opposite y-coordinate = sine). That's the whole geometric content of "cosine is even, sine is odd."`;
+}
+document.getElementById('oeSlider').addEventListener('input', draw);
+draw();
+</script>
+</body>
+</html>

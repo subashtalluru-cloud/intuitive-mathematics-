@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #BE123C;
+  --part-accent-light: #FFE4E6;
+  --part-highlight: #0369A1;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part05-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FFF1F2; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Period and Frequency Are Reciprocals — Watch Why</div>
+  <div class="mb-sub">Frequency = cycles per second. Period = seconds per cycle. Drag the frequency slider and watch the period (measured directly on the wave) shrink exactly as 1/f predicts.</div>
+
+  <div class="mb-stage">
+    <svg id="periodSvg" viewBox="0 0 300 140" style="width:100%; height:140px; max-width:320px; display:block; margin:0 auto;"></svg>
+    <input type="range" min="1" max="10" value="2" id="freqSlider" class="mb-slider" style="width:85%; display:block; margin:8px auto;">
+    <div style="text-align:center; font-family:var(--font-mono); font-size:0.9rem;" id="freqOut"></div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">This isn't a coincidence to memorize — if a wave completes f cycles every second, then simple division tells you each individual cycle must take 1/f seconds. Confusing "frequency" with "ω" (angular frequency, used inside the sine function) is the chapter's own flagged common mistake — they differ by a factor of 2π.</div>
+</div>
+
+<script>
+function draw(){
+  const f = parseInt(document.getElementById('freqSlider').value);
+  const period = 1/f;
+  document.getElementById('freqOut').innerHTML = `Frequency f = ${f} Hz &nbsp;→&nbsp; Period T = 1/${f} = ${period.toFixed(3)}s`;
+
+  const svg = document.getElementById('periodSvg');
+  svg.innerHTML = '';
+  const cx=15, cy=70, scaleX=280, scaleY=40;
+  const xAxis = document.createElementNS('http://www.w3.org/2000/svg','line');
+  xAxis.setAttribute('x1',cx);xAxis.setAttribute('y1',cy);xAxis.setAttribute('x2',295);xAxis.setAttribute('y2',cy);
+  xAxis.setAttribute('stroke','var(--line)');
+  svg.appendChild(xAxis);
+
+  let path='M';
+  for(let t=0;t<=1;t+=0.005){
+    const y = Math.sin(2*Math.PI*f*t);
+    path += `${cx+t*scaleX},${cy-y*scaleY} L`;
+  }
+  const curve = document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve.setAttribute('d',path.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke','var(--part-accent)'); curve.setAttribute('stroke-width','2');
+  svg.appendChild(curve);
+
+  // mark one period
+  const periodEnd = cx+period*scaleX;
+  const bracket = document.createElementNS('http://www.w3.org/2000/svg','path');
+  bracket.setAttribute('d',`M${cx},${cy+20} L${cx},${cy+26} L${periodEnd},${cy+26} L${periodEnd},${cy+20}`);
+  bracket.setAttribute('fill','none'); bracket.setAttribute('stroke','var(--part-highlight)'); bracket.setAttribute('stroke-width','2');
+  svg.appendChild(bracket);
+  const periodLabel = document.createElementNS('http://www.w3.org/2000/svg','text');
+  periodLabel.setAttribute('x',(cx+periodEnd)/2);periodLabel.setAttribute('y',cy+40);periodLabel.setAttribute('text-anchor','middle');periodLabel.setAttribute('font-size','10');periodLabel.setAttribute('fill','var(--part-highlight)');
+  periodLabel.textContent = `T = ${period.toFixed(3)}s (one full cycle)`;
+  svg.appendChild(periodLabel);
+
+  const secLabel = document.createElementNS('http://www.w3.org/2000/svg','text');
+  secLabel.setAttribute('x',150);secLabel.setAttribute('y',15);secLabel.setAttribute('text-anchor','middle');secLabel.setAttribute('font-size','9');secLabel.setAttribute('fill','var(--ink-soft)');
+  secLabel.textContent = 'shown: 1 full second';
+  svg.appendChild(secLabel);
+}
+document.getElementById('freqSlider').addEventListener('input', draw);
+draw();
+</script>
+</body>
+</html>

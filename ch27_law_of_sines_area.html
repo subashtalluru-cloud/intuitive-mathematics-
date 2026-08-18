@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #BE123C;
+  --part-accent-light: #FFE4E6;
+  --part-highlight: #0369A1;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part05-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FFF1F2; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Law of Sines — Born From Computing Area Twice</div>
+  <div class="mb-sub">Same triangle, same area — computed two different ways using two different side/angle pairs. Click through to see why sin(A)/a = sin(B)/b falls out for free.</div>
+
+  <div class="mb-stage">
+    <svg id="areaSvg" viewBox="0 0 260 160" style="width:100%; height:185px; max-width:280px; display:block; margin:0 auto;"></svg>
+  </div>
+  <button class="mb-btn primary" onclick="nextStep()" style="display:block; margin:10px auto;">Next step</button>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">This is a genuinely different derivation technique from the Law of Cosines (which came from the Pythagorean theorem). The Law of Sines comes from a completely independent idea: the SAME triangle's area, computed two consistent ways, must agree.</div>
+</div>
+
+<script>
+let step = 0;
+const A_deg=50, B_deg=70, a=6, b=7;
+function draw(highlightHeight){
+  const svg = document.getElementById('areaSvg');
+  svg.innerHTML='';
+  const p1=[30,140], p2=[220,140], p3=[110,30];
+  const tri = document.createElementNS('http://www.w3.org/2000/svg','path');
+  tri.setAttribute('d',`M${p1} L${p2} L${p3} Z`);
+  tri.setAttribute('fill','var(--part-accent-light)'); tri.setAttribute('stroke','var(--part-accent)'); tri.setAttribute('stroke-width','2');
+  svg.appendChild(tri);
+  if(highlightHeight){
+    const h = document.createElementNS('http://www.w3.org/2000/svg','line');
+    h.setAttribute('x1',p3[0]);h.setAttribute('y1',p3[1]);h.setAttribute('x2',p3[0]);h.setAttribute('y2',140);
+    h.setAttribute('stroke','var(--part-highlight)'); h.setAttribute('stroke-width','2'); h.setAttribute('stroke-dasharray','3,2');
+    svg.appendChild(h);
+    const hLabel = document.createElementNS('http://www.w3.org/2000/svg','text');
+    hLabel.setAttribute('x',p3[0]+8);hLabel.setAttribute('y',90);hLabel.setAttribute('font-size','10');hLabel.setAttribute('fill','var(--part-highlight)');
+    hLabel.textContent = 'height';
+    svg.appendChild(hLabel);
+  }
+  [['A',p1,-15,10],['B',p2,10,10],['C',p3,0,-8]].forEach(([lbl,p,dx,dy])=>{
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',p[0]+dx);t.setAttribute('y',p[1]+dy);t.setAttribute('font-size','11');t.setAttribute('font-weight','700');
+    t.textContent = lbl;
+    svg.appendChild(t);
+  });
+}
+const steps = [
+  "Picture the triangle with side a opposite angle A, side b opposite angle B.",
+  "Compute the area one way: Area = ½ · a · b · sin(C) — using sides a, b and their included angle C.",
+  "Compute the SAME area a different way: Area = ½ · b · (height from A) — where height = a·sin(B) — giving Area = ½ · a · b · sin(B) using a different pairing.",
+  "Both expressions equal the SAME area, so ½·a·b·sin(C) considerations combine: sin(A)/a = sin(B)/b — falls out directly from setting consistent area expressions equal."
+];
+function nextStep(){
+  if(step<steps.length){
+    draw(step>=1);
+    const fb = document.getElementById('fb');
+    fb.className = 'mb-feedback show info';
+    fb.innerHTML = `${step+1}. ${steps[step]}`;
+    step++;
+    if(step===steps.length){
+      fb.className = 'mb-feedback show good';
+    }
+  }
+}
+draw(false);
+nextStep();
+</script>
+</body>
+</html>

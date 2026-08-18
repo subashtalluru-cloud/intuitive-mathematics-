@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #7C3AED;
+  --part-accent-light: #EDE9FE;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part04-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FAF5FF; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Approaching the Asymptote — f(x) = 1/(x−2)</div>
+  <div class="mb-sub">Click values of x getting closer and closer to 2. Watch what happens to f(x) — and notice x=2 itself is simply excluded, not "close to undefined."</div>
+
+  <div class="mb-stage">
+    <svg id="asymSvg" viewBox="0 0 300 220" style="width:100%; height:220px; max-width:320px; display:block; margin:0 auto;"></svg>
+    <div style="text-align:center; font-family:var(--font-mono); font-size:0.85rem;" id="valueLog"></div>
+  </div>
+  <div class="mb-controls" style="justify-content:center;">
+    <button class="mb-btn" onclick="testX(3)">x=3</button>
+    <button class="mb-btn" onclick="testX(2.5)">x=2.5</button>
+    <button class="mb-btn" onclick="testX(2.1)">x=2.1</button>
+    <button class="mb-btn" onclick="testX(2.01)">x=2.01</button>
+    <button class="mb-btn" onclick="testX(2)">x=2 (try it!)</button>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Only the EXACT zero of the denominator (x=2) is excluded from the domain. Every nearby point, however close, is perfectly well-defined — the function just grows unboundedly large as you approach.</div>
+</div>
+
+<script>
+function draw(){
+  const svg = document.getElementById('asymSvg');
+  svg.innerHTML = '';
+  const cx=150, cy=110, scaleX=25, scaleY=10;
+  const asymX = cx + 2*scaleX;
+  const asym = document.createElementNS('http://www.w3.org/2000/svg','line');
+  asym.setAttribute('x1',asymX);asym.setAttribute('y1',5);asym.setAttribute('x2',asymX);asym.setAttribute('y2',215);
+  asym.setAttribute('stroke','var(--bad)'); asym.setAttribute('stroke-dasharray','4,3');
+  svg.appendChild(asym);
+
+  let path1='M', path2='M';
+  for(let x=-2; x<1.9; x+=0.05){
+    const y = 1/(x-2);
+    path1 += `${cx+x*scaleX},${Math.max(5,Math.min(215,cy-y*scaleY))} L`;
+  }
+  for(let x=2.1; x<7; x+=0.05){
+    const y = 1/(x-2);
+    path2 += `${cx+x*scaleX},${Math.max(5,Math.min(215,cy-y*scaleY))} L`;
+  }
+  [path1,path2].forEach(p=>{
+    const curve = document.createElementNS('http://www.w3.org/2000/svg','path');
+    curve.setAttribute('d',p.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke','var(--part-accent)'); curve.setAttribute('stroke-width','2');
+    svg.appendChild(curve);
+  });
+}
+function testX(x){
+  const fb = document.getElementById('fb');
+  const log = document.getElementById('valueLog');
+  if(x===2){
+    log.textContent = 'f(2) = 1/(2−2) = 1/0 — UNDEFINED';
+    fb.className = 'mb-feedback show bad';
+    fb.innerHTML = `x=2 is the exact zero of the denominator — genuinely excluded from the domain. This is the ONLY excluded point; every nearby value is perfectly fine.`;
+  } else {
+    const y = 1/(x-2);
+    log.textContent = `f(${x}) = 1/(${x}−2) = ${y.toFixed(3)}`;
+    fb.className = 'mb-feedback show info';
+    fb.innerHTML = `As x gets closer to 2 (from ${x}), f(x) grows ${Math.abs(y) > 5 ? 'dramatically larger' : 'larger'} in magnitude — this is the vertical asymptote, a visual preview of Part VIII's limits.`;
+  }
+}
+draw();
+</script>
+</body>
+</html>

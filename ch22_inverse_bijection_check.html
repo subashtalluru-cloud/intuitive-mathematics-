@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #7C3AED;
+  --part-accent-light: #EDE9FE;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part04-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FAF5FF; }
+  .func-card{ background:#fff; border:2px solid var(--line); border-radius:8px; padding:12px; margin-bottom:10px; cursor:pointer; }
+  .verdict{ display:none; margin-top:8px; padding:8px; border-radius:6px; font-size:0.82rem; }
+  .verdict.show{ display:block; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Does This Function Have an Inverse?</div>
+  <div class="mb-sub">An inverse exists if and only if the function is a bijection. Click each function to check.</div>
+
+  <div class="mb-stage" id="funcsContainer"></div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Surjectivity is needed so f⁻¹ has SOME input to return for every element of its domain. Injectivity is needed so f⁻¹ never faces an impossible choice between two candidate outputs. Both conditions, simultaneously, or no genuine inverse exists.</div>
+</div>
+
+<script>
+const funcs = [
+  {name:"f(x) = 2x + 1 (all reals → all reals)", hasInv:true,
+   explain:"HAS an inverse: f⁻¹(x)=(x−1)/2. This is a bijection — injective (different x give different 2x+1) and surjective (every real is hit)."},
+  {name:"f(x) = x² (all reals → all reals)", hasInv:false,
+   explain:"NO inverse (on this domain). Not injective: f(2)=4 and f(−2)=4 — two different inputs, same output. Given output 4, should the inverse return 2 or −2? No consistent answer exists."},
+  {name:"f(x) = x² (restricted to x ≥ 0)", hasInv:true,
+   explain:"HAS an inverse: f⁻¹(x)=√x. Restricting the domain to x≥0 makes it injective again (now each output has only one non-negative input), restoring the bijection."},
+  {name:"f(x) = 5 (constant function, all reals → {5})", hasInv:false,
+   explain:"NO inverse. Wildly not injective (every input maps to the same output 5) — given output 5, infinitely many candidate inputs exist, with no way to choose."}
+];
+function render(){
+  const container = document.getElementById('funcsContainer');
+  container.innerHTML = '';
+  funcs.forEach((fn,i)=>{
+    const card = document.createElement('div');
+    card.className = 'func-card';
+    card.innerHTML = `<strong>${fn.name}</strong><div class="verdict" id="v${i}"></div>`;
+    card.onclick = ()=> reveal(i,fn);
+    container.appendChild(card);
+  });
+}
+function reveal(i,fn){
+  const v = document.getElementById('v'+i);
+  v.classList.add('show');
+  v.style.background = fn.hasInv ? '#F0FDF4' : '#FEF2F2';
+  v.style.color = fn.hasInv ? 'var(--good)' : 'var(--bad)';
+  v.innerHTML = fn.explain;
+}
+render();
+</script>
+</body>
+</html>

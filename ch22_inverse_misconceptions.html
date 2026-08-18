@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #7C3AED;
+  --part-accent-light: #EDE9FE;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part04-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FAF5FF; }
+  .stmt-card{ background:#fff; border:2px solid var(--line); border-radius:10px; padding:12px; margin-bottom:10px; cursor:pointer; }
+  .verdict{ display:none; margin-top:8px; padding:8px; border-radius:6px; font-size:0.82rem; }
+  .verdict.show{ display:block; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Inverse Function Instincts — True or False?</div>
+  <div class="mb-sub">Click each statement to reveal whether it's a common misconception.</div>
+
+  <div class="mb-stage" id="itemsContainer"></div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">f⁻¹(x) ≠ 1/f(x) — this is one of the most common early confusions. The "−1" in f⁻¹ is inverse-function notation, not an exponent.</div>
+</div>
+
+<script>
+const items = [
+  {text:"f⁻¹(x) means the same thing as 1/f(x).", verdict:false,
+   explain:"MISCONCEPTION. f⁻¹ is inverse-function notation (undoing f), completely different from the reciprocal 1/f(x). For f(x)=2x, f⁻¹(x)=x/2, but 1/f(x)=1/(2x) — genuinely different functions."},
+  {text:"Every function has an inverse if you just solve for x.", verdict:false,
+   explain:"MISCONCEPTION. Solving 'for x' only produces a genuine function if the original was a bijection. Try it on f(x)=x²: solving y=x² for x gives x=±√y — TWO values, not a function at all."},
+  {text:"The graph of f⁻¹ is the reflection of f's graph across y=x.", verdict:true,
+   explain:"TRUE. Since f⁻¹ swaps every (x,y) pair to (y,x), and swapping coordinates is exactly geometric reflection across the diagonal line y=x."},
+  {text:"f(f⁻¹(x)) = x for every x, whenever f⁻¹ exists.", verdict:true,
+   explain:"TRUE — this is essentially the definition of 'inverse': applying f then f⁻¹ (or vice versa) undoes the round trip completely, returning exactly the original input."}
+];
+function render(){
+  const container = document.getElementById('itemsContainer');
+  container.innerHTML = '';
+  items.forEach((it,i)=>{
+    const card = document.createElement('div');
+    card.className = 'stmt-card';
+    card.innerHTML = `${i+1}. "${it.text}"<div class="verdict" id="v${i}"></div>`;
+    card.onclick = ()=> reveal(i);
+    container.appendChild(card);
+  });
+}
+function reveal(i){
+  const it = items[i];
+  const v = document.getElementById('v'+i);
+  v.classList.add('show');
+  v.style.background = it.verdict ? '#F0FDF4' : '#FEF2F2';
+  v.style.color = it.verdict ? 'var(--good)' : 'var(--bad)';
+  v.innerHTML = `<strong>${it.verdict?'TRUE':'MISCONCEPTION'}:</strong> ${it.explain}`;
+}
+render();
+</script>
+</body>
+</html>

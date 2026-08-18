@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #7C3AED;
+  --part-accent-light: #EDE9FE;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part04-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FAF5FF; }
+  .pipeline{ display:flex; align-items:center; justify-content:center; gap:6px; margin:10px 0; flex-wrap:wrap; }
+  .machine{ background:#fff; border:2px solid var(--part-accent); border-radius:8px; padding:8px 10px; font-family:var(--font-mono); font-size:0.78rem; text-align:center; }
+  .arrow{ font-size:1.2rem; color:var(--part-highlight); }
+  .bracket-group{ border:2px dashed var(--part-highlight); border-radius:10px; padding:4px; display:flex; gap:6px; align-items:center; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Regrouping Is Free. Reordering Is Not.</div>
+  <div class="mb-sub">f(x)=x+1, g(x)=2x, h(x)=x². Click to see (f∘g)∘h vs f∘(g∘h) — same physical sequence, different bracket — then compare against actually reversing the order.</div>
+
+  <div class="mb-stage">
+    <div id="pipelineDisplay"></div>
+  </div>
+  <div class="mb-controls" style="justify-content:center;">
+    <button class="mb-btn" onclick="testAssoc()">Test regrouping: (f∘g)∘h vs f∘(g∘h)</button>
+    <button class="mb-btn" onclick="testCommute()">Test reordering: f∘g∘h vs h∘g∘f</button>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Regrouping three machines in an unchanged sequence never alters the physical processing order — it's just a human bookkeeping bracket. Reordering actually swaps which machine processes first. This is why composition is associative (grouping is free) but NOT commutative (order is not free).</div>
+</div>
+
+<script>
+function f(x){return x+1;}
+function g(x){return 2*x;}
+function h(x){return x*x;}
+function box(label){ return `<div class="machine">${label}</div>`; }
+function arrow(){ return `<div class="arrow">→</div>`; }
+
+function testAssoc(){
+  const x=3;
+  const hVal = h(x), gVal = g(hVal), fVal = f(gVal);
+  document.getElementById('pipelineDisplay').innerHTML =
+    `<div style="text-align:center; font-size:0.8rem; color:var(--part-accent); font-weight:700;">(f∘g)∘h — same physical order: h, then g, then f</div>
+     <div class="pipeline">
+       <div class="bracket-group">${box('x='+x)}${arrow()}${box('h: x² → '+hVal)}${arrow()}${box('g: ×2 → '+gVal)}</div>
+       ${arrow()}${box('f: +1 → <strong>'+fVal+'</strong>')}
+     </div>
+     <div style="text-align:center; font-size:0.8rem; color:var(--part-highlight); font-weight:700; margin-top:10px;">f∘(g∘h) — identical physical order, different bracket</div>
+     <div class="pipeline">
+       ${box('x='+x)}${arrow()}
+       <div class="bracket-group">${box('h: x² → '+hVal)}${arrow()}${box('g: ×2 → '+gVal)}${arrow()}${box('f: +1 → <strong>'+fVal+'</strong>')}</div>
+     </div>`;
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show good';
+  fb.innerHTML = `x=3: both groupings process h→g→f in the exact same physical sequence and land on ${fVal}. IDENTICAL — because the bracket never changed WHICH machine runs first, only how humans visually group the notation.`;
+}
+function testCommute(){
+  const x=3;
+  const hVal=h(x), gVal1=g(hVal), forward=f(gVal1);
+  const fVal=f(x), gVal2=g(fVal), reversed=h(gVal2);
+  document.getElementById('pipelineDisplay').innerHTML =
+    `<div style="text-align:center; font-size:0.8rem; color:var(--part-accent); font-weight:700;">f∘g∘h — physical order: h, then g, then f</div>
+     <div class="pipeline">${box('x='+x)}${arrow()}${box('h: x² → '+hVal)}${arrow()}${box('g: ×2 → '+gVal1)}${arrow()}${box('f: +1 → <strong>'+forward+'</strong>')}</div>
+     <div style="text-align:center; font-size:0.8rem; color:var(--part-highlight); font-weight:700; margin-top:10px;">h∘g∘f — REVERSED physical order: f, then g, then h</div>
+     <div class="pipeline">${box('x='+x)}${arrow()}${box('f: +1 → '+fVal)}${arrow()}${box('g: ×2 → '+gVal2)}${arrow()}${box('h: x² → <strong>'+reversed+'</strong>')}</div>`;
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show bad';
+  fb.innerHTML = `x=3: forward order gives ${forward}, reversed order gives ${reversed} — GENUINELY DIFFERENT. This time the actual physical machine sequence changed, not just the bracket. This is the real distinction: associative (bracket-free) but not commutative (order-bound).`;
+}
+testAssoc();
+</script>
+</body>
+</html>

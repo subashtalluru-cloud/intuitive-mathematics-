@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #7C3AED;
+  --part-accent-light: #EDE9FE;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part04-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FAF5FF; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Progressive Tax Brackets — Piecewise in the Real World</div>
+  <div class="mb-sub">10% on the first $10,000, 20% on the next $30,000, 30% above that. Enter an income and watch each bracket's contribution as a stacked bar.</div>
+
+  <div class="mb-stage">
+    <svg id="taxSvg" viewBox="0 0 260 200" style="width:100%; height:231px; max-width:280px; display:block; margin:0 auto;"></svg>
+    <input type="number" id="incomeIn" value="55000" style="font-family:var(--font-mono); width:120px; padding:6px; text-align:center; display:block; margin:8px auto;">
+    <button class="mb-btn primary" onclick="computeTax()" style="display:block; margin:0 auto;">Compute tax</button>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">A common misconception: "earning more can put your WHOLE income in a higher bracket." False — each bracket only taxes its own slice, visible as separate stacked segments below, never the whole bar turning the top bracket's color.</div>
+</div>
+
+<script>
+function computeTax(){
+  const income = parseFloat(document.getElementById('incomeIn').value)||0;
+  const b1 = Math.min(income,10000);
+  const b2 = Math.min(Math.max(income-10000,0),30000);
+  const b3 = Math.max(income-40000,0);
+  const tax1=b1*0.10, tax2=b2*0.20, tax3=b3*0.30;
+  const totalTax = tax1+tax2+tax3;
+
+  const svg = document.getElementById('taxSvg');
+  svg.innerHTML = '';
+  const scale = 150/Math.max(income,40000);
+  let y = 180;
+  const segments = [[b1,tax1,'10%','var(--part-accent)'],[b2,tax2,'20%','var(--part-highlight)'],[b3,tax3,'30%','#7C3AED']];
+  segments.forEach(([base,tax,rate,color])=>{
+    if(base<=0) return;
+    const h = base*scale;
+    const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('x',80);rect.setAttribute('y',y-h);rect.setAttribute('width',90);rect.setAttribute('height',h);
+    rect.setAttribute('fill',color);
+    svg.appendChild(rect);
+    const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',175);lbl.setAttribute('y',y-h/2+4);lbl.setAttribute('font-size','9');lbl.setAttribute('fill',color);
+    lbl.textContent = `${rate}: $${tax.toFixed(0)}`;
+    svg.appendChild(lbl);
+    y -= h;
+  });
+
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show good';
+  fb.innerHTML = `Total tax: $${totalTax.toFixed(2)} (effective rate ${(100*totalTax/income).toFixed(1)}%). Notice the effective rate is LOWER than the top bracket's 30% — because, as the stacked bar shows, only the topmost segment is taxed at 30%; the rest sit in lower brackets below it.`;
+}
+computeTax();
+</script>
+</body>
+</html>
