@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#B45309; --part-accent-light:#FEF3C7; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FFFBEB; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Divide by n or n-1? A Small Change With a Real Consequence</div>
+<div class="mb-sub">Sample variance divides by n-1, not n — Bessel's correction. Drag the sample size and watch how much this single choice matters, and how that gap shrinks as your sample grows.</div>
+<div class="mb-stage">
+<div class="slider-row"><label>Sample size n = <span id="nVal">7</span></label><input type="range" id="nSlider" min="3" max="100" value="7"></div>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">This is not a pedantic technicality — dividing by n instead of n-1 is a systematic bias that consistently UNDERESTIMATES the true population variance, most severely for small samples.</div>
+</div>
+<script>
+function generateData(n){
+  let seed=42;
+  function rand(){ seed=(seed*9301+49297)%233280; return seed/233280; }
+  const data=[];
+  for(let i=0;i<n;i++) data.push(10+rand()*40);
+  return data;
+}
+function compute(){
+  const n=parseInt(document.getElementById('nSlider').value);
+  document.getElementById('nVal').textContent=n;
+  const data=generateData(n);
+  const mean=data.reduce((a,b)=>a+b,0)/n;
+  const sumSq=data.reduce((s,x)=>s+(x-mean)*(x-mean),0);
+  const varN=sumSq/n;
+  const varN1=sumSq/(n-1);
+  const pctDiff = ((varN1-varN)/varN)*100;
+
+  document.getElementById('readout').innerHTML =
+    'Sum of squared deviations: '+sumSq.toFixed(2)+'<br>'+
+    'Divide by n='+n+': variance = '+varN.toFixed(3)+'<br>'+
+    'Divide by n-1='+(n-1)+': variance = '+varN1.toFixed(3)+'<br>'+
+    'Difference: '+pctDiff.toFixed(1)+'% higher with correction';
+  document.getElementById('fb').innerHTML = n<10
+    ? 'At this small sample size, the correction changes the variance estimate by a genuinely meaningful '+pctDiff.toFixed(1)+'% — dividing by n here would systematically underestimate the true spread.'
+    : 'At n='+n+', the correction only changes the estimate by '+pctDiff.toFixed(1)+'% — as samples grow, n and n-1 become nearly indistinguishable, and the correction matters progressively less.';
+}
+document.getElementById('nSlider').addEventListener('input', compute);
+compute();
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> drag n down to its smallest setting (n=3) and watch the percentage difference balloon; then drag it up to 100 and watch that difference shrink toward nearly nothing. Bessel's correction exists precisely because a SAMPLE's own mean is itself estimated from the same data, making the data appear artificially closer to its own mean than to the true, unknown population mean - a bias that matters enormously for small samples and becomes negligible for large ones.";
+</script>
+</body></html>

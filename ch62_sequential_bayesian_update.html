@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#B45309; --part-accent-light:#FEF3C7; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FFFBEB; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#bayesSvg{ width:100%; height:auto; aspect-ratio:2.5/1; display:block; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin:4px; }
+.mb-btn:hover{ background:var(--part-accent); color:#fff; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Belief, Refined Draw by Draw — Never Restarting From Scratch</div>
+<div class="mb-sub">A jar is equally likely to be 70%-red or 70%-blue. Draw marbles one at a time; each posterior becomes the next prior. Watch belief climb, compound, and eventually cross into near-certainty.</div>
+<div class="mb-stage">
+<svg id="bayesSvg" viewBox="0 0 400 160"></svg>
+<button class="mb-btn" onclick="drawMarble('red')">Draw: got RED</button>
+<button class="mb-btn" onclick="drawMarble('blue')">Draw: got BLUE</button>
+<button class="mb-btn" onclick="resetSim()">Reset to neutral prior</button>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">A Bayesian credible interval can genuinely be interpreted as "there is a 95% probability the true value lies within this range" — precisely the interpretation Chapter 56 carefully ruled out for the frequentist confidence interval.</div>
+</div>
+<script>
+let history=[0.5];
+function drawMarble(color){
+  const prior=history[history.length-1];
+  const pRedGivenMostlyRed=0.7, pRedGivenMostlyBlue=0.3;
+  let posterior;
+  if(color==='red'){
+    const pRedOverall=pRedGivenMostlyRed*prior+pRedGivenMostlyBlue*(1-prior);
+    posterior=(pRedGivenMostlyRed*prior)/pRedOverall;
+  } else {
+    const pBlueGivenMostlyRed=0.3, pBlueGivenMostlyBlue=0.7;
+    const pBlueOverall=pBlueGivenMostlyRed*prior+pBlueGivenMostlyBlue*(1-prior);
+    posterior=(pBlueGivenMostlyRed*prior)/pBlueOverall;
+  }
+  history.push(posterior);
+  render();
+}
+function resetSim(){
+  history=[0.5];
+  render();
+}
+function render(){
+  const svg=document.getElementById('bayesSvg');
+  svg.innerHTML='';
+  const origin={x:30,y:130};
+  history.forEach((p,i)=>{
+    const x=origin.x+i*55;
+    const h=p*100;
+    const bar=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    bar.setAttribute('x',x); bar.setAttribute('y',origin.y-h); bar.setAttribute('width',40); bar.setAttribute('height',h);
+    bar.setAttribute('fill','var(--part-accent)'); bar.setAttribute('fill-opacity','0.7');
+    svg.appendChild(bar);
+    const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',x+20); lbl.setAttribute('y',origin.y-h-6); lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('font-size','10'); lbl.setAttribute('font-weight','700');
+    lbl.textContent=(p*100).toFixed(1)+'%';
+    svg.appendChild(lbl);
+    const stepLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    stepLbl.setAttribute('x',x+20); stepLbl.setAttribute('y',145); stepLbl.setAttribute('text-anchor','middle'); stepLbl.setAttribute('font-size','9');
+    stepLbl.textContent = i===0 ? 'prior' : 'draw '+i;
+    svg.appendChild(stepLbl);
+  });
+  const current=history[history.length-1];
+  document.getElementById('readout').innerHTML = 'Current belief the jar is "mostly red": '+(current*100).toFixed(1)+'%<br>Draws so far: '+(history.length-1);
+  document.getElementById('fb').innerHTML = history.length===1
+    ? 'No evidence yet — a genuinely neutral 50/50 starting belief.'
+    : 'Each posterior became the next draw\u2019s prior automatically — the belief compounds across draws rather than resetting, exactly Bayesian inference\u2019s sequential character.';
+}
+render();
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> draw 'red' twice in a row and watch belief climb from 50% to 70% to about 84.5% - then try drawing 'blue' once after that and watch it pull back down substantially. Nothing here ever restarts from the original neutral 50% prior; each new bar is computed directly from the immediately preceding bar. This IS Chapter 51's Bayes' theorem, applied repeatedly and coherently - proving mathematically that updating one piece of evidence at a time produces exactly the same final answer as updating once with all the evidence combined.";
+</script>
+</body></html>

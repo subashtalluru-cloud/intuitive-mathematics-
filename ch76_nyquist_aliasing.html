@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C2D92; --part-accent-light:#F3E8FF; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FAF5FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#nyquistSvg{ width:100%; height:auto; aspect-ratio:2.3/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">8,000 Hz Sampling Exceeds a 5,000 Hz Signal — Still Not Enough</div>
+<div class="mb-sub">Nyquist requires DOUBLE the highest frequency, not merely "faster than" it. Drag the sampling rate and watch exactly when aliasing distortion kicks in.</div>
+<div class="mb-stage">
+<svg id="nyquistSvg" viewBox="0 0 400 160"></svg>
+<div class="slider-row"><label>Sampling rate (Hz): <span id="sampleVal">8000</span></label><input type="range" id="sampleSlider" min="3000" max="15000" step="500" value="8000"></div>
+<div class="readout" id="readoutNyq"></div>
+</div>
+<div id="fbNyq" class="mb-feedback"></div>
+<div class="aha" id="ahaNyq"></div>
+<div class="mb-caption">Aliasing, once it has occurred during sampling, cannot be corrected or reversed afterward by any subsequent digital processing — preventing it requires acting proactively before sampling, not attempting cleanup afterward.</div>
+</div>
+<script>
+function drawNyq(){
+  const sampleRate=parseInt(document.getElementById('sampleSlider').value);
+  document.getElementById('sampleVal').textContent=sampleRate.toLocaleString();
+  const highestFreq=5000;
+  const nyquistMin=2*highestFreq;
+  const sufficient = sampleRate>=nyquistMin;
+
+  const svg=document.getElementById('nyquistSvg');
+  svg.innerHTML='';
+  const scale=0.02, origin={x:20,y:80};
+
+  const signalLine=document.createElementNS('http://www.w3.org/2000/svg','line');
+  signalLine.setAttribute('x1',origin.x+highestFreq*scale); signalLine.setAttribute('y1',20); signalLine.setAttribute('x2',origin.x+highestFreq*scale); signalLine.setAttribute('y2',130);
+  signalLine.setAttribute('stroke','var(--part-accent)'); signalLine.setAttribute('stroke-width','2');
+  svg.appendChild(signalLine);
+  const signalLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  signalLbl.setAttribute('x',origin.x+highestFreq*scale); signalLbl.setAttribute('y',15); signalLbl.setAttribute('text-anchor','middle'); signalLbl.setAttribute('font-size','9'); signalLbl.setAttribute('fill','var(--part-accent)');
+  signalLbl.textContent='signal: 5,000 Hz';
+  svg.appendChild(signalLbl);
+
+  const nyquistLine=document.createElementNS('http://www.w3.org/2000/svg','line');
+  nyquistLine.setAttribute('x1',origin.x+nyquistMin*scale); nyquistLine.setAttribute('y1',20); nyquistLine.setAttribute('x2',origin.x+nyquistMin*scale); nyquistLine.setAttribute('y2',130);
+  nyquistLine.setAttribute('stroke','var(--good)'); nyquistLine.setAttribute('stroke-width','2'); nyquistLine.setAttribute('stroke-dasharray','4,3');
+  svg.appendChild(nyquistLine);
+  const nyquistLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  nyquistLbl.setAttribute('x',origin.x+nyquistMin*scale); nyquistLbl.setAttribute('y',35); nyquistLbl.setAttribute('text-anchor','middle'); nyquistLbl.setAttribute('font-size','9'); nyquistLbl.setAttribute('fill','var(--good)');
+  nyquistLbl.textContent='Nyquist min: 10,000 Hz';
+  svg.appendChild(nyquistLbl);
+
+  const sampleLine=document.createElementNS('http://www.w3.org/2000/svg','line');
+  sampleLine.setAttribute('x1',origin.x+sampleRate*scale); sampleLine.setAttribute('y1',20); sampleLine.setAttribute('x2',origin.x+sampleRate*scale); sampleLine.setAttribute('y2',130);
+  sampleLine.setAttribute('stroke', sufficient?'var(--good)':'var(--bad)'); sampleLine.setAttribute('stroke-width','3');
+  svg.appendChild(sampleLine);
+  const sampleLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  sampleLbl.setAttribute('x',origin.x+sampleRate*scale); sampleLbl.setAttribute('y',145); sampleLbl.setAttribute('text-anchor','middle'); sampleLbl.setAttribute('font-size','10'); sampleLbl.setAttribute('font-weight','700'); sampleLbl.setAttribute('fill', sufficient?'var(--good)':'var(--bad)');
+  sampleLbl.textContent='your rate';
+  svg.appendChild(sampleLbl);
+
+  document.getElementById('readoutNyq').innerHTML =
+    'Signal highest frequency: 5,000 Hz<br>'+
+    'Nyquist minimum required: 10,000 Hz<br>'+
+    'Your sampling rate: '+sampleRate.toLocaleString()+' Hz<br>'+
+    'Result: '+(sufficient?'NO ALIASING':'ALIASING OCCURS');
+  document.getElementById('fbNyq').innerHTML = sufficient
+    ? sampleRate.toLocaleString()+' Hz genuinely meets or exceeds the 10,000 Hz Nyquist minimum — the signal can be perfectly reconstructed from these samples.'
+    : sampleRate.toLocaleString()+' Hz exceeds the raw 5,000 Hz signal frequency, but falls short of the REQUIRED 10,000 Hz (double that frequency) — this produces genuine, irreversible aliasing distortion, misrepresenting high-frequency content as false lower frequencies.';
+}
+document.getElementById('sampleSlider').addEventListener('input', drawNyq);
+drawNyq();
+document.getElementById('ahaNyq').innerHTML="<strong>Aha:</strong> drag the sampling rate to 8,000 Hz - it genuinely exceeds the signal's own 5,000 Hz, which feels like it should be enough, yet aliasing still occurs because Nyquist specifically requires DOUBLE the highest frequency, not merely 'faster than' it. Only once you drag past 10,000 Hz does the distortion disappear. This exact gap - between 'higher than the signal' and 'higher than twice the signal' - is precisely the common mistake real audio engineers must guard against with deliberate anti-aliasing filters before sampling ever begins.";
+</script>
+</body></html>

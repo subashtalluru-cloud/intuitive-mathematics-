@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#0F766E; --part-accent-light:#CCFBF1; --part-highlight:#7C3AED;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F0FDFA; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#numSvg{ width:100%; height:auto; aspect-ratio:2.5/1; display:block; cursor:pointer; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FEF3C7; color:#92400E; border:1px solid #FDE68A; }
+.aha strong{ color:#B45309; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Zoom In on the Integers — Nothing New Appears. Zoom In on the Reals — Infinity Does.</div>
+<div class="mb-sub">Click "zoom in" repeatedly on each number line. One reveals genuinely new numbers at every scale, forever. The other never does — its gaps are real and permanent.</div>
+<div class="mb-stage">
+<svg id="numSvg" viewBox="0 0 400 160"></svg>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">This isn't a minor technicality — it's exactly why discrete mathematics needs an entirely different toolkit from calculus: derivatives and continuous integrals were built for the dense, gapless world; counting and graph structure were built for the gapped, countable one.</div>
+</div>
+<script>
+let zoomLevel=0;
+function draw(){
+  const svg=document.getElementById('numSvg');
+  svg.innerHTML='';
+  const scale=Math.pow(3,zoomLevel);
+  const center=2;
+
+  // top: integers
+  const topY=40;
+  for(let i=-2;i<=6;i++){
+    const x=200+(i-center)*40*scale;
+    if(x<10||x>390) continue;
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',x); dot.setAttribute('cy',topY); dot.setAttribute('r',4); dot.setAttribute('fill','var(--part-accent)');
+    svg.appendChild(dot);
+    if(zoomLevel<3){
+      const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+      lbl.setAttribute('x',x); lbl.setAttribute('y',topY-10); lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('font-size','9');
+      lbl.textContent=i;
+      svg.appendChild(lbl);
+    }
+  }
+  const topLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  topLbl.setAttribute('x',10); topLbl.setAttribute('y',topY+4); topLbl.setAttribute('font-size','10'); topLbl.setAttribute('fill','var(--part-accent)'); topLbl.setAttribute('font-weight','700');
+  topLbl.textContent='integers:';
+  svg.appendChild(topLbl);
+
+  // bottom: reals, drawn as dense fill proportional to zoom
+  const botY=120;
+  const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1',60); line.setAttribute('y1',botY); line.setAttribute('x2',390); line.setAttribute('y2',botY);
+  line.setAttribute('stroke','var(--part-highlight)'); line.setAttribute('stroke-width','3');
+  svg.appendChild(line);
+  const numTicks=Math.min(40,5*(zoomLevel+1));
+  for(let i=0;i<=numTicks;i++){
+    const x=60+i*(330/numTicks);
+    const tick=document.createElementNS('http://www.w3.org/2000/svg','line');
+    tick.setAttribute('x1',x); tick.setAttribute('y1',botY-5); tick.setAttribute('x2',x); tick.setAttribute('y2',botY+5);
+    tick.setAttribute('stroke','var(--part-highlight)'); tick.setAttribute('stroke-width','1');
+    svg.appendChild(tick);
+  }
+  const botLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  botLbl.setAttribute('x',10); botLbl.setAttribute('y',botY+4); botLbl.setAttribute('font-size','10'); botLbl.setAttribute('fill','var(--part-highlight)'); botLbl.setAttribute('font-weight','700');
+  botLbl.textContent='reals:';
+  svg.appendChild(botLbl);
+
+  document.getElementById('readout').innerHTML = 'Zoom level: '+zoomLevel+'x<br>Integer line: still just isolated dots, same gaps as before.<br>Real line: '+(numTicks)+' visible values now — always more between any two, however close.';
+}
+function zoomIn(){
+  zoomLevel = Math.min(zoomLevel+1,6);
+  draw();
+  document.getElementById('fb').innerHTML = zoomLevel<3
+    ? 'Notice the integer dots above just spread apart — no new numbers appeared between them. The real line below is already showing more ticks than before.'
+    : 'Even at this zoom level, the integers show nothing new between consecutive dots — genuinely, permanently empty gaps. The real line keeps revealing more ticks the deeper you zoom, with no end to this process, ever.';
+}
+document.getElementById('numSvg').addEventListener('click', zoomIn);
+draw();
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> click the diagram several times to zoom in further and further. The integer line's gaps NEVER fill in, no matter how far you zoom - there is no number between 2 and 3 in this system, full stop. The real line, by contrast, reveals genuinely new numbers at every single zoom level, forever - this is exactly Chapter 9's density property. This isn't a limitation of the picture; it's the actual mathematical structure, and it's precisely why discrete mathematics (counting exact, separated possibilities) requires fundamentally different tools than calculus (built for this endless, gapless divisibility).";
+</script>
+</body></html>

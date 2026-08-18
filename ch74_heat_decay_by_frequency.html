@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C2D92; --part-accent-light:#F3E8FF; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FAF5FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#heatSvg{ width:100%; height:auto; aspect-ratio:2.3/1; display:block; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin-top:10px; }
+.mb-btn:hover{ background:var(--part-accent); color:#fff; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Watch a Rod's Sharp Bumps Vanish 9x Faster Than Its Broad Curve</div>
+<div class="mb-sub">Initial temperature: sin(x) + sin(3x). Click "advance time" and watch the sharper n=3 wiggle disappear almost completely before the smooth n=1 pattern has faded much at all — decay rate grows with the SQUARE of frequency.</div>
+<div class="mb-stage">
+<svg id="heatSvg" viewBox="0 0 400 160"></svg>
+<button class="mb-btn" onclick="advanceTime()">Advance time</button>
+<button class="mb-btn" onclick="resetTime()">Reset to t=0</button>
+<div class="readout" id="readout5"></div>
+</div>
+<div id="fb5" class="mb-feedback"></div>
+<div class="aha" id="aha5"></div>
+<div class="mb-caption">A general initial profile's overall SHAPE, not merely its size, changes over time — different harmonics decay at dramatically different rates, with fine high-frequency detail vanishing well before broad low-frequency structure does.</div>
+</div>
+<script>
+let t=0;
+function draw5(){
+  const svg=document.getElementById('heatSvg');
+  svg.innerHTML='';
+  const scaleX=60, scaleY=30, origin={x:20,y:80};
+
+  const rate1=1, rate3=9;
+  let d='M';
+  for(let x=0;x<=Math.PI;x+=0.02){
+    const y = Math.sin(x)*Math.exp(-rate1*t) + Math.sin(3*x)*Math.exp(-rate3*t);
+    d+=(origin.x+x*scaleX)+','+(origin.y-y*scaleY)+' L';
+  }
+  const curve=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve.setAttribute('d',d.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke','var(--part-accent)'); curve.setAttribute('stroke-width','2.5');
+  svg.appendChild(curve);
+
+  const axis=document.createElementNS('http://www.w3.org/2000/svg','line');
+  axis.setAttribute('x1',origin.x); axis.setAttribute('y1',origin.y); axis.setAttribute('x2',origin.x+Math.PI*scaleX); axis.setAttribute('y2',origin.y);
+  axis.setAttribute('stroke','#94A3B8');
+  svg.appendChild(axis);
+
+  const amp1=Math.exp(-rate1*t), amp3=Math.exp(-rate3*t);
+  document.getElementById('readout5').innerHTML =
+    't = '+t.toFixed(2)+'<br>'+
+    'n=1 harmonic remaining strength: '+(amp1*100).toFixed(1)+'%<br>'+
+    'n=3 harmonic remaining strength: '+(amp3*100).toFixed(1)+'%';
+  document.getElementById('fb5').innerHTML = t===0
+    ? 'At t=0, both harmonics are at full strength — the combined curve shows visible fine structure from the n=3 wiggle layered on the broad n=1 shape.'
+    : (amp3<0.05
+      ? 'The n=3 wiggle has essentially vanished ('+(amp3*100).toFixed(1)+'% remaining) while the n=1 shape is still clearly present ('+(amp1*100).toFixed(1)+'%) — the curve has genuinely changed SHAPE, not just size, as the fine detail smoothed away first.'
+      : 'The n=3 wiggle is fading noticeably faster than the broad n=1 curve — exactly the 9x decay-rate difference (3\u00b2=9) making itself visible.');
+}
+function advanceTime(){
+  t+=0.05;
+  draw5();
+}
+function resetTime(){
+  t=0;
+  draw5();
+}
+draw5();
+document.getElementById('aha5').innerHTML="<strong>Aha:</strong> click 'advance time' repeatedly and watch the fine wiggle smooth away almost completely while the broad curve is still clearly visible - this is the direct, physical consequence of decay rate growing as frequency SQUARED, not merely proportionally. A rod's temperature profile doesn't just shrink uniformly over time; its very SHAPE evolves, with sharp, high-frequency detail vanishing first and only the broad, low-frequency structure persisting toward the final smooth equilibrium.";
+</script>
+</body></html>

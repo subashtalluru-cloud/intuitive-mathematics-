@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#B45309; --part-accent-light:#FEF3C7; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FFFBEB; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#tSvg{ width:100%; height:auto; aspect-ratio:2.2/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">A Brewer's Small-Sample Problem — Fatter Tails, Honestly Earned</div>
+<div class="mb-sub">n=9, mean=52, s=6, testing against a claimed mean of 48. The z-test (assuming known sigma) would reject. The correctly-adjusted t-test, honest about small-sample uncertainty, does not. Drag degrees of freedom and watch the t-distribution converge toward the normal curve.</div>
+<div class="mb-stage">
+<svg id="tSvg" viewBox="0 0 400 200"></svg>
+<div class="slider-row"><label>Degrees of freedom: <span id="dfVal">8</span></label><input type="range" id="dfSlider" min="1" max="100" value="8"></div>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">The t-distribution's extra tail-heaviness isn't fixed — it directly reflects how much data went into estimating the standard deviation, converging smoothly to the normal distribution as that estimate becomes more reliable.</div>
+</div>
+<script>
+function normPdf(z){ return Math.exp(-z*z/2)/Math.sqrt(2*Math.PI); }
+function tPdf(t,df){
+  const num = Math.pow(1+(t*t)/df, -(df+1)/2);
+  // approximate normalizing constant via Stirling-based gamma ratio
+  const g1 = gammaApprox((df+1)/2);
+  const g2 = gammaApprox(df/2);
+  const norm = g1/(Math.sqrt(df*Math.PI)*g2);
+  return norm*num;
+}
+function gammaApprox(x){
+  // Lanczos approximation
+  const g=7;
+  const c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+  if(x<0.5) return Math.PI/(Math.sin(Math.PI*x)*gammaApprox(1-x));
+  x-=1;
+  let a=c[0];
+  const t=x+g+0.5;
+  for(let i=1;i<g+2;i++) a+=c[i]/(x+i);
+  return Math.sqrt(2*Math.PI)*Math.pow(t,x+0.5)*Math.exp(-t)*a;
+}
+function draw(){
+  const df=parseInt(document.getElementById('dfSlider').value);
+  document.getElementById('dfVal').textContent=df;
+
+  const svg=document.getElementById('tSvg');
+  svg.innerHTML='';
+  const scale=40, origin={x:200,y:170};
+  let dNorm='M', dT='M';
+  for(let z=-4;z<=4;z+=0.05){
+    const x=origin.x+z*scale;
+    const yN=origin.y-normPdf(z)*300;
+    const yT=origin.y-tPdf(z,df)*300;
+    dNorm+=x+','+yN+' L';
+    dT+=x+','+yT+' L';
+  }
+  const normCurve=document.createElementNS('http://www.w3.org/2000/svg','path');
+  normCurve.setAttribute('d',dNorm.slice(0,-1)); normCurve.setAttribute('fill','none'); normCurve.setAttribute('stroke','#94A3B8'); normCurve.setAttribute('stroke-width','2'); normCurve.setAttribute('stroke-dasharray','4,3');
+  svg.appendChild(normCurve);
+  const tCurve=document.createElementNS('http://www.w3.org/2000/svg','path');
+  tCurve.setAttribute('d',dT.slice(0,-1)); tCurve.setAttribute('fill','none'); tCurve.setAttribute('stroke','var(--part-accent)'); tCurve.setAttribute('stroke-width','2.5');
+  svg.appendChild(tCurve);
+
+  const label1=document.createElementNS('http://www.w3.org/2000/svg','text');
+  label1.setAttribute('x',330); label1.setAttribute('y',30); label1.setAttribute('font-size','10'); label1.setAttribute('fill','#94A3B8');
+  label1.textContent='normal (dashed)';
+  svg.appendChild(label1);
+  const label2=document.createElementNS('http://www.w3.org/2000/svg','text');
+  label2.setAttribute('x',330); label2.setAttribute('y',45); label2.setAttribute('font-size','10'); label2.setAttribute('fill','var(--part-accent)');
+  label2.textContent='t-dist (solid)';
+  svg.appendChild(label2);
+
+  document.getElementById('readout').innerHTML = 'df = '+df+' (roughly, sample size - 1)<br>'+(df<15 ? 'Tails are visibly heavier than normal — genuine extra uncertainty from estimating sigma with a small sample.' : 'Tails have nearly merged with the normal distribution — with this much data, estimation uncertainty is negligible.');
+}
+document.getElementById('dfSlider').addEventListener('input', draw);
+draw();
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> drag df from 1 up to 100 and watch the solid orange t-curve's tails visibly thin down, converging onto the dashed gray normal curve. This isn't decoration - it's why a t=2.0 test statistic with only 8 degrees of freedom FAILS to reach significance (critical value ~2.306), while the same t=2.0 WOULD have been significant under the normal distribution's more optimistic 1.96 threshold - the t-distribution is honestly accounting for the genuine extra uncertainty a small sample carries.";
+</script>
+</body></html>

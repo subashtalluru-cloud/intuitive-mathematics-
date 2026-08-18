@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C2D92; --part-accent-light:#F3E8FF; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FAF5FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#singleSvg{ width:100%; height:auto; aspect-ratio:2.3/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">One Harmonic Alone: Shape Frozen, Only Size Shrinks</div>
+<div class="mb-sub">Initial condition is already a single pure sine — no other frequencies to compete with. Drag time forward and watch the curve shrink in place, its exact sine shape never distorting.</div>
+<div class="mb-stage">
+<svg id="singleSvg" viewBox="0 0 400 160"></svg>
+<div class="slider-row"><label>Time t = <span id="tVal">0.00</span></label><input type="range" id="tSlider" min="0" max="100" value="0"></div>
+<div class="readout" id="readout6"></div>
+</div>
+<div id="fb6" class="mb-feedback"></div>
+<div class="aha" id="aha6"></div>
+<div class="mb-caption">This shape-preserving behavior is a special property of a SINGLE-harmonic initial condition — a general profile with multiple frequencies will have its shape itself distort over time, not merely shrink uniformly.</div>
+</div>
+<script>
+function draw6(){
+  const tRaw=parseInt(document.getElementById('tSlider').value);
+  const t=tRaw/100;
+  document.getElementById('tVal').textContent=t.toFixed(2);
+  const rate=4; // n=2, alpha=1, L=pi
+  const amp=5*Math.exp(-rate*t);
+
+  const svg=document.getElementById('singleSvg');
+  svg.innerHTML='';
+  const scaleX=60, scaleY=12, origin={x:20,y:80};
+
+  let d='M';
+  for(let x=0;x<=Math.PI;x+=0.02){
+    const y=amp*Math.sin(2*x);
+    d+=(origin.x+x*scaleX)+','+(origin.y-y*scaleY)+' L';
+  }
+  const curve=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve.setAttribute('d',d.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke','var(--part-accent)'); curve.setAttribute('stroke-width','2.5');
+  svg.appendChild(curve);
+
+  const axis=document.createElementNS('http://www.w3.org/2000/svg','line');
+  axis.setAttribute('x1',origin.x); axis.setAttribute('y1',origin.y); axis.setAttribute('x2',origin.x+Math.PI*scaleX); axis.setAttribute('y2',origin.y);
+  axis.setAttribute('stroke','#94A3B8');
+  svg.appendChild(axis);
+
+  document.getElementById('readout6').innerHTML =
+    'u(x,t) = 5sin(2x)e^(-4t)<br>Current amplitude: '+amp.toFixed(3)+' (started at 5.000)<br>Shape: unchanged sine curve, only scaled';
+  document.getElementById('fb6').innerHTML = 'The curve is still exactly a sine wave at every single time step — only its height has changed, never its fundamental shape, since there is only one frequency present to decay.';
+}
+document.getElementById('tSlider').addEventListener('input', draw6);
+draw6();
+document.getElementById('aha6').innerHTML="<strong>Aha:</strong> drag time all the way up and the curve shrinks toward the flat zero line, but at every single point along the way it remains a PERFECT sine shape - never distorted, never lopsided. This is only possible because this specific initial condition happens to contain just one single harmonic. The moment a second, different-frequency harmonic is added to the mix (as in the previous element's sin(x)+sin(3x) example), that guarantee breaks completely - real physical initial conditions almost always contain many frequencies, so real heat-equation solutions almost always change SHAPE, not just size, over time.";
+</script>
+</body></html>

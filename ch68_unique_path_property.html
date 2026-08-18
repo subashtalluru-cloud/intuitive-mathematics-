@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#0F766E; --part-accent-light:#CCFBF1; --part-highlight:#7C3AED;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F0FDFA; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#treeSvg{ width:100%; height:auto; aspect-ratio:1.8/1; display:block; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin:4px; }
+.mb-btn:hover, .mb-btn.active{ background:var(--part-accent); color:#fff; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FEF3C7; color:#92400E; border:1px solid #FDE68A; }
+.aha strong{ color:#B45309; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Remove Any One Edge From a Tree — It Splits in Two, Guaranteed</div>
+<div class="mb-sub">A tree has exactly one path between any two vertices, with zero redundancy. Click any edge to remove it and watch the tree fall apart into two disconnected pieces — every single time, no exceptions.</div>
+<div class="mb-stage">
+<svg id="treeSvg" viewBox="0 0 300 200"></svg>
+<button class="mb-btn" onclick="resetTree()">Restore the tree</button>
+<div class="readout" id="readout">Click any edge to remove it.</div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">Adding even a single additional edge to an already-connected tree would necessarily create a cycle — a second, redundant path — representing pure structural waste from a pure-connectivity standpoint.</div>
+</div>
+<script>
+const positions={A:[150,30],B:[80,90],C:[220,90],D:[40,160],E:[120,160]};
+const edges=[['A','B'],['A','C'],['B','D'],['B','E']];
+let removedEdge=null;
+function componentsAfterRemoval(removed){
+  const adj={};
+  Object.keys(positions).forEach(v=>adj[v]=[]);
+  edges.forEach(([a,b])=>{
+    if(removed && a===removed[0] && b===removed[1]) return;
+    adj[a].push(b); adj[b].push(a);
+  });
+  const visited={};
+  const components=[];
+  Object.keys(positions).forEach(v=>{
+    if(visited[v]) return;
+    const comp=[]; const stack=[v];
+    while(stack.length){
+      const cur=stack.pop();
+      if(visited[cur]) continue;
+      visited[cur]=true; comp.push(cur);
+      adj[cur].forEach(n=>{ if(!visited[n]) stack.push(n); });
+    }
+    components.push(comp);
+  });
+  return components;
+}
+function draw(){
+  const svg=document.getElementById('treeSvg');
+  svg.innerHTML='';
+  const comps=componentsAfterRemoval(removedEdge);
+  const compColor={};
+  const palette=['var(--part-accent)','var(--part-highlight)','#B45309'];
+  comps.forEach((comp,i)=>{ comp.forEach(v=>compColor[v]=palette[i%palette.length]); });
+
+  edges.forEach(([a,b])=>{
+    const isRemoved = removedEdge && a===removedEdge[0] && b===removedEdge[1];
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',positions[a][0]); line.setAttribute('y1',positions[a][1]);
+    line.setAttribute('x2',positions[b][0]); line.setAttribute('y2',positions[b][1]);
+    line.setAttribute('stroke', isRemoved?'#E2E8F0':'#94A3B8');
+    line.setAttribute('stroke-width', isRemoved?'1':'3');
+    line.setAttribute('stroke-dasharray', isRemoved?'4,3':'none');
+    line.setAttribute('data-a',a); line.setAttribute('data-b',b);
+    line.setAttribute('style','cursor:pointer');
+    svg.appendChild(line);
+  });
+  Object.keys(positions).forEach(v=>{
+    const [x,y]=positions[v];
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',x); dot.setAttribute('cy',y); dot.setAttribute('r',16); dot.setAttribute('fill',compColor[v]);
+    svg.appendChild(dot);
+    const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',x); lbl.setAttribute('y',y+4); lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('font-size','12'); lbl.setAttribute('fill','#fff'); lbl.setAttribute('font-weight','700');
+    lbl.textContent=v;
+    svg.appendChild(lbl);
+  });
+
+  if(removedEdge){
+    document.getElementById('readout').innerHTML = 'Removed edge '+removedEdge[0]+'-'+removedEdge[1]+'. Resulting pieces: '+comps.map(c=>'{'+c.join(',')+'}').join(' and ');
+    document.getElementById('fb').innerHTML = 'The tree split into exactly '+comps.length+' disconnected pieces — no alternate path ever existed to bridge them, exactly as the "no redundancy" tree property guarantees.';
+  }
+}
+function resetTree(){
+  removedEdge=null;
+  draw();
+  document.getElementById('readout').innerHTML = 'Click any edge to remove it.';
+  document.getElementById('fb').innerHTML = '';
+}
+document.getElementById('treeSvg').addEventListener('click', e=>{
+  if(e.target.tagName!=='line') return;
+  const a=e.target.getAttribute('data-a'), b=e.target.getAttribute('data-b');
+  removedEdge=[a,b];
+  draw();
+});
+draw();
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> click any single edge - it doesn't matter which one, the tree ALWAYS splits into exactly two pieces, with total certainty. Compare this to a general graph with a cycle: removing one edge from a cycle keeps everything connected, since an alternate path exists. A tree has zero such alternate paths anywhere - which is exactly why it uses the fewest possible edges to keep everything connected, and exactly why Kruskal's algorithm, by construction, never produces anything but a tree.";
+</script>
+</body></html>

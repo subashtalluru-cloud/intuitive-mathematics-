@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#0D9488; --part-accent-light:#CCFBF1; --part-highlight:#EA580C;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F0FDFA; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+.eq-card{ font-family:var(--font-mono); font-size:1rem; background:#fff; border:2px solid var(--line); border-radius:10px; padding:14px 18px; margin-bottom:10px; cursor:pointer; }
+.eq-card.correct{ border-color:var(--good); background:#F0FDF4; }
+.eq-card.incorrect{ border-color:var(--bad); background:#FEF2F2; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">"Separation of Variables Always Works" — False. Spot Which Equations Qualify</div>
+<div class="mb-sub">Separation requires the right side to factor into f(x) times g(y) — no addition mixing the variables together. Click each equation to check.</div>
+<div class="mb-stage" id="cardsContainer"></div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">Recognizing quickly, by visual inspection, whether an equation's right-hand side genuinely factors is exactly the fast diagnostic skill that lets scientists identify which of several available techniques actually applies before investing effort in the wrong one.</div>
+</div>
+<script>
+const eqs=[
+  {latex:"y' = 2xy", separable:true, explain:"SEPARABLE. 2xy = (2x)(y) — a clean product of a pure-x function and a pure-y function."},
+  {latex:"y' = x + y", separable:false, explain:"NOT SEPARABLE. x+y is a SUM, not a product — there is no way to factor a sum of two variables into separate single-variable functions. This is a linear equation, requiring Chapter 49's integrating-factor method instead."},
+  {latex:"y' = y/x", separable:true, explain:"SEPARABLE. y/x = (1/x)(y) — a product of a pure-x function (1/x) and a pure-y function (y)."},
+  {latex:"y' = x^2 + y^2", separable:false, explain:"NOT SEPARABLE. Again a sum, not a product — x^2+y^2 cannot be factored into separate single-variable pieces, despite superficially 'looking like' it might work."}
+];
+function render(){
+  const c=document.getElementById('cardsContainer');
+  c.innerHTML='';
+  eqs.forEach((eq,i)=>{
+    const div=document.createElement('div');
+    div.className='eq-card';
+    div.textContent=eq.latex;
+    div.onclick=()=>check(i,div);
+    c.appendChild(div);
+  });
+}
+function check(i,div){
+  const eq=eqs[i];
+  div.classList.add(eq.separable?'correct':'incorrect');
+  document.getElementById('fb').innerHTML=eq.explain;
+}
+render();
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> click all four equations - notice y'=x+y and y'=x^2+y^2 LOOK similarly simple to the separable ones, yet neither can be separated, no matter how the algebra is rearranged. The structural test (product vs. sum) is a fast, reliable diagnostic - genuinely faster than attempting the full separation procedure and discovering partway through that it fails.";
+</script>
+</body></html>

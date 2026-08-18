@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#DC2626; --part-accent-light:#FEE2E2; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FEF2F2; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.layout-row{ display:grid; grid-template-columns:1.2fr 1fr; gap:28px; align-items:start; }
+@media (max-width:800px){ .layout-row{ grid-template-columns:1fr; } }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#pollSvg{ width:100%; height:auto; aspect-ratio:1.6/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Why Pollsters Trust 1,000 People to Represent 300 Million</div>
+<div class="mb-sub">A poll samples n voters from a 50/50-split population. Drag the sample size and watch the standard error shrink — with diminishing returns — telling you exactly how much the poll result can be trusted.</div>
+<div class="layout-row">
+<div class="mb-stage"><svg id="pollSvg" viewBox="0 0 300 200"></svg></div>
+<div>
+<div class="slider-row"><label>Sample size n = <span id="nVal">1000</span></label><input type="range" id="nSlider" min="10" max="4000" value="1000"></div>
+<div class="readout" id="readout"></div>
+</div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">A common mistake is confusing the population proportion p with the standard error — the standard error measures how much the SAMPLE ESTIMATE typically varies from the true value, a genuinely different quantity.</div>
+</div>
+<script>
+function normCdf(x){ return 0.5*(1+erf(x/Math.sqrt(2))); }
+function erf(x){
+  const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+  const sign = x<0 ? -1:1; x=Math.abs(x);
+  const t=1/(1+p*x);
+  const y=1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);
+  return sign*y;
+}
+function draw(){
+  const n=parseInt(document.getElementById('nSlider').value);
+  document.getElementById('nVal').textContent=n;
+  const p=0.5;
+  const se=Math.sqrt(p*(1-p)/n);
+  const zLow=(0.47-p)/se, zHigh=(0.53-p)/se;
+  const prob=normCdf(zHigh)-normCdf(zLow);
+
+  const svg=document.getElementById('pollSvg');
+  svg.innerHTML='';
+  const cx=150, cy=170, scaleX=800;
+  let d='M';
+  for(let x=-0.1;x<=0.1;x+=0.001){
+    const z=x/se;
+    const y=Math.exp(-z*z/2)/(se*Math.sqrt(2*Math.PI));
+    const px=cx+x*scaleX, py=170-Math.min(160,y*se*140);
+    d+=px+','+py+' L';
+  }
+  const curve=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve.setAttribute('d',d.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke','var(--part-accent)'); curve.setAttribute('stroke-width','2');
+  svg.appendChild(curve);
+
+  const band=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  band.setAttribute('x',cx+(-0.03)*scaleX); band.setAttribute('y',10); band.setAttribute('width',0.06*scaleX); band.setAttribute('height',160);
+  band.setAttribute('fill','var(--good)'); band.setAttribute('fill-opacity','0.15');
+  svg.appendChild(band);
+
+  document.getElementById('readout').innerHTML =
+    'n = '+n+'<br>Standard error = sqrt(0.5x0.5/'+n+') = '+se.toFixed(4)+'<br>P(estimate within 3 points of truth) = '+(prob*100).toFixed(1)+'%';
+  document.getElementById('fb').innerHTML = 'The curve narrows dramatically as n grows, but with genuinely DIMINISHING returns — doubling n does not halve the standard error, it only shrinks it by a factor of sqrt(2)≈1.41.';
+}
+document.getElementById('nSlider').addEventListener('input', draw);
+draw();
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> drag n from 10 up to 1000 and watch the confidence shoot up fast - then drag from 1000 to 4000 (quadrupling) and notice the improvement is much smaller. This diminishing-returns pattern (shrinking proportional to the SQUARE ROOT of n, not n itself) is exactly why pollsters settle on a few thousand respondents rather than attempting to survey millions - the accuracy gain beyond that point becomes genuinely not worth the added cost.";
+</script>
+</body></html>

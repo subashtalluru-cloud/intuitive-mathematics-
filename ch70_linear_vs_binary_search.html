@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#0F766E; --part-accent-light:#CCFBF1; --part-highlight:#7C3AED;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F0FDFA; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#searchSvg{ width:100%; height:auto; aspect-ratio:2.3/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FEF3C7; color:#92400E; border:1px solid #FDE68A; }
+.aha strong{ color:#B45309; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Phone Book Doubles in Size — One Search Method Barely Notices</div>
+<div class="mb-sub">Drag the phone book's size from 10 entries to 10 million. Linear search checks every entry one by one; binary search halves the remaining candidates at every step.</div>
+<div class="mb-stage">
+<svg id="searchSvg" viewBox="0 0 400 160"></svg>
+<div class="slider-row"><label>Phone book size (log scale): <span id="sizeVal">1,000</span> entries</label><input type="range" id="sizeSlider" min="1" max="7" step="0.1" value="3"></div>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">This gap only becomes visible when growth RATE, not raw performance at one fixed size, is the actual object of study — the two methods look similar on a book of 10 entries.</div>
+</div>
+<script>
+function draw(){
+  const exp=parseFloat(document.getElementById('sizeSlider').value);
+  const n=Math.round(Math.pow(10,exp));
+  document.getElementById('sizeVal').textContent=n.toLocaleString();
+  const linearChecks=n;
+  const binaryChecks=Math.ceil(Math.log2(n));
+
+  const svg=document.getElementById('searchSvg');
+  svg.innerHTML='';
+  const maxBarHeight=120;
+  const linearBarHeight=Math.min(maxBarHeight, Math.log10(linearChecks+1)*20);
+  const binaryBarHeight=Math.min(maxBarHeight, Math.log10(binaryChecks+1)*20);
+
+  const linearBar=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  linearBar.setAttribute('x',80); linearBar.setAttribute('y',140-linearBarHeight); linearBar.setAttribute('width',60); linearBar.setAttribute('height',linearBarHeight);
+  linearBar.setAttribute('fill','var(--bad)');
+  svg.appendChild(linearBar);
+  const linearLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  linearLbl.setAttribute('x',110); linearLbl.setAttribute('y',140-linearBarHeight-8); linearLbl.setAttribute('text-anchor','middle'); linearLbl.setAttribute('font-size','11'); linearLbl.setAttribute('font-weight','700');
+  linearLbl.textContent=linearChecks.toLocaleString();
+  svg.appendChild(linearLbl);
+  const linearName=document.createElementNS('http://www.w3.org/2000/svg','text');
+  linearName.setAttribute('x',110); linearName.setAttribute('y',155); linearName.setAttribute('text-anchor','middle'); linearName.setAttribute('font-size','10');
+  linearName.textContent='linear search';
+  svg.appendChild(linearName);
+
+  const binaryBar=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  binaryBar.setAttribute('x',250); binaryBar.setAttribute('y',140-binaryBarHeight); binaryBar.setAttribute('width',60); binaryBar.setAttribute('height',binaryBarHeight);
+  binaryBar.setAttribute('fill','var(--good)');
+  svg.appendChild(binaryBar);
+  const binaryLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  binaryLbl.setAttribute('x',280); binaryLbl.setAttribute('y',140-binaryBarHeight-8); binaryLbl.setAttribute('text-anchor','middle'); binaryLbl.setAttribute('font-size','11'); binaryLbl.setAttribute('font-weight','700');
+  binaryLbl.textContent=binaryChecks;
+  svg.appendChild(binaryLbl);
+  const binaryName=document.createElementNS('http://www.w3.org/2000/svg','text');
+  binaryName.setAttribute('x',280); binaryName.setAttribute('y',155); binaryName.setAttribute('text-anchor','middle'); binaryName.setAttribute('font-size','10');
+  binaryName.textContent='binary search';
+  svg.appendChild(binaryName);
+
+  document.getElementById('readout').innerHTML =
+    'Phone book size: '+n.toLocaleString()+' entries<br>'+
+    'Linear search worst case: '+linearChecks.toLocaleString()+' checks<br>'+
+    'Binary search worst case: '+binaryChecks+' checks';
+  document.getElementById('fb').innerHTML = n<=20
+    ? 'At this small size, both methods require a comparably small number of checks — the difference barely matters yet.'
+    : 'Binary search needs only '+binaryChecks+' checks while linear search needs '+linearChecks.toLocaleString()+' — a gap that only becomes dramatic at genuinely large scale, exactly why growth RATE matters more than performance at any one fixed size.';
+}
+document.getElementById('sizeSlider').addEventListener('input', draw);
+draw();
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> drag the slider all the way to 10 million entries - linear search's bar requires 10 million checks in the worst case, while binary search needs only about 24. Every time the phone book DOUBLES in size, linear search's effort also roughly doubles, but binary search needs only ONE additional check - this halving-at-every-step behavior is exactly why logarithmic growth is so dramatically more favorable than linear growth at real-world scale.";
+</script>
+</body></html>

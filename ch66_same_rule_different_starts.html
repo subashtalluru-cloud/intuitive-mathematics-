@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#0F766E; --part-accent-light:#CCFBF1; --part-highlight:#7C3AED;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F0FDFA; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:10px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FEF3C7; color:#92400E; border:1px solid #FDE68A; }
+.aha strong{ color:#B45309; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">"Each Term Is the Sum of the Two Before It" — Which Sequence, Exactly?</div>
+<div class="mb-sub">The Fibonacci RULE alone describes infinitely many sequences. Drag the two starting values and watch a genuinely different sequence emerge, following the exact same rule throughout.</div>
+<div class="mb-stage">
+<div class="slider-row"><label>First term a_0 = <span id="a0Val">1</span></label><input type="range" id="a0Slider" min="0" max="10" value="1"></div>
+<div class="slider-row"><label>Second term a_1 = <span id="a1Val">1</span></label><input type="range" id="a1Slider" min="0" max="10" value="1"></div>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">This directly parallels Chapter 47's own observation about differential equations requiring initial conditions to select one particular solution from an entire family of possibilities.</div>
+</div>
+<script>
+function draw(){
+  const a0=parseInt(document.getElementById('a0Slider').value);
+  const a1=parseInt(document.getElementById('a1Slider').value);
+  document.getElementById('a0Val').textContent=a0;
+  document.getElementById('a1Val').textContent=a1;
+  const seq=[a0,a1];
+  for(let i=2;i<8;i++) seq.push(seq[i-1]+seq[i-2]);
+  document.getElementById('readout').innerHTML = 'Sequence: '+seq.join(', ')+', ...';
+  const isStandard = a0===1 && a1===1;
+  document.getElementById('fb').innerHTML = isStandard
+    ? 'These are the standard starting values — this is genuinely the classic Fibonacci sequence (1, 1, 2, 3, 5, 8, ...).'
+    : 'Same exact rule ("each term = sum of previous two"), completely different resulting sequence — the rule alone never pinned down which specific sequence you\u2019d get.';
+}
+document.getElementById('a0Slider').addEventListener('input', draw);
+document.getElementById('a1Slider').addEventListener('input', draw);
+draw();
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> drag the starting values away from (1,1) to almost anything else, like (3,5) - you still get a perfectly valid sequence obeying the identical Fibonacci-style rule at every single step, yet it's an entirely different sequence of numbers. The recursive rule by itself describes an entire FAMILY of possible sequences; only specific initial conditions single out one particular member of that family - precisely the same lesson Chapter 47's differential equations taught with initial-value problems.";
+</script>
+</body></html>

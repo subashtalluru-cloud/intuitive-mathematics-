@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C2D92; --part-accent-light:#F3E8FF; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FAF5FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#stretchSvg{ width:100%; height:auto; aspect-ratio:2.5/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Stretch the Period to Infinity — Discrete Frequency Bars Blur Into a Curve</div>
+<div class="mb-sub">A periodic signal has only whole-number-multiple frequencies. Drag the period longer and longer and watch the spacing between allowed frequencies shrink — approaching a genuinely continuous spectrum.</div>
+<div class="mb-stage">
+<svg id="stretchSvg" viewBox="0 0 400 160"></svg>
+<div class="slider-row"><label>Period length: <span id="periodVal">2\u03c0</span></label><input type="range" id="periodSlider" min="1" max="10" value="1"></div>
+<div class="readout" id="readout8"></div>
+</div>
+<div id="fb8" class="mb-feedback"></div>
+<div class="aha" id="aha8"></div>
+<div class="mb-caption">In the true limit — period stretched all the way to infinity, representing a signal that truly never repeats — this blurred, continuous frequency picture is exactly the Fourier transform.</div>
+</div>
+<script>
+function draw8(){
+  const mult=parseInt(document.getElementById('periodSlider').value);
+  document.getElementById('periodVal').textContent = mult===1 ? '2\u03c0' : mult+'\u00d72\u03c0';
+  const spacing = 1/mult;
+
+  const svg=document.getElementById('stretchSvg');
+  svg.innerHTML='';
+  const origin={x:20,y:130};
+  const numBars=Math.min(40, Math.round(8*mult));
+  for(let i=1;i<=numBars;i++){
+    const freq=i*spacing;
+    if(freq>8) break;
+    const x=origin.x+freq*44;
+    const h=60*Math.exp(-freq*freq/8);
+    const bar=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    bar.setAttribute('x',x); bar.setAttribute('y',origin.y-h); bar.setAttribute('width',Math.max(1,3/mult)); bar.setAttribute('height',h);
+    bar.setAttribute('fill','var(--part-accent)');
+    svg.appendChild(bar);
+  }
+  const axis=document.createElementNS('http://www.w3.org/2000/svg','line');
+  axis.setAttribute('x1',origin.x); axis.setAttribute('y1',origin.y); axis.setAttribute('x2',380); axis.setAttribute('y2',origin.y);
+  axis.setAttribute('stroke','#94A3B8');
+  svg.appendChild(axis);
+
+  document.getElementById('readout8').innerHTML =
+    'Period stretched to '+(mult===1?'2\u03c0 (original)':mult+' times longer')+'<br>'+
+    'Spacing between allowed frequencies: '+spacing.toFixed(3)+' (was 1.000)<br>'+
+    'Number of visible bars in this range: '+numBars;
+  document.getElementById('fb8').innerHTML = mult===1
+    ? 'Widely-spaced discrete bars — only whole-number frequencies (1,2,3,...) are allowed, exactly Chapter 72\u2019s harmonic structure.'
+    : (mult>=6
+      ? 'The bars have packed together so tightly they visually blur into a continuous curve — this is the Fourier transform\u2019s continuous spectrum, emerging directly as the discrete case\u2019s limit.'
+      : 'The bars are packing closer together as the period stretches — more frequencies becoming available, each one weaker individually.');
+}
+document.getElementById('periodSlider').addEventListener('input', draw8);
+draw8();
+document.getElementById('aha8').innerHTML="<strong>Aha:</strong> drag the period slider to its maximum and watch the individual bars merge into what looks like a smooth continuous curve - this is not a visual trick, it is the literal mathematical limit. As a periodic signal's period stretches toward infinity (representing a signal that truly never repeats), the once-discrete list of allowed frequencies genuinely becomes every real number whatsoever - the exact transition from Chapter 73's discrete coefficients to this chapter's continuous Fourier transform.";
+</script>
+</body></html>

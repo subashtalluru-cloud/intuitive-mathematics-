@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#B45309; --part-accent-light:#FEF3C7; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FFFBEB; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#anovaSvg{ width:100%; height:auto; aspect-ratio:2.4/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Same Three Group Means — Drag the Spread, Watch F Collapse</div>
+<div class="mb-sub">Three groups with means 50, 55, 60 (n=10 each). Drag each group's own internal spread and watch the F-statistic — comparing spread BETWEEN groups to spread WITHIN groups — change dramatically, even though the means never move.</div>
+<div class="mb-stage">
+<svg id="anovaSvg" viewBox="0 0 400 160"></svg>
+<div class="slider-row"><label>Within-group standard deviation: <span id="sVal">5</span></label><input type="range" id="sSlider" min="1" max="25" value="5"></div>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">A large F-statistic (between-group variance well exceeding within-group variance) signals genuine group differences; F near 1 signals the apparent differences are entirely consistent with ordinary noise.</div>
+</div>
+<script>
+function draw(){
+  const s=parseInt(document.getElementById('sSlider').value);
+  document.getElementById('sVal').textContent=s;
+  const means=[50,55,60], n=10;
+  const grandMean=55;
+  const ssBetween = n*means.reduce((sum,m)=>sum+(m-grandMean)*(m-grandMean),0);
+  const msBetween = ssBetween/2;
+  const ssWithin = 3*(n-1)*s*s;
+  const msWithin = ssWithin/27;
+  const F = msBetween/msWithin;
+
+  const svg=document.getElementById('anovaSvg');
+  svg.innerHTML='';
+  const scale=3, origin={x:20,y:80};
+  means.forEach((m,i)=>{
+    const cx=origin.x+m*scale;
+    const spread=Math.min(s*scale,60);
+    const ellipse=document.createElementNS('http://www.w3.org/2000/svg','ellipse');
+    ellipse.setAttribute('cx',cx); ellipse.setAttribute('cy',80); ellipse.setAttribute('rx',spread); ellipse.setAttribute('ry',30);
+    ellipse.setAttribute('fill', i===0?'var(--part-accent)':(i===1?'var(--part-highlight)':'var(--good)')); ellipse.setAttribute('fill-opacity','0.25');
+    ellipse.setAttribute('stroke', i===0?'var(--part-accent)':(i===1?'var(--part-highlight)':'var(--good)')); ellipse.setAttribute('stroke-width','2');
+    svg.appendChild(ellipse);
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',cx); dot.setAttribute('cy',80); dot.setAttribute('r',4); dot.setAttribute('fill','var(--ink)');
+    svg.appendChild(dot);
+    const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',cx); lbl.setAttribute('y',130); lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('font-size','10');
+    lbl.textContent='mean='+m;
+    svg.appendChild(lbl);
+  });
+
+  document.getElementById('readout').innerHTML =
+    'MS between = '+msBetween.toFixed(1)+'<br>MS within = '+msWithin.toFixed(1)+'<br>F = '+F.toFixed(2)+' (df = 2, 27)';
+  document.getElementById('fb').innerHTML = F>5
+    ? 'F='+F.toFixed(1)+' — the group clusters are well-separated relative to their own internal noise. Strong evidence of genuine differences.'
+    : (F>2 ? 'F='+F.toFixed(1)+' — the clusters are starting to overlap meaningfully. The evidence for genuine group differences is weakening.'
+    : 'F='+F.toFixed(1)+' — the clusters overlap heavily now. Despite the SAME three means (50, 55, 60), this much internal noise makes the apparent differences statistically indistinguishable from ordinary random variation.');
+}
+document.getElementById('sSlider').addEventListener('input', draw);
+draw();
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> drag the within-group spread from small to large - the three colored dots (the group means) NEVER move, yet F collapses from a strongly significant ~10 down toward 1. This is Fisher's central insight made visible: whether three means look 'different' can never be judged by the means alone - it depends entirely on how that between-group spread compares to the ordinary noise already present within each group.";
+</script>
+</body></html>

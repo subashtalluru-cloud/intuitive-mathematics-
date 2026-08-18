@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#0F766E; --part-accent-light:#CCFBF1; --part-highlight:#7C3AED;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F0FDFA; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+.toggle-row{ display:flex; gap:20px; justify-content:center; flex-wrap:wrap; margin-bottom:16px; }
+.toggle{ display:flex; flex-direction:column; align-items:center; gap:6px; }
+.toggle-btn{ width:70px; height:40px; border-radius:20px; border:2px solid var(--line); background:#fff; cursor:pointer; font-weight:700; font-size:0.85rem; }
+.toggle-btn.on{ background:var(--part-accent); color:#fff; border-color:var(--part-accent); }
+#alarmResult{ text-align:center; font-size:1.3rem; font-weight:700; padding:20px; border-radius:12px; margin-top:10px; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.82rem,0.95vw,0.94rem); text-align:center; margin-top:10px; color:var(--ink-soft); }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FEF3C7; color:#92400E; border:1px solid #FDE68A; }
+.aha strong{ color:#B45309; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">"Door Open AND Motion, OR Smoke" — Toggle the Sensors Yourself</div>
+<div class="mb-sub">Alarm = (Door AND Motion) OR Smoke. Toggle each sensor and watch the alarm respond exactly according to this precise Boolean expression — no ambiguity left in the English requirement.</div>
+<div class="mb-stage">
+<div class="toggle-row">
+<div class="toggle"><span>Door open (D)</span><button class="toggle-btn" id="doorBtn" onclick="toggle('door')">OFF</button></div>
+<div class="toggle"><span>Motion (M)</span><button class="toggle-btn" id="motionBtn" onclick="toggle('motion')">OFF</button></div>
+<div class="toggle"><span>Smoke (S)</span><button class="toggle-btn" id="smokeBtn" onclick="toggle('smoke')">OFF</button></div>
+</div>
+<div id="alarmResult"></div>
+<div class="readout" id="readout"></div>
+</div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">This translation from an English requirement into (D AND M) OR S is exactly what a circuit designer must do precisely and unambiguously before any physical gate is ever wired.</div>
+</div>
+<script>
+let state={door:false,motion:false,smoke:false};
+function toggle(sensor){
+  state[sensor]=!state[sensor];
+  render();
+}
+function render(){
+  document.getElementById('doorBtn').classList.toggle('on',state.door);
+  document.getElementById('doorBtn').textContent = state.door?'ON':'OFF';
+  document.getElementById('motionBtn').classList.toggle('on',state.motion);
+  document.getElementById('motionBtn').textContent = state.motion?'ON':'OFF';
+  document.getElementById('smokeBtn').classList.toggle('on',state.smoke);
+  document.getElementById('smokeBtn').textContent = state.smoke?'ON':'OFF';
+
+  const alarm = (state.door && state.motion) || state.smoke;
+  const resultDiv=document.getElementById('alarmResult');
+  resultDiv.textContent = alarm ? 'ALARM ON' : 'alarm off';
+  resultDiv.style.background = alarm ? '#FEE2E2' : '#F0FDF4';
+  resultDiv.style.color = alarm ? 'var(--bad)' : 'var(--good)';
+
+  document.getElementById('readout').innerHTML = '(D AND M) OR S = ('+state.door+' AND '+state.motion+') OR '+state.smoke+' = '+alarm;
+}
+render();
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> toggle Smoke ON alone, with Door and Motion both OFF - the alarm fires immediately, exactly because OR only needs ONE true input. Now toggle Smoke back off and try Door ON alone without Motion - nothing happens, because AND genuinely requires BOTH inputs true. This is the entire discipline of Boolean circuit design in miniature: an English sentence with real ambiguity risk becomes a single, precise, mechanically checkable expression with zero room for misinterpretation.";
+</script>
+</body></html>

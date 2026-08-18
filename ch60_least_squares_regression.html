@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#B45309; --part-accent-light:#FEF3C7; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FFFBEB; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#regSvg{ width:100%; height:auto; aspect-ratio:1.6/1; display:block; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin-top:10px; }
+.mb-btn:hover{ background:var(--part-accent); color:#fff; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">The Line That Minimizes Total Squared Distance — Not Just "Looks Right"</div>
+<div class="mb-sub">Study hours vs. exam scores, 5 students. Click to reveal the least-squares line — the ONE specific line, among infinitely many possible lines, that minimizes the combined squared vertical distance to every point.</div>
+<div class="mb-stage">
+<svg id="regSvg" viewBox="0 0 300 220"></svg>
+<button class="mb-btn" onclick="fitLine()">Fit the least-squares line</button>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">Extrapolating this fitted line far outside the observed study-hours range (say, predicting a score for 40 hours of daily studying) would be numerically computable but practically meaningless.</div>
+</div>
+<script>
+const study=[2,4,6,8,10];
+const scores=[55,62,68,80,85];
+function drawPoints(){
+  const svg=document.getElementById('regSvg');
+  svg.innerHTML='';
+  const scaleX=22, scaleY=1.8, origin={x:30,y:190};
+  const axisX=document.createElementNS('http://www.w3.org/2000/svg','line');
+  axisX.setAttribute('x1',origin.x); axisX.setAttribute('y1',origin.y); axisX.setAttribute('x2',270); axisX.setAttribute('y2',origin.y);
+  axisX.setAttribute('stroke','#94A3B8');
+  svg.appendChild(axisX);
+  const axisY=document.createElementNS('http://www.w3.org/2000/svg','line');
+  axisY.setAttribute('x1',origin.x); axisY.setAttribute('y1',10); axisY.setAttribute('x2',origin.x); axisY.setAttribute('y2',origin.y);
+  axisY.setAttribute('stroke','#94A3B8');
+  svg.appendChild(axisY);
+
+  study.forEach((s,i)=>{
+    const x=origin.x+s*scaleX;
+    const y=origin.y-(scores[i]-40)*scaleY;
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',x); dot.setAttribute('cy',y); dot.setAttribute('r',5); dot.setAttribute('fill','var(--part-highlight)');
+    svg.appendChild(dot);
+  });
+}
+function fitLine(){
+  const n=study.length;
+  const xbar=study.reduce((a,b)=>a+b,0)/n;
+  const ybar=scores.reduce((a,b)=>a+b,0)/n;
+  const sxy=study.reduce((s,x,i)=>s+(x-xbar)*(scores[i]-ybar),0);
+  const sxx=study.reduce((s,x)=>s+(x-xbar)*(x-xbar),0);
+  const slope=sxy/sxx;
+  const intercept=ybar-slope*xbar;
+  const syy=scores.reduce((s,y)=>s+(y-ybar)*(y-ybar),0);
+  const r=sxy/Math.sqrt(sxx*syy);
+  const r2=r*r;
+  const pred8=slope*8+intercept;
+
+  const svg=document.getElementById('regSvg');
+  const scaleX=22, scaleY=1.8, origin={x:30,y:190};
+  const x1=0, x2=12;
+  const y1=slope*x1+intercept, y2=slope*x2+intercept;
+  const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1',origin.x+x1*scaleX); line.setAttribute('y1',origin.y-(y1-40)*scaleY);
+  line.setAttribute('x2',origin.x+x2*scaleX); line.setAttribute('y2',origin.y-(y2-40)*scaleY);
+  line.setAttribute('stroke','var(--part-accent)'); line.setAttribute('stroke-width','2.5');
+  svg.appendChild(line);
+
+  study.forEach((s,i)=>{
+    const x=origin.x+s*scaleX;
+    const yActual=origin.y-(scores[i]-40)*scaleY;
+    const yPred=slope*s+intercept;
+    const yPredPx=origin.y-(yPred-40)*scaleY;
+    const resid=document.createElementNS('http://www.w3.org/2000/svg','line');
+    resid.setAttribute('x1',x); resid.setAttribute('y1',yActual); resid.setAttribute('x2',x); resid.setAttribute('y2',yPredPx);
+    resid.setAttribute('stroke','var(--bad)'); resid.setAttribute('stroke-dasharray','2,2');
+    svg.appendChild(resid);
+  });
+
+  const predDot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  predDot.setAttribute('cx',origin.x+8*scaleX); predDot.setAttribute('cy',origin.y-(pred8-40)*scaleY); predDot.setAttribute('r',5); predDot.setAttribute('fill','var(--good)');
+  svg.appendChild(predDot);
+
+  document.getElementById('readout').innerHTML =
+    'Slope = '+slope.toFixed(2)+', Intercept = '+intercept.toFixed(2)+'<br>'+
+    'Line: y = '+slope.toFixed(2)+'x + '+intercept.toFixed(2)+'<br>'+
+    'Correlation r = '+r.toFixed(3)+', R\u00b2 = '+(r2*100).toFixed(1)+'%<br>'+
+    'Predicted score at 8 hours: '+pred8.toFixed(1);
+  document.getElementById('fb').innerHTML = 'R\u00b2='+(r2*100).toFixed(1)+'% means that percentage of the variability in exam scores is statistically explained by study hours alone — the red dashed residuals are each individual student\u2019s remaining, unexplained gap from this specific best-fit line.';
+}
+drawPoints();
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> the fitted line was never chosen by eye - it is the UNIQUE line minimizing the sum of all five squared red-dashed distances simultaneously. Any other line you might sketch by hand, even one that looks reasonable, would produce a larger total squared distance. This is exactly why it is called the 'least squares' line - it is mathematically, not just visually, the best fit.";
+</script>
+</body></html>

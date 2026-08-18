@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#B45309; --part-accent-light:#FEF3C7; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FFFBEB; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#courtSvg{ width:100%; height:auto; aspect-ratio:2.2/1; display:block; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin:4px; }
+.mb-btn:hover, .mb-btn.active{ background:var(--part-accent); color:#fff; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Presumption of Innocence, Applied to a Manufacturing Line</div>
+<div class="mb-sub">Target weight: 500g. Compare two samples of 64 components — one where the evidence is strong enough to reject the "nothing changed" assumption, one where it isn't. Neither result is a certainty; only a threshold-based decision.</div>
+<div class="mb-stage">
+<svg id="courtSvg" viewBox="0 0 400 180"></svg>
+<button class="mb-btn active" onclick="show('reject',this)">Sample 1: mean=504g</button>
+<button class="mb-btn" onclick="show('fail',this)">Sample 2: mean=501.5g</button>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">"Failing to reject" is never proof of truth — exactly as a "not guilty" verdict means the evidence wasn't strong enough to convict, not that innocence was definitively established.</div>
+</div>
+<script>
+function normPdf(z){ return Math.exp(-z*z/2)/Math.sqrt(2*Math.PI); }
+function normCdf(z){ return 0.5*(1+erf(z/Math.sqrt(2))); }
+function erf(x){
+  const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;
+  const sign=x<0?-1:1; x=Math.abs(x);
+  const t=1/(1+p*x);
+  const y=1-(((((a5*t+a4)*t)+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);
+  return sign*y;
+}
+function draw(mode){
+  const n=64, mu0=500, s=12;
+  const se=s/Math.sqrt(n);
+  const xbar = mode==='reject' ? 504 : 501.5;
+  const z=(xbar-mu0)/se;
+  const p=2*(1-normCdf(Math.abs(z)));
+
+  const svg=document.getElementById('courtSvg');
+  svg.innerHTML='';
+  const scale=40, origin={x:200,y:150};
+  let d='M';
+  for(let zz=-4;zz<=4;zz+=0.05){
+    const x=origin.x+zz*scale;
+    const y=origin.y-normPdf(zz)*300;
+    d+=x+','+y+' L';
+  }
+  const curve=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve.setAttribute('d',d.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke','var(--part-accent)'); curve.setAttribute('stroke-width','2');
+  svg.appendChild(curve);
+
+  const critZ=1.96;
+  [[-4,-critZ],[critZ,4]].forEach(([a,b])=>{
+    let dd='M'+(origin.x+a*scale)+','+origin.y+' ';
+    for(let zz=a;zz<=b;zz+=0.05){ dd+=(origin.x+zz*scale)+','+(origin.y-normPdf(zz)*300)+' L'; }
+    dd+=(origin.x+b*scale)+','+origin.y+' Z';
+    const region=document.createElementNS('http://www.w3.org/2000/svg','path');
+    region.setAttribute('d',dd); region.setAttribute('fill','#FEF2F2'); region.setAttribute('fill-opacity','0.7');
+    svg.appendChild(region);
+  });
+
+  const zX=origin.x+z*scale;
+  const zLine=document.createElementNS('http://www.w3.org/2000/svg','line');
+  zLine.setAttribute('x1',zX); zLine.setAttribute('y1',20); zLine.setAttribute('x2',zX); zLine.setAttribute('y2',150);
+  zLine.setAttribute('stroke','var(--bad)'); zLine.setAttribute('stroke-width','2.5');
+  svg.appendChild(zLine);
+  const zLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  zLbl.setAttribute('x',zX); zLbl.setAttribute('y',15); zLbl.setAttribute('text-anchor','middle'); zLbl.setAttribute('font-size','10'); zLbl.setAttribute('fill','var(--bad)'); zLbl.setAttribute('font-weight','700');
+  zLbl.textContent='z='+z.toFixed(2);
+  svg.appendChild(zLbl);
+
+  const decision = p<0.05 ? 'REJECT null hypothesis' : 'FAIL TO REJECT null hypothesis';
+  document.getElementById('readout').innerHTML =
+    'Sample mean: '+xbar+'g, n=64, s=12g<br>Test statistic z = ('+xbar+'-500)/('+se.toFixed(2)+') = '+z.toFixed(3)+'<br>p-value = '+p.toFixed(4)+'<br>Decision at alpha=0.05: '+decision;
+  document.getElementById('fb').innerHTML = p<0.05
+    ? 'p='+p.toFixed(4)+' < 0.05 — the observed data would be genuinely rare if the process really were still centered at 500g. The evidence is strong enough to reject the default assumption, exactly like a jury convicting on strong evidence.'
+    : 'p='+p.toFixed(4)+' > 0.05 — the observed data is entirely unsurprising if the process really is still centered at 500g. This is NOT proof the process is unchanged — it only means THIS evidence is not strong enough to overturn the default assumption, exactly like a "not guilty" verdict.';
+}
+function show(mode,btn){
+  document.querySelectorAll('.mb-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  draw(mode);
+}
+draw('reject');
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> click between both samples - the red shaded regions (the 'surprising enough to convict' zone) never move, since alpha=0.05 is fixed in advance. Only the black z-line (where THIS specific evidence landed) moves. A p-value is never 'the probability the null hypothesis is true' - it's the probability of seeing evidence this extreme IF the null hypothesis were true, a completely different, one-directional question, exactly the P(positive|disease) vs P(disease|positive) distinction from Chapter 51's own medical test paradox.";
+</script>
+</body></html>

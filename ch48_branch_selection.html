@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#0D9488; --part-accent-light:#CCFBF1; --part-highlight:#EA580C;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F0FDFA; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#branchSvg{ width:100%; height:auto; aspect-ratio:1.4/1; display:block; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin:4px; }
+.mb-btn:hover, .mb-btn.active{ background:var(--part-accent); color:#fff; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Two Algebraically Equal Roots — Only the Initial Condition Breaks the Tie</div>
+<div class="mb-sub">y'=2x/y, y(0)=3. Separating and integrating gives y^2=2x^2+9 — but that has TWO valid square roots. Click each candidate and see which one actually passes through the required starting point.</div>
+<div class="mb-stage">
+<svg id="branchSvg" viewBox="0 0 260 220"></svg>
+<button class="mb-btn active" onclick="show('pos',this)">y = +sqrt(2x^2+9)</button>
+<button class="mb-btn" onclick="show('neg',this)">y = -sqrt(2x^2+9)</button>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">This branch-selection situation directly mirrors Chapter 14's quadratic equation having two algebraically valid roots — here, both branches genuinely satisfy the same underlying relationship y^2=2x^2+9, and only the initial condition determines which one correctly describes the actual situation.</div>
+</div>
+<script>
+const scale=25, origin={x:130,y:190};
+function toSvg(x,y){ return {x:origin.x+x*scale, y:origin.y-y*scale*0.35}; }
+function draw(mode){
+  const svg=document.getElementById('branchSvg');
+  svg.innerHTML='';
+  let d='M';
+  for(let x=-4;x<=4;x+=0.05){
+    const inner=2*x*x+9;
+    const y = mode==='pos' ? Math.sqrt(inner) : -Math.sqrt(inner);
+    const p=toSvg(x,y);
+    d+=p.x+','+p.y+' L';
+  }
+  const curve=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve.setAttribute('d',d.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke', mode==='pos'?'var(--good)':'var(--bad)'); curve.setAttribute('stroke-width','2.5');
+  svg.appendChild(curve);
+
+  const target=toSvg(0,3);
+  const targetDot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  targetDot.setAttribute('cx',target.x); targetDot.setAttribute('cy',target.y); targetDot.setAttribute('r',7);
+  targetDot.setAttribute('fill','none'); targetDot.setAttribute('stroke','var(--part-highlight)'); targetDot.setAttribute('stroke-width','2.5');
+  svg.appendChild(targetDot);
+  const targetLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  targetLbl.setAttribute('x',target.x+12); targetLbl.setAttribute('y',target.y-8); targetLbl.setAttribute('font-size','11'); targetLbl.setAttribute('fill','var(--part-highlight)'); targetLbl.setAttribute('font-weight','700');
+  targetLbl.textContent='required: y(0)=3';
+  svg.appendChild(targetLbl);
+
+  const actualY0 = mode==='pos' ? 3 : -3;
+  const readout=document.getElementById('readout');
+  const matches = Math.abs(actualY0-3)<0.01;
+  readout.style.background = matches ? 'var(--part-accent-light)' : '#FEF2F2';
+  readout.style.color = matches ? 'var(--part-accent)' : 'var(--bad)';
+  readout.innerHTML = 'At x=0, this branch gives y='+actualY0+' — '+(matches?'MATCHES the required initial condition':'CONTRADICTS the required initial condition y(0)=3');
+}
+function show(mode,btn){
+  document.querySelectorAll('.mb-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  draw(mode);
+  const fb=document.getElementById('fb');
+  fb.innerHTML = mode==='pos'
+    ? 'Both branches are equally valid solutions to y^2=2x^2+9 as pure algebra — but only THIS branch satisfies the actual initial condition supplied. This is the correct particular solution.'
+    : 'This branch is algebraically valid too (it also satisfies y^2=2x^2+9), but it gives y(0)=-3, directly contradicting the required y(0)=3. This branch must be rejected — not because the algebra is wrong, but because it fails the specific real-world starting condition.';
+}
+draw('pos');
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> click back and forth between both branches - notice neither one is 'more correct' algebraically; both genuinely satisfy y^2=2x^2+9 everywhere. The initial condition is the ONLY thing that breaks the tie, exactly as an initial condition narrows a general C-family down to one member, but here narrowing a genuinely different kind of ambiguity: which of two structurally different formulas actually applies.";
+</script>
+</body></html>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#B45309; --part-accent-light:#FEF3C7; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FFFBEB; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+@media (max-width:760px){ .two-col{ grid-template-columns:1fr; } }
+.panel{ background:#fff; border:2px solid var(--line); border-radius:12px; padding:18px; }
+.panel-header{ font-weight:700; text-align:center; margin-bottom:10px; font-size:clamp(0.9rem,1.05vw,1.02rem); }
+.claim{ font-size:0.95em; line-height:1.6; }
+.correct{ border-color:var(--good); background:#F0FDF4; }
+.wrong{ border-color:var(--part-accent); background:var(--part-accent-light); }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Same-Looking Interval, Genuinely Different Meaning</div>
+<div class="mb-sub">A 95% confidence interval and a 95% credible interval can be numerically nearly identical, yet mean something philosophically different. Only one of these two statements is actually valid for each.</div>
+<div class="two-col">
+<div class="panel correct">
+<div class="panel-header" style="color:var(--good);">Bayesian credible interval</div>
+<div class="claim">"There is a 95% probability the true value lies within this specific range."</div>
+<div class="claim" style="margin-top:10px; font-weight:700; color:var(--good);">✓ VALID — this is exactly what a credible interval means.</div>
+</div>
+<div class="panel wrong">
+<div class="panel-header" style="color:var(--part-accent);">Frequentist confidence interval</div>
+<div class="claim">"There is a 95% probability the true value lies within this specific range."</div>
+<div class="claim" style="margin-top:10px; font-weight:700; color:var(--part-accent);">✗ INVALID — this is Chapter 56's own persistent misinterpretation.</div>
+</div>
+</div>
+<div id="fb" class="mb-feedback">The exact same-sounding sentence is correct for one framework and incorrect for the other — the numbers can be nearly identical, but what they're entitled to claim genuinely differs.</div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">For many common problems, with a reasonably neutral prior and adequate sample size, Bayesian and frequentist methods often produce numerically very similar results — the difference lies primarily in interpretation, not necessarily in the final number.</div>
+</div>
+<script>
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> both intervals can come out looking numerically almost identical for the same dataset, which makes this distinction easy to miss. The Bayesian version treats the unknown parameter itself as having a genuine probability distribution (reflecting your own updated belief about it), so a direct probability statement about where it lies is valid. The frequentist version treats the parameter as a single, fixed, unknown constant and the INTERVAL itself as the random quantity varying across hypothetical repeated samples - so a probability statement can only describe the construction procedure, never this one particular fixed interval, exactly Chapter 56's own careful distinction.";
+</script>
+</body></html>

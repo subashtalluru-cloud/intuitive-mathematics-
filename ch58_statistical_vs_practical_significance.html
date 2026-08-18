@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#B45309; --part-accent-light:#FEF3C7; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FFFBEB; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+@media (max-width:760px){ .two-col{ grid-template-columns:1fr; } }
+.panel{ background:#fff; border:2px solid var(--line); border-radius:12px; padding:16px; cursor:pointer; }
+.panel.active{ border-color:var(--part-accent); }
+.panel-header{ font-weight:700; text-align:center; margin-bottom:8px; font-size:clamp(0.9rem,1.05vw,1.02rem); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.82rem,0.95vw,0.94rem); line-height:1.8; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+.badge{ display:inline-block; padding:2px 8px; border-radius:6px; font-size:0.75rem; font-weight:700; margin-top:6px; }
+.badge.sig{ background:#DCFCE7; color:var(--good); }
+.badge.notsig{ background:#FEE2E2; color:var(--bad); }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Statistically Significant ≠ Practically Meaningful</div>
+<div class="mb-sub">Click each scenario. One has a huge sample detecting a trivial difference; the other has a small sample failing to confirm a genuinely large one. Neither p-value alone tells the full story — Cohen's d does.</div>
+<div class="two-col">
+<div class="panel active" id="panelA" onclick="show('A')"><div class="panel-header" style="color:var(--part-accent);">Case A: n=10,000 per group</div><div id="readoutA" class="readout"></div></div>
+<div class="panel" id="panelB" onclick="show('B')"><div class="panel-header" style="color:var(--part-highlight);">Case B: n=8 per group</div><div id="readoutB" class="readout"></div></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">Effect size measures like Cohen's d provide a sample-size-independent measure of how large a difference genuinely is, distinct from whether that difference is statistically detectable.</div>
+</div>
+<script>
+function computeCase(mode){
+  if(mode==='A'){
+    const n=10000, m1=100.0, m2=100.5, pooledSd=10;
+    const se=pooledSd*Math.sqrt(2/n);
+    const t=(m2-m1)/se;
+    const d=(m2-m1)/pooledSd;
+    return {n,m1,m2,t,d,sig:Math.abs(t)>1.96};
+  } else {
+    const n=8, m1=100.0, m2=115.0, pooledSd=20;
+    const se=pooledSd*Math.sqrt(2/n);
+    const t=(m2-m1)/se;
+    const d=(m2-m1)/pooledSd;
+    return {n,m1,m2,t,d,sig:Math.abs(t)>2.145};
+  }
+}
+function render(){
+  const a=computeCase('A'), b=computeCase('B');
+  document.getElementById('readoutA').innerHTML =
+    'Group means: '+a.m1+' vs '+a.m2+'<br>t = '+a.t.toFixed(2)+'<br>Cohen\u2019s d = '+a.d.toFixed(3)+
+    '<br><span class="badge '+(a.sig?'sig':'notsig')+'">'+(a.sig?'STATISTICALLY SIGNIFICANT':'NOT SIGNIFICANT')+'</span>';
+  document.getElementById('readoutB').innerHTML =
+    'Group means: '+b.m1+' vs '+b.m2+'<br>t = '+b.t.toFixed(2)+'<br>Cohen\u2019s d = '+b.d.toFixed(3)+
+    '<br><span class="badge '+(b.sig?'sig':'notsig')+'">'+(b.sig?'STATISTICALLY SIGNIFICANT':'NOT SIGNIFICANT')+'</span>';
+}
+function show(which){
+  document.getElementById('panelA').classList.toggle('active', which==='A');
+  document.getElementById('panelB').classList.toggle('active', which==='B');
+  if(which==='A'){
+    document.getElementById('fb').innerHTML = 'A tiny, practically trivial 0.5-point difference (d=0.05, a negligible effect size) becomes statistically significant purely because 10,000 people were sampled per group. Statistically real does not mean practically important.';
+  } else {
+    document.getElementById('fb').innerHTML = 'A genuinely large 15-point difference (d=0.75, a substantial effect size) fails to reach statistical significance simply because only 8 people were sampled per group — the study lacked adequate statistical power to detect a real, meaningful effect.';
+  }
+}
+render();
+show('A');
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> click between both cases - Case A has an impressively low p-value but a Cohen's d of only 0.05 (negligible by any standard convention); Case B has a much larger, more meaningful d of 0.75 but fails significance purely from having too few people. A massive sample can make a difference nobody would ever care about 'statistically significant,' while a genuinely important difference can be statistically invisible in a small study - this is exactly why responsible reporting always includes an effect size alongside any p-value, never the p-value alone.";
+</script>
+</body></html>

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#0F766E; --part-accent-light:#CCFBF1; --part-highlight:#7C3AED;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F0FDFA; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+@media (max-width:760px){ .two-col{ grid-template-columns:1fr; } }
+.panel{ background:#fff; border:2px solid var(--line); border-radius:12px; padding:16px; text-align:center; }
+.panel-header{ font-weight:700; margin-bottom:10px; font-size:clamp(0.9rem,1.05vw,1.02rem); }
+table{ width:100%; border-collapse:collapse; font-size:clamp(0.8rem,0.95vw,0.92rem); margin-top:14px; }
+td,th{ border:1px solid var(--line); padding:8px; text-align:center; }
+th{ background:var(--part-accent-light); }
+.match{ color:var(--good); font-weight:700; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin-top:14px; }
+.mb-btn:hover{ background:var(--part-accent); color:#fff; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FEF3C7; color:#92400E; border:1px solid #FDE68A; }
+.aha strong{ color:#B45309; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">4 Logic Gates, Simplified to a Single Wire — Provably Identical Behavior</div>
+<div class="mb-sub">(A AND B) OR (A AND NOT B) looks like it needs real circuitry. Algebra says it's exactly equal to just A. Click to verify this claim against every possible input, exhaustively.</div>
+<div class="two-col">
+<div class="panel"><div class="panel-header" style="color:var(--part-accent);">Unsimplified: (A∧B) ∨ (A∧¬B)</div>2 AND gates, 1 NOT gate, 1 OR gate</div>
+<div class="panel"><div class="panel-header" style="color:var(--good);">Simplified: just A</div>0 gates — a direct wire</div>
+</div>
+<button class="mb-btn" onclick="verify()">Verify against every input combination</button>
+<table id="truthTable"><tr><th>A</th><th>B</th><th>(A∧B)∨(A∧¬B)</th><th>A</th><th>Match?</th></tr></table>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">Boolean algebra has its own distinct identities — like the law of excluded middle, B∨¬B is always true — with no direct numerical analog; treating Boolean variables like ordinary numbers produces incorrect simplifications.</div>
+</div>
+<script>
+function verify(){
+  const table=document.getElementById('truthTable');
+  [[true,true],[true,false],[false,true],[false,false]].forEach(([A,B])=>{
+    const lhs = (A&&B)||(A&&!B);
+    const rhs = A;
+    const matches = lhs===rhs;
+    const row=document.createElement('tr');
+    row.innerHTML = '<td>'+A+'</td><td>'+B+'</td><td>'+lhs+'</td><td>'+rhs+'</td><td class="'+(matches?'match':'')+'">'+(matches?'YES':'NO')+'</td>';
+    table.appendChild(row);
+  });
+  document.getElementById('fb').innerHTML = 'All four rows match exactly — the two circuits are provably, exhaustively identical in every possible input scenario, confirming the simplified single-wire circuit behaves exactly like the original 4-gate version.';
+}
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> the algebraic trick is factoring out A to get A AND (B OR NOT B), then recognizing that 'B OR NOT B' is ALWAYS true regardless of B's actual value - a Boolean-specific law with no equivalent in ordinary number algebra. Once that middle piece drops to just 'true,' A AND true simplifies to just A. In a real processor with billions of gates, catching even a small fraction of reductions like this one translates directly into real manufacturing savings, smaller chip size, and lower power consumption.";
+</script>
+</body></html>

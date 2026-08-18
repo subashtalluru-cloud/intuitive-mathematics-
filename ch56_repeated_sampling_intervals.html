@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#B45309; --part-accent-light:#FEF3C7; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FFFBEB; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#ciSvg{ width:100%; height:auto; aspect-ratio:2/1; display:block; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin-top:10px; }
+.mb-btn:hover{ background:var(--part-accent); color:#fff; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">"95% Confidence" Is About the PROCEDURE, Not This One Interval</div>
+<div class="mb-sub">The true mean is fixed and never changes (shown as the green line — normally unknown, revealed here only for teaching purposes). Click to draw 20 fresh samples, each producing its own 95% confidence interval. Watch roughly 19 out of 20 capture the true mean — never all 20, and rarely fewer than 18 or 19.</div>
+<div class="mb-stage">
+<svg id="ciSvg" viewBox="0 0 400 220"></svg>
+<button class="mb-btn" onclick="runSim()">Draw 20 fresh samples</button>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">This is the single most persistent misinterpretation in statistics: 95% confidence describes this repeated-sampling PROCEDURE's long-run reliability, never the probability that any one already-computed interval contains the truth.</div>
+</div>
+<script>
+const trueMean=50;
+function randNormal(){
+  let u=0,v=0;
+  while(u===0) u=Math.random();
+  while(v===0) v=Math.random();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+function runSim(){
+  const svg=document.getElementById('ciSvg');
+  svg.innerHTML='';
+  const n=30, sigma=10, se=sigma/Math.sqrt(n), margin=1.96*se;
+  const scaleX=6, origin={x:100,y:10};
+  const centerX=200;
+  const trueLine=document.createElementNS('http://www.w3.org/2000/svg','line');
+  trueLine.setAttribute('x1',centerX); trueLine.setAttribute('y1',5); trueLine.setAttribute('x2',centerX); trueLine.setAttribute('y2',215);
+  trueLine.setAttribute('stroke','var(--good)'); trueLine.setAttribute('stroke-width','2'); trueLine.setAttribute('stroke-dasharray','4,3');
+  svg.appendChild(trueLine);
+  const trueLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  trueLbl.setAttribute('x',centerX); trueLbl.setAttribute('y',10); trueLbl.setAttribute('text-anchor','middle'); trueLbl.setAttribute('font-size','9'); trueLbl.setAttribute('fill','var(--good)');
+  trueLbl.textContent='true mean (usually unknown)';
+  svg.appendChild(trueLbl);
+
+  let captured=0;
+  for(let i=0;i<20;i++){
+    const sampleMean = trueMean + randNormal()*se;
+    const lo = sampleMean-margin, hi = sampleMean+margin;
+    const capturesTruth = lo<=trueMean && trueMean<=hi;
+    if(capturesTruth) captured++;
+    const y=20+i*9.5;
+    const x1=centerX+(lo-trueMean)*scaleX, x2=centerX+(hi-trueMean)*scaleX;
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',x1); line.setAttribute('y1',y); line.setAttribute('x2',x2); line.setAttribute('y2',y);
+    line.setAttribute('stroke', capturesTruth?'var(--part-highlight)':'var(--bad)'); line.setAttribute('stroke-width','2.5');
+    svg.appendChild(line);
+  }
+  document.getElementById('readout').innerHTML = captured+' out of 20 intervals (i.e. '+(captured*5)+'%) captured the true mean this run.';
+  document.getElementById('fb').innerHTML = 'Blue intervals captured the true mean; red intervals (there should usually be 0-2) missed it entirely by pure sampling bad luck — each interval was constructed by an IDENTICAL, equally valid procedure.';
+}
+runSim();
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> click 'draw 20 fresh samples' several times - the captured count bounces around 19/20 (95%), sometimes 18, occasionally all 20, rarely fewer than 17. NONE of the 20 intervals themselves ever change after being drawn - each is simply right or wrong, with no probability left once computed. The 95% describes how reliable this PROCEDURE is across many repetitions, not your confidence in any one specific interval you happen to be looking at.";
+</script>
+</body></html>

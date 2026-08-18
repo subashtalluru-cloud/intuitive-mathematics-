@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#0F766E; --part-accent-light:#CCFBF1; --part-highlight:#7C3AED;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F0FDFA; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FEF3C7; color:#92400E; border:1px solid #FDE68A; }
+.aha strong{ color:#B45309; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Picking 6 From 49 — Nearly 14 Million Ways, With No Order Attached</div>
+<div class="mb-sub">Drag the pool size and watch the combination count explode. This is exactly why lottery odds are so dramatically small — not from any trick, but from genuine combinatorial explosion.</div>
+<div class="mb-stage">
+<div class="slider-row"><label>Pool size (choosing 6 numbers): <span id="poolVal">49</span></label><input type="range" id="poolSlider" min="10" max="60" value="49"></div>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">Confusing permutations and combinations here would produce an answer off by a factor of 6! = 720 — an enormous, consequential discrepancy for exactly this kind of large selection.</div>
+</div>
+<script>
+function combination(n,k){
+  if(k>n) return 0;
+  let result=1;
+  for(let i=0;i<k;i++){
+    result = result*(n-i)/(i+1);
+  }
+  return Math.round(result);
+}
+function draw(){
+  const n=parseInt(document.getElementById('poolSlider').value);
+  document.getElementById('poolVal').textContent=n;
+  const k=6;
+  if(k>n){
+    document.getElementById('readout').innerHTML = 'Pool too small — need at least 6 numbers to choose from.';
+    return;
+  }
+  const combos=combination(n,k);
+  const odds = 1/combos;
+
+  document.getElementById('readout').innerHTML =
+    'C('+n+', 6) = '+combos.toLocaleString()+' distinct possible selections<br>'+
+    'A single random ticket\u2019s odds of matching: 1 in '+combos.toLocaleString();
+  document.getElementById('fb').innerHTML = n>=45
+    ? 'At pool size '+n+', the combination count has grown into the tens of millions — a single ticket\u2019s odds are genuinely, dramatically small, exactly why lottery jackpots can grow so large before being won.'
+    : 'At pool size '+n+', the count is still large but far more modest than at 49 — even a small change in pool size shifts the odds substantially, since combinations grow extremely fast.';
+}
+document.getElementById('poolSlider').addEventListener('input', draw);
+draw();
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> drag the pool size down from 49 to 20 - the combination count drops from nearly 14 million to under 40,000, a dramatic collapse from a relatively modest change in pool size. This is combinatorial explosion made visible: C(n,6) grows extremely fast as n increases, which is exactly why real lotteries deliberately choose a large pool size - it is the single lever that makes winning odds astronomically small without needing any other trick.";
+</script>
+</body></html>

@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#B45309; --part-accent-light:#FEF3C7; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FFFBEB; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#widthSvg{ width:100%; height:auto; aspect-ratio:2.5/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Want More Confidence? You Pay for It With Width.</div>
+<div class="mb-sub">Same data, same sample size — only the confidence level changes. Drag it and watch the interval widen. Genuine improvement (narrower AND more confident) requires more data, not a slider.</div>
+<div class="mb-stage">
+<svg id="widthSvg" viewBox="0 0 400 140"></svg>
+<div class="slider-row"><label>Confidence level: <span id="confVal">95</span>%</label><input type="range" id="confSlider" min="50" max="99" value="95"></div>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">A narrower interval is only genuinely "better" if it comes from a larger sample — narrowing it merely by lowering the confidence level is not a real improvement, just a different, less reliable trade-off.</div>
+</div>
+<script>
+function zForConfidence(conf){
+  // approximate inverse normal CDF via rational approximation
+  const p = 1-(1-conf/100)/2;
+  const a1=-3.969683028665376e+01,a2=2.209460984245205e+02,a3=-2.759285104469687e+02,a4=1.383577518672690e+02,a5=-3.066479806614716e+01,a6=2.506628277459239e+00;
+  const b1=-5.447609879822406e+01,b2=1.615858368580409e+02,b3=-1.556989798598866e+02,b4=6.680131188771972e+01,b5=-1.328068155288572e+01;
+  const c1=-7.784894002430293e-03,c2=-3.223964580411365e-01,c3=-2.400758277161838e+00,c4=-2.549732539343734e+00,c5=4.374664141464968e+00,c6=2.938163982698783e+00;
+  const d1=7.784695709041462e-03,d2=3.224671290700398e-01,d3=2.445134137142996e+00,d4=3.754408661907416e+00;
+  const plow=0.02425;
+  let q,r;
+  if(p<plow){ q=Math.sqrt(-2*Math.log(p)); return (((((c1*q+c2)*q+c3)*q+c4)*q+c5)*q+c6)/((((d1*q+d2)*q+d3)*q+d4)*q+1); }
+  else if(p<=1-plow){ q=p-0.5; r=q*q; return (((((a1*r+a2)*r+a3)*r+a4)*r+a5)*r+a6)*q/(((((b1*r+b2)*r+b3)*r+b4)*r+b5)*r+1); }
+  else { q=Math.sqrt(-2*Math.log(1-p)); return -(((((c1*q+c2)*q+c3)*q+c4)*q+c5)*q+c6)/((((d1*q+d2)*q+d3)*q+d4)*q+1); }
+}
+function draw(){
+  const conf=parseInt(document.getElementById('confSlider').value);
+  document.getElementById('confVal').textContent=conf;
+  const z=zForConfidence(conf);
+  const xbar=8.2, se=15/Math.sqrt(200);
+  const margin=z*se;
+
+  const svg=document.getElementById('widthSvg');
+  svg.innerHTML='';
+  const scaleX=25, centerX=200;
+  const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1',centerX-margin*scaleX); line.setAttribute('y1',70); line.setAttribute('x2',centerX+margin*scaleX); line.setAttribute('y2',70);
+  line.setAttribute('stroke','var(--part-accent)'); line.setAttribute('stroke-width','4');
+  svg.appendChild(line);
+  const centerDot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  centerDot.setAttribute('cx',centerX); centerDot.setAttribute('cy',70); centerDot.setAttribute('r',5); centerDot.setAttribute('fill','var(--part-highlight)');
+  svg.appendChild(centerDot);
+
+  document.getElementById('readout').innerHTML =
+    'z-value for '+conf+'% confidence: '+z.toFixed(3)+'<br>'+
+    'Margin of error: '+margin.toFixed(3)+'<br>'+
+    'Interval: ('+(xbar-margin).toFixed(2)+', '+(xbar+margin).toFixed(2)+')<br>'+
+    'Width: '+(2*margin).toFixed(3);
+  document.getElementById('fb').innerHTML = 'Same sample, same standard error — only the confidence level changed, yet the interval width changed substantially. Higher confidence necessarily means a WIDER net, not a more precise one.';
+}
+document.getElementById('confSlider').addEventListener('input', draw);
+draw();
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> drag confidence up toward 99% and watch the interval widen substantially - drag it down toward 50% and watch it narrow dramatically, but become far less trustworthy. There is no free lunch here: for a FIXED sample size, the only way to get more confidence is a wider interval, and the only way to get a genuinely narrower interval at the SAME confidence is to collect more data - never to simply adjust this slider.";
+</script>
+</body></html>

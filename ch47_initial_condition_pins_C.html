@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#0D9488; --part-accent-light:#CCFBF1; --part-highlight:#EA580C;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F0FDFA; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.layout-row{ display:grid; grid-template-columns:1.2fr 1fr; gap:28px; align-items:start; }
+@media (max-width:800px){ .layout-row{ grid-template-columns:1fr; } }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#familySvg{ width:100%; height:auto; aspect-ratio:1.2/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">One Measurement Pins Down the Entire Family</div>
+<div class="mb-sub">y=Ce^2x solves y'=2y for ANY constant C — infinitely many valid curves. Drag the initial population at t=0 and watch the ENTIRE family collapse to one single specific curve.</div>
+<div class="layout-row">
+<div class="mb-stage"><svg id="familySvg" viewBox="0 0 260 220"></svg></div>
+<div>
+<div class="slider-row"><label>Initial condition y(0) = <span id="y0Val">2.0</span></label><input type="range" id="y0Slider" min="5" max="80" value="20"></div>
+<div class="readout" id="readout"></div>
+</div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">This exact two-stage process — solve to get a general family, then use one measurement to pin down the remaining unknown constant — is precisely what Chapter 48's own worked examples will apply repeatedly.</div>
+</div>
+<script>
+const scale=25, origin={x:20,y:200};
+function toSvg(x,y){ return {x:origin.x+x*scale, y:origin.y-y*scale*0.3}; }
+function draw(){
+  const y0Raw=parseInt(document.getElementById('y0Slider').value);
+  const y0=y0Raw/10;
+  document.getElementById('y0Val').textContent=y0.toFixed(1);
+  const C=y0;
+
+  const svg=document.getElementById('familySvg');
+  svg.innerHTML='';
+  [0.5,1,2,4].forEach(otherC=>{
+    let d='M';
+    for(let x=0;x<=3;x+=0.05){
+      const y=Math.min(60,otherC*Math.exp(2*x));
+      const p=toSvg(x,y);
+      d+=p.x+','+p.y+' L';
+    }
+    const curve=document.createElementNS('http://www.w3.org/2000/svg','path');
+    curve.setAttribute('d',d.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke','#CBD5E1'); curve.setAttribute('stroke-width','1.5');
+    svg.appendChild(curve);
+  });
+
+  let d2='M';
+  for(let x=0;x<=3;x+=0.05){
+    const y=Math.min(60,C*Math.exp(2*x));
+    const p=toSvg(x,y);
+    d2+=p.x+','+p.y+' L';
+  }
+  const highlighted=document.createElementNS('http://www.w3.org/2000/svg','path');
+  highlighted.setAttribute('d',d2.slice(0,-1)); highlighted.setAttribute('fill','none'); highlighted.setAttribute('stroke','var(--part-highlight)'); highlighted.setAttribute('stroke-width','2.5');
+  svg.appendChild(highlighted);
+
+  const p0=toSvg(0,y0);
+  const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  dot.setAttribute('cx',p0.x); dot.setAttribute('cy',p0.y); dot.setAttribute('r',6); dot.setAttribute('fill','var(--part-highlight)');
+  svg.appendChild(dot);
+
+  document.getElementById('readout').innerHTML =
+    'General solution: y=Ce^2x<br>Given y(0)='+y0.toFixed(1)+'<br>Substitute: '+y0.toFixed(1)+'=Ce^0=C<br>So C='+C.toFixed(1)+'<br>Particular solution: y='+C.toFixed(1)+'e^2x';
+  document.getElementById('fb').innerHTML = 'The gray curves show OTHER valid family members (different C values) — all satisfy y-prime=2y equally well. Only the ONE orange curve passes through your specific initial condition point.';
+}
+document.getElementById('y0Slider').addEventListener('input', draw);
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> drag the initial condition across its whole range and watch the highlighted curve slide through the gray family - every gray curve remains a perfectly valid solution to the SAME differential equation the entire time. The initial condition doesn't change the equation at all; it only selects WHICH already-valid family member matches your specific real-world starting measurement.";
+draw();
+</script>
+</body></html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#0F766E; --part-accent-light:#CCFBF1; --part-highlight:#7C3AED;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F0FDFA; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#parkSvg{ width:100%; height:auto; aspect-ratio:1.7/1; display:block; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin-top:10px; }
+.mb-btn:hover{ background:var(--part-accent); color:#fff; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FEF3C7; color:#92400E; border:1px solid #FDE68A; }
+.aha strong{ color:#B45309; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">No Need to Try Every Route — Just Count Each Junction's Trails</div>
+<div class="mb-sub">5 park trail junctions. Can a walker cover every trail exactly once and return to start? Click to check each junction's degree — the answer follows immediately, with no route-searching required at all.</div>
+<div class="mb-stage">
+<svg id="parkSvg" viewBox="0 0 300 220"></svg>
+<button class="mb-btn" onclick="checkEuler()">Check every junction's degree</button>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">Connectivity and the even-degree condition are two entirely separate requirements — this network is fully connected, yet still has no Euler circuit, exactly the subtlety Euler's original insight was built to capture.</div>
+</div>
+<script>
+const positions={A:[150,30],B:[70,90],C:[150,110],D:[220,90],E:[150,190]};
+const edges=[['A','B'],['A','C'],['A','D'],['B','C'],['C','D'],['C','E'],['D','E']];
+function degree(v){
+  return edges.filter(([a,b])=>a===v||b===v).length;
+}
+function draw(highlight){
+  const svg=document.getElementById('parkSvg');
+  svg.innerHTML='';
+  edges.forEach(([a,b])=>{
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',positions[a][0]); line.setAttribute('y1',positions[a][1]);
+    line.setAttribute('x2',positions[b][0]); line.setAttribute('y2',positions[b][1]);
+    line.setAttribute('stroke','#94A3B8'); line.setAttribute('stroke-width','2');
+    svg.appendChild(line);
+  });
+  Object.keys(positions).forEach(v=>{
+    const [x,y]=positions[v];
+    const deg=degree(v);
+    const isOdd=deg%2!==0;
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',x); dot.setAttribute('cy',y); dot.setAttribute('r',16);
+    dot.setAttribute('fill', highlight&&isOdd ? 'var(--bad)' : 'var(--part-accent)');
+    svg.appendChild(dot);
+    const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',x); lbl.setAttribute('y',y+4); lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('font-size','12'); lbl.setAttribute('fill','#fff'); lbl.setAttribute('font-weight','700');
+    lbl.textContent=v;
+    svg.appendChild(lbl);
+    if(highlight){
+      const degLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+      degLbl.setAttribute('x',x); degLbl.setAttribute('y',y-24); degLbl.setAttribute('text-anchor','middle'); degLbl.setAttribute('font-size','10'); degLbl.setAttribute('font-weight','700'); degLbl.setAttribute('fill', isOdd?'var(--bad)':'var(--good)');
+      degLbl.textContent='degree '+deg+(isOdd?' (odd)':' (even)');
+      svg.appendChild(degLbl);
+    }
+  });
+}
+function checkEuler(){
+  draw(true);
+  const oddVertices = Object.keys(positions).filter(v=>degree(v)%2!==0);
+  document.getElementById('readout').innerHTML =
+    Object.keys(positions).map(v=>v+': degree '+degree(v)).join(', ')+
+    '<br>Odd-degree junctions: '+oddVertices.join(', ')+
+    '<br>Euler circuit exists: '+(oddVertices.length===0?'YES':'NO');
+  document.getElementById('fb').innerHTML = oddVertices.length===0
+    ? 'Every junction has even degree — a complete, non-repeating walking tour genuinely exists, confirmed without ever trying a single route.'
+    : 'Junctions '+oddVertices.join(' and ')+' both have odd degree — no complete tour is possible without repeating at least one trail, confirmed immediately by this simple count alone, with zero routes actually attempted.';
+}
+draw(false);
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> this 5-junction network IS fully connected - every junction can reach every other one. Yet the degree count alone, with no route ever attempted, proves conclusively that no complete non-repeating tour exists. This is the same reasoning Euler used on Königsberg's seven bridges in 1736: instead of exhaustively trying every possible walking route (astronomically many for a real network), a single, simple count settles the question immediately and with total certainty.";
+</script>
+</body></html>

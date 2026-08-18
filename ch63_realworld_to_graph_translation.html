@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#0F766E; --part-accent-light:#CCFBF1; --part-highlight:#7C3AED;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F0FDFA; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#empSvg{ width:100%; height:auto; aspect-ratio:1.8/1; display:block; cursor:pointer; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FEF3C7; color:#92400E; border:1px solid #FDE68A; }
+.aha strong{ color:#B45309; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">5 Employees, "Reach Anyone Within One Relay" — Click Two Dots to Test</div>
+<div class="mb-sub">Vertices are employees; edges are direct communication lines. Click any two dots to check whether they can reach each other directly, or through exactly one intermediate colleague.</div>
+<div class="mb-stage">
+<svg id="empSvg" viewBox="0 0 300 220"></svg>
+<div class="readout" id="readout">Click two employee dots.</div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">A real-world staffing question — "can everyone reach everyone else quickly enough?" — translates directly into precise graph-theoretic language: vertices, edges, and path length, with no ambiguity left once the translation is made.</div>
+</div>
+<script>
+const positions=[[150,30],[260,90],[210,190],[90,190],[40,90]];
+const names=['Alice','Bob','Carla','Dev','Erin'];
+const edges=[[0,1],[1,2],[2,3],[3,4],[4,0]]; // 5-cycle: minimal connected structure
+let selected=[];
+function draw(){
+  const svg=document.getElementById('empSvg');
+  svg.innerHTML='';
+  edges.forEach(([a,b])=>{
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',positions[a][0]); line.setAttribute('y1',positions[a][1]);
+    line.setAttribute('x2',positions[b][0]); line.setAttribute('y2',positions[b][1]);
+    line.setAttribute('stroke','#94A3B8'); line.setAttribute('stroke-width','2');
+    svg.appendChild(line);
+  });
+  positions.forEach((p,i)=>{
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',p[0]); dot.setAttribute('cy',p[1]); dot.setAttribute('r',14);
+    dot.setAttribute('fill', selected.includes(i)?'var(--part-highlight)':'var(--part-accent)');
+    dot.setAttribute('data-idx',i); dot.setAttribute('style','cursor:pointer');
+    svg.appendChild(dot);
+    const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',p[0]); lbl.setAttribute('y',p[1]+4); lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('font-size','9'); lbl.setAttribute('fill','#fff'); lbl.setAttribute('font-weight','700');
+    lbl.textContent=names[i][0];
+    svg.appendChild(lbl);
+    const nameLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    nameLbl.setAttribute('x',p[0]); nameLbl.setAttribute('y',p[1]-20); nameLbl.setAttribute('text-anchor','middle'); nameLbl.setAttribute('font-size','9');
+    nameLbl.textContent=names[i];
+    svg.appendChild(nameLbl);
+  });
+}
+function pathLength(a,b){
+  if(a===b) return 0;
+  const directEdge = edges.some(([x,y])=>(x===a&&y===b)||(x===b&&y===a));
+  if(directEdge) return 1;
+  // check length-2 path
+  for(let mid=0;mid<5;mid++){
+    if(mid===a||mid===b) continue;
+    const e1 = edges.some(([x,y])=>(x===a&&y===mid)||(x===mid&&y===a));
+    const e2 = edges.some(([x,y])=>(x===mid&&y===b)||(x===b&&y===mid));
+    if(e1&&e2) return 2;
+  }
+  return -1;
+}
+document.getElementById('empSvg').addEventListener('click', e=>{
+  if(e.target.tagName!=='circle') return;
+  const idx=parseInt(e.target.getAttribute('data-idx'));
+  if(selected.includes(idx)) return;
+  selected.push(idx);
+  if(selected.length>2) selected=[idx];
+  draw();
+  if(selected.length===2){
+    const len=pathLength(selected[0],selected[1]);
+    document.getElementById('readout').innerHTML = names[selected[0]]+' to '+names[selected[1]]+': path length = '+(len===-1?'none found':len);
+    document.getElementById('fb').innerHTML = len<=2 && len>=0
+      ? "Within the required limit — reachable directly or through exactly one relay, satisfying management's requirement."
+      : 'This pair fails the requirement — no path of length 2 or less exists between them with this specific set of communication lines.';
+  }
+});
+draw();
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> click through several different pairs of employees - every single pair in this 5-line network turns out reachable within one relay, using only 5 communication lines total (not the 10 a fully-connected network would need). The vague English phrase 'everyone can reach everyone within one relay' has become a precise, checkable graph property - path length at most 2 between every vertex pair - with no ambiguity left about what counts as satisfying the requirement.";
+</script>
+</body></html>

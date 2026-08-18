@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#0D9488; --part-accent-light:#CCFBF1; --part-highlight:#EA580C;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F0FDFA; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#twoCondSvg{ width:100%; height:auto; aspect-ratio:2/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Same Starting Height, Different Starting Velocity — Wildly Different Futures</div>
+<div class="mb-sub">y''+4y=0. Both curves below start at EXACTLY the same height, y(0)=1. Drag only the initial velocity and watch how differently the same starting position plays out.</div>
+<div class="mb-stage">
+<svg id="twoCondSvg" viewBox="0 0 320 180"></svg>
+<div class="slider-row"><label>Initial velocity y'(0) = <span id="vVal">0.0</span></label><input type="range" id="vSlider" min="-40" max="40" value="0"></div>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">Knowing an oscillating system's current position alone is genuinely insufficient to predict its future behavior — a mass at a specific height could be momentarily at rest there, or passing rapidly through that height, and only its velocity resolves the ambiguity.</div>
+</div>
+<script>
+function y(t,v0){
+  const omega=2;
+  return Math.cos(omega*t) + (v0/omega)*Math.sin(omega*t);
+}
+const scale=45, origin={x:20,y:90};
+function toSvg(t,yy){ return {x:origin.x+t*scale, y:origin.y-yy*30}; }
+function draw(){
+  const v0Raw=parseInt(document.getElementById('vSlider').value);
+  const v0=v0Raw/10;
+  document.getElementById('vVal').textContent=v0.toFixed(1);
+
+  const svg=document.getElementById('twoCondSvg');
+  svg.innerHTML='';
+  const axis=document.createElementNS('http://www.w3.org/2000/svg','line');
+  axis.setAttribute('x1',10); axis.setAttribute('y1',origin.y); axis.setAttribute('x2',310); axis.setAttribute('y2',origin.y);
+  axis.setAttribute('stroke','#E2E8F0');
+  svg.appendChild(axis);
+
+  let d='M';
+  for(let t=0;t<=6;t+=0.03){
+    const yy=y(t,v0);
+    const p=toSvg(t,yy);
+    d+=p.x+','+p.y+' L';
+  }
+  const curve=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve.setAttribute('d',d.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke','var(--part-accent)'); curve.setAttribute('stroke-width','2.5');
+  svg.appendChild(curve);
+
+  const startDot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  const sp=toSvg(0,1);
+  startDot.setAttribute('cx',sp.x); startDot.setAttribute('cy',sp.y); startDot.setAttribute('r',6); startDot.setAttribute('fill','var(--part-highlight)');
+  svg.appendChild(startDot);
+
+  const amplitude = Math.sqrt(1+(v0/2)*(v0/2));
+  document.getElementById('readout').innerHTML =
+    'y(0)=1 (fixed), y-prime(0)='+v0.toFixed(1)+'<br>Resulting amplitude of oscillation: '+amplitude.toFixed(3)+'<br>y(t) = cos(2t) + '+(v0/2).toFixed(2)+'sin(2t)';
+  document.getElementById('fb').innerHTML = Math.abs(v0)<0.1
+    ? 'With zero initial velocity, the mass starts momentarily AT REST at height 1 — the smallest possible amplitude for this starting height.'
+    : 'With initial velocity '+v0.toFixed(1)+', the mass is already MOVING through height 1, not resting there — producing a genuinely larger oscillation amplitude ('+amplitude.toFixed(2)+') than the same starting height alone would suggest.';
+}
+document.getElementById('vSlider').addEventListener('input', draw);
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> every single curve you drag through passes through the identical orange starting point - same height, same instant - yet they diverge into completely different oscillation amplitudes immediately afterward. Position alone was never enough information; this is exactly why a second-order equation's solution needs TWO constants, and why real initial-value problems always supply both position and velocity together.";
+draw();
+</script>
+</body></html>

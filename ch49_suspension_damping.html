@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#0D9488; --part-accent-light:#CCFBF1; --part-highlight:#EA580C;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F0FDFA; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#suspSvg{ width:100%; height:auto; aspect-ratio:2.2/1; display:block; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin:4px; }
+.mb-btn:hover, .mb-btn.active{ background:var(--part-accent); color:#fff; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Design a Car Suspension — Three Discriminant Cases, Three Real Behaviors</div>
+<div class="mb-sub">y''+by'+cy=0 models the suspension after a bump. The discriminant b^2-4c decides everything: click each damping case and watch the actual physical consequence for a passenger.</div>
+<div class="mb-stage">
+<svg id="suspSvg" viewBox="0 0 440 200"></svg>
+<button class="mb-btn active" onclick="show('under',this)">Underdamped (b=2,c=5)</button>
+<button class="mb-btn" onclick="show('crit',this)">Critically damped (b=4,c=4)</button>
+<button class="mb-btn" onclick="show('over',this)">Overdamped (b=5,c=4)</button>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">Engineers compute the discriminant as an early design-verification step precisely because these three behaviors have dramatically different real-world safety and comfort consequences.</div>
+</div>
+<script>
+function displacementFixed(t,b,c){
+  const disc=b*b-4*c;
+  if(disc>0){
+    const r1=(-b+Math.sqrt(disc))/2, r2=(-b-Math.sqrt(disc))/2;
+    const A=(-r2)/(r1-r2), B=1-A;
+    return A*Math.exp(r1*t)+B*Math.exp(r2*t);
+  } else if(Math.abs(disc)<1e-9){
+    const r=-b/2;
+    return Math.exp(r*t)*(1-r*t);
+  } else {
+    const real=-b/2, imag=Math.sqrt(-disc)/2;
+    return Math.exp(real*t)*Math.cos(imag*t);
+  }
+}
+const scale=60, origin={x:20,y:100};
+function toSvg(t,y){ return {x:origin.x+t*scale, y:origin.y-y*70}; }
+function draw(mode){
+  let b,c,label,color;
+  if(mode==='under'){ b=2;c=5; label='UNDERDAMPED - visible oscillation before settling'; color='var(--bad)'; }
+  else if(mode==='crit'){ b=4;c=4; label='CRITICALLY DAMPED - fastest return, zero oscillation'; color='var(--good)'; }
+  else { b=5;c=4; label='OVERDAMPED - smooth but sluggish return'; color='var(--part-highlight)'; }
+
+  const svg=document.getElementById('suspSvg');
+  svg.innerHTML='';
+  const axis=document.createElementNS('http://www.w3.org/2000/svg','line');
+  axis.setAttribute('x1',10); axis.setAttribute('y1',origin.y); axis.setAttribute('x2',420); axis.setAttribute('y2',origin.y);
+  axis.setAttribute('stroke','#E2E8F0');
+  svg.appendChild(axis);
+
+  let d='M';
+  for(let t=0;t<=6;t+=0.03){
+    const y=displacementFixed(t,b,c);
+    const p=toSvg(t,y);
+    d+=p.x+','+p.y+' L';
+  }
+  const curve=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve.setAttribute('d',d.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke',color); curve.setAttribute('stroke-width','2.5');
+  svg.appendChild(curve);
+
+  const disc=b*b-4*c;
+  document.getElementById('readout').innerHTML =
+    'y+prime+prime + '+b+'y-prime + '+c+'y = 0<br>Discriminant = '+b+'^2-4('+c+') = '+disc+'<br>'+label;
+  document.getElementById('fb').innerHTML = mode==='under'
+    ? 'Complex roots produce genuine, physically real oscillation — the car bounces visibly several times before settling, reducing tire-road contact exactly when control matters most.'
+    : mode==='crit'
+    ? 'A repeated real root gives the fastest possible return to equilibrium with ZERO oscillation — the genuine engineering sweet spot real suspension designers target.'
+    : 'Two distinct real roots mean smooth decay with no oscillation, but a noticeably SLOWER return — more of the bump impact reaches the passenger before the suspension fully recovers.';
+}
+function show(mode,btn){
+  document.querySelectorAll('.mb-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  draw(mode);
+}
+draw('under');
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> click through all three cases and compare how quickly each curve settles near zero - critically damped (green) reaches equilibrium FASTEST of all three, with zero oscillation, which is exactly why it is the genuine engineering target, not merely a compromise between the other two extremes.";
+</script>
+</body></html>

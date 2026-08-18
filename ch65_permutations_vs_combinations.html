@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#0F766E; --part-accent-light:#CCFBF1; --part-highlight:#7C3AED;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F0FDFA; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+@media (max-width:760px){ .two-col{ grid-template-columns:1fr; } }
+.panel{ background:#fff; border:2px solid var(--line); border-radius:12px; padding:16px; }
+.panel-header{ font-weight:700; text-align:center; margin-bottom:10px; font-size:clamp(0.9rem,1.05vw,1.02rem); }
+#permBox, #combBox{ min-height:60px; display:flex; flex-wrap:wrap; gap:6px; align-items:center; justify-content:center; }
+.book{ width:32px; height:44px; border-radius:4px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:14px; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin-top:14px; }
+.mb-btn:hover{ background:var(--part-accent); color:#fff; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.82rem,0.95vw,0.94rem); line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FEF3C7; color:#92400E; border:1px solid #FDE68A; }
+.aha strong{ color:#B45309; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Same 3 Books, Two Genuinely Different Questions</div>
+<div class="mb-sub">Shop window display (order matters) vs. charity donation box (order doesn't). Click to shuffle the same 3 books and see how many distinct outcomes each scenario actually produces.</div>
+<div class="two-col">
+<div class="panel"><div class="panel-header" style="color:var(--part-accent);">Shop window: PERMUTATION</div><div id="permBox"></div></div>
+<div class="panel"><div class="panel-header" style="color:var(--part-highlight);">Donation box: COMBINATION</div><div id="combBox"></div></div>
+</div>
+<button class="mb-btn" onclick="shuffle()">Shuffle the same 3 books</button>
+<div class="readout" id="readout"></div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">A single misidentification — using the wrong one of these two closely related formulas — is by far the most common combinatorics error; explicitly asking "does rearranging count as different?" reliably prevents it.</div>
+</div>
+<script>
+const colors={'A':'var(--part-accent)','B':'var(--part-highlight)','C':'#B45309'};
+let shuffleCount=0;
+function permute(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+function render(order){
+  const permBox=document.getElementById('permBox');
+  permBox.innerHTML='';
+  order.forEach(letter=>{
+    const div=document.createElement('div');
+    div.className='book'; div.style.background=colors[letter]; div.textContent=letter;
+    permBox.appendChild(div);
+  });
+  const combBox=document.getElementById('combBox');
+  combBox.innerHTML='';
+  ['A','B','C'].forEach(letter=>{
+    const div=document.createElement('div');
+    div.className='book'; div.style.background=colors[letter]; div.textContent=letter;
+    combBox.appendChild(div);
+  });
+}
+function shuffle(){
+  shuffleCount++;
+  const order=permute(['A','B','C']);
+  render(order);
+  document.getElementById('readout').innerHTML =
+    'Shuffle #'+shuffleCount+': shop window shows "'+order.join('')+'"<br>'+
+    'Total DISTINCT shop-window arrangements possible: 3! = 6<br>'+
+    'Total DISTINCT donation-box selections possible: 1 (always the same 3 books, however shuffled)';
+  document.getElementById('fb').innerHTML = 'The shop window genuinely shows a NEW arrangement each shuffle (up to 6 distinct possibilities) — but the donation box never changes at all, since it always contains exactly the same set {A, B, C} regardless of order.';
+}
+render(['A','B','C']);
+document.getElementById('readout').innerHTML = 'Click "shuffle" to see the permutation count in action.';
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> click shuffle repeatedly - the shop window box keeps changing (up to 6 genuinely different-looking arrangements), while the donation box, drawn identically every single time, never changes at all. This is exactly why combinations are always SMALLER in count than permutations for the same items: every one combination (the donation box) corresponds to multiple permutations (all 6 possible shop-window orderings) that all collapse down to that same single unordered group.";
+</script>
+</body></html>

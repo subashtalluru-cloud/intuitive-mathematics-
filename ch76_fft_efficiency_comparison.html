@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C2D92; --part-accent-light:#F3E8FF; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FAF5FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#fftSvg{ width:100%; height:auto; aspect-ratio:2.3/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">1,024 Data Points — Direct Method: a Million Operations. FFT: Ten Thousand.</div>
+<div class="mb-sub">The exact same mathematical answer, computed two different ways. Drag the dataset size and watch the efficiency gap widen dramatically — this is why real-time audio processing is even possible.</div>
+<div class="mb-stage">
+<svg id="fftSvg" viewBox="0 0 400 160"></svg>
+<div class="slider-row"><label>Data points (n, power of 2): <span id="nValFft">1024</span></label><input type="range" id="nSliderFft" min="4" max="14" value="10"></div>
+<div class="readout" id="readoutFft"></div>
+</div>
+<div id="fbFft" class="mb-feedback"></div>
+<div class="aha" id="ahaFft"></div>
+<div class="mb-caption">The FFT computes the EXACT same mathematical result as the direct DFT formula, with zero loss of accuracy — the entire advantage is purely computational efficiency, never a tradeoff against correctness.</div>
+</div>
+<script>
+function draw9(){
+  const power=parseInt(document.getElementById('nSliderFft').value);
+  const n=Math.pow(2,power);
+  document.getElementById('nValFft').textContent=n.toLocaleString();
+  const direct=n*n;
+  const fft=n*Math.log2(n);
+  const ratio=direct/fft;
+
+  const svg=document.getElementById('fftSvg');
+  svg.innerHTML='';
+  const maxH=110;
+  const directH=maxH;
+  const fftH=Math.max(2, maxH*(Math.log10(fft)/Math.log10(direct)));
+
+  const directBar=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  directBar.setAttribute('x',100); directBar.setAttribute('y',130-directH); directBar.setAttribute('width',60); directBar.setAttribute('height',directH);
+  directBar.setAttribute('fill','var(--bad)');
+  svg.appendChild(directBar);
+  const directLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  directLbl.setAttribute('x',130); directLbl.setAttribute('y',130-directH-8); directLbl.setAttribute('text-anchor','middle'); directLbl.setAttribute('font-size','10'); directLbl.setAttribute('font-weight','700');
+  directLbl.textContent=direct.toLocaleString();
+  svg.appendChild(directLbl);
+  const directName=document.createElementNS('http://www.w3.org/2000/svg','text');
+  directName.setAttribute('x',130); directName.setAttribute('y',145); directName.setAttribute('text-anchor','middle'); directName.setAttribute('font-size','10');
+  directName.textContent='direct DFT: n\u00b2';
+  svg.appendChild(directName);
+
+  const fftBar=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  fftBar.setAttribute('x',250); fftBar.setAttribute('y',130-fftH); fftBar.setAttribute('width',60); fftBar.setAttribute('height',fftH);
+  fftBar.setAttribute('fill','var(--good)');
+  svg.appendChild(fftBar);
+  const fftLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  fftLbl.setAttribute('x',280); fftLbl.setAttribute('y',130-fftH-8); fftLbl.setAttribute('text-anchor','middle'); fftLbl.setAttribute('font-size','10'); fftLbl.setAttribute('font-weight','700');
+  fftLbl.textContent=Math.round(fft).toLocaleString();
+  svg.appendChild(fftLbl);
+  const fftName=document.createElementNS('http://www.w3.org/2000/svg','text');
+  fftName.setAttribute('x',280); fftName.setAttribute('y',145); fftName.setAttribute('text-anchor','middle'); fftName.setAttribute('font-size','10');
+  fftName.textContent='FFT: n log\u2082n';
+  svg.appendChild(fftName);
+
+  document.getElementById('readoutFft').innerHTML =
+    'n = '+n.toLocaleString()+' data points<br>'+
+    'Direct DFT: '+direct.toLocaleString()+' operations<br>'+
+    'FFT: '+Math.round(fft).toLocaleString()+' operations<br>'+
+    'FFT is '+ratio.toFixed(1)+'x faster';
+  document.getElementById('fbFft').innerHTML = 'Both methods compute the exact same mathematical answer — the FFT simply eliminates genuinely redundant repeated calculations the direct method performs unnecessarily.';
+}
+document.getElementById('nSliderFft').addEventListener('input', draw9);
+draw9();
+document.getElementById('ahaFft').innerHTML="<strong>Aha:</strong> drag n up to its maximum (16,384 points) and watch the speedup ratio climb well past 1,000x - this gap only widens as datasets grow larger, exactly Chapter 70's own lesson about growth rates dominating eventual performance. This exact algorithm, discovered in 1965, is precisely why a smartphone can update a real-time audio visualizer dozens of times per second: the direct method would be computationally far too slow for genuinely real-time processing, while the FFT makes it routine.";
+</script>
+</body></html>

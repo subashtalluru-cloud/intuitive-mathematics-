@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#B45309; --part-accent-light:#FEF3C7; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FFFBEB; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#mcSvg{ width:100%; height:auto; aspect-ratio:2.4/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Six "Independent" 5% Tests Are Not a 5% Risk Overall</div>
+<div class="mb-sub">Comparing 4 groups pairwise means 6 separate t-tests, each with its own 5% false-positive chance. Drag the number of groups and watch the OVERALL chance that at least one comparison shows a fake "significant" difference — even with zero real group differences.</div>
+<div class="mb-stage">
+<svg id="mcSvg" viewBox="0 0 400 140"></svg>
+<div class="slider-row"><label>Number of groups being compared: <span id="groupsVal">4</span></label><input type="range" id="groupsSlider" min="2" max="8" value="4"></div>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">This is not merely "more detailed" than ANOVA — running many uncorrected pairwise tests is a genuine methodological error that inflates the true false-positive rate well beyond the researcher's own intended significance level.</div>
+</div>
+<script>
+function draw(){
+  const groups=parseInt(document.getElementById('groupsSlider').value);
+  document.getElementById('groupsVal').textContent=groups;
+  const numTests = groups*(groups-1)/2;
+  const alpha=0.05;
+  const overallRisk = 1-Math.pow(1-alpha,numTests);
+
+  const svg=document.getElementById('mcSvg');
+  svg.innerHTML='';
+  const barWidth = Math.min(overallRisk*300,300);
+  const bar=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  bar.setAttribute('x',30); bar.setAttribute('y',40); bar.setAttribute('width',barWidth); bar.setAttribute('height',30);
+  bar.setAttribute('fill', overallRisk>0.2 ? 'var(--bad)' : 'var(--part-accent)');
+  svg.appendChild(bar);
+  const targetLine=document.createElementNS('http://www.w3.org/2000/svg','line');
+  targetLine.setAttribute('x1',30+0.05*300); targetLine.setAttribute('y1',20); targetLine.setAttribute('x2',30+0.05*300); targetLine.setAttribute('y2',90);
+  targetLine.setAttribute('stroke','var(--good)'); targetLine.setAttribute('stroke-dasharray','3,2'); targetLine.setAttribute('stroke-width','2');
+  svg.appendChild(targetLine);
+  const targetLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  targetLbl.setAttribute('x',30+0.05*300); targetLbl.setAttribute('y',105); targetLbl.setAttribute('text-anchor','middle'); targetLbl.setAttribute('font-size','9'); targetLbl.setAttribute('fill','var(--good)');
+  targetLbl.textContent='intended 5%';
+  svg.appendChild(targetLbl);
+
+  document.getElementById('readout').innerHTML =
+    'Number of pairwise tests needed: '+numTests+'<br>Intended error rate per test: 5%<br>ACTUAL overall false-positive risk: '+(overallRisk*100).toFixed(1)+'%';
+  document.getElementById('fb').innerHTML = 'With '+groups+' groups compared pairwise ('+numTests+' separate tests), even if NONE of the groups genuinely differ at all, there is a '+(overallRisk*100).toFixed(1)+'% chance at least one comparison falsely appears "significant" purely by chance — far above the intended 5% risk a single test carries.';
+}
+document.getElementById('groupsSlider').addEventListener('input', draw);
+draw();
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> drag groups from 2 up to 8 - at 2 groups there is only 1 test, and the risk matches the intended 5% exactly. But by 8 groups, 28 separate pairwise tests are needed, and the true chance of at least one FALSE alarm balloons past 75%, even with zero genuine differences anywhere. ANOVA's single, unified F-test exists precisely to avoid this trap, asking one well-controlled question instead of accumulating hidden risk across many separate ones.";
+</script>
+</body></html>

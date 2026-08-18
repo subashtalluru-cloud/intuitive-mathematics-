@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#DC2626; --part-accent-light:#FEE2E2; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FEF2F2; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+.scenario-card{ background:#fff; border:2px solid var(--line); border-radius:10px; padding:12px 16px; margin-bottom:10px; cursor:pointer; }
+.scenario-card.valid{ border-color:var(--good); background:#F0FDF4; }
+.scenario-card.invalid{ border-color:var(--bad); background:#FEF2F2; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">"Just Count and Divide" — Only Works if Every Outcome Is Equally Likely</div>
+<div class="mb-sub">The simple counting formula P=favorable/total silently assumes every outcome has the same chance. Click each scenario to check whether that assumption actually holds.</div>
+<div class="mb-stage" id="cardsContainer"></div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">Statisticians verify the equally-likely assumption explicitly before using the simple counting formula — biased samples silently invalidate it, producing a confidently wrong answer rather than an obviously broken one.</div>
+</div>
+<script>
+const scenarios=[
+  {text:"A fair six-sided die: P(rolling a 4)", valid:true, explain:"VALID. A fair die is specifically constructed so each face has equal physical probability — the counting shortcut 1/6 genuinely applies."},
+  {text:"A weighted die favoring 6: P(rolling a 4), using 1/6 anyway", valid:false, explain:"INVALID. If the die is weighted, each face does NOT have equal probability — applying 1/6 here silently produces a confidently wrong answer, not an obviously broken one."},
+  {text:"A standard 52-card deck, well-shuffled: P(drawing an Ace)", valid:true, explain:"VALID. A well-shuffled standard deck genuinely gives every card equal probability — 4/52 is correct."},
+  {text:"Predicting tomorrow's weather: P(rain), counting 'rain' and 'no rain' as 2 equally likely outcomes", valid:false, explain:"INVALID. Rain and no-rain are NOT equally likely outcomes just because there happen to be two of them — this is exactly the counting shortcut's most common real-world misapplication."}
+];
+function render(){
+  const c=document.getElementById('cardsContainer');
+  c.innerHTML='';
+  scenarios.forEach((s,i)=>{
+    const div=document.createElement('div');
+    div.className='scenario-card';
+    div.textContent=s.text;
+    div.onclick=()=>check(i,div);
+    c.appendChild(div);
+  });
+}
+function check(i,div){
+  const s=scenarios[i];
+  div.classList.add(s.valid?'valid':'invalid');
+  document.getElementById('fb').innerHTML=s.explain;
+}
+render();
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> the weather example is worth dwelling on - counting 'two possible outcomes' and assuming each gets probability 1/2 is a genuinely common real-world mistake, precisely because it FEELS like the same counting logic that correctly gives a fair die's 1/6. The number of outcomes alone never determines their probabilities; only genuine symmetry (like a fair die's construction) justifies the equal-probability assumption.";
+</script>
+</body></html>

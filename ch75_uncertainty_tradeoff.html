@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C2D92; --part-accent-light:#F3E8FF; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FAF5FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+@media (max-width:760px){ .two-col{ grid-template-columns:1fr; } }
+.panel{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px; }
+.panel-header{ font-weight:700; text-align:center; margin-bottom:8px; font-size:clamp(0.85rem,1vw,0.98rem); }
+.panelSvg{ width:100%; height:auto; aspect-ratio:1.6/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin:14px 0; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Narrow the Pulse in Time — Its Spectrum Widens, Guaranteed</div>
+<div class="mb-sub">A brief "click" cannot also have a razor-narrow pitch — this is a mathematical theorem, not an engineering limitation. Drag pulse width and watch the spectrum respond exactly oppositely.</div>
+<div class="two-col">
+<div class="panel"><div class="panel-header" style="color:var(--part-accent);">Time domain: the pulse</div><svg class="panelSvg" id="timeSvg" viewBox="0 0 200 140"></svg></div>
+<div class="panel"><div class="panel-header" style="color:var(--part-highlight);">Frequency domain: its spectrum</div><svg class="panelSvg" id="freqSvg2" viewBox="0 0 200 140"></svg></div>
+</div>
+<div class="slider-row"><label>Pulse width (narrower = shorter click): <span id="widthVal">1.0</span></label><input type="range" id="widthSlider2" min="10" max="200" value="100"></div>
+<div class="readout" id="readout7"></div>
+<div id="fb7" class="mb-feedback"></div>
+<div class="aha" id="aha7"></div>
+<div class="mb-caption">This is the exact same mathematical structure underlying Heisenberg's uncertainty principle in quantum mechanics — position and momentum, here appearing directly in an everyday audio-engineering context.</div>
+</div>
+<script>
+function draw7(){
+  const raw=parseInt(document.getElementById('widthSlider2').value);
+  const sigmaT=raw/100;
+  document.getElementById('widthVal').textContent=sigmaT.toFixed(2);
+  const sigmaF=1/(2*Math.PI*sigmaT);
+  const product=sigmaT*sigmaF;
+
+  const timeSvg=document.getElementById('timeSvg');
+  timeSvg.innerHTML='';
+  const originT={x:100,y:100};
+  let dT='M';
+  for(let t=-4;t<=4;t+=0.05){
+    const y=Math.exp(-(t*t)/(2*sigmaT*sigmaT));
+    dT+=(originT.x+t*20)+','+(originT.y-y*70)+' L';
+  }
+  const curveT=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curveT.setAttribute('d',dT.slice(0,-1)); curveT.setAttribute('fill','none'); curveT.setAttribute('stroke','var(--part-accent)'); curveT.setAttribute('stroke-width','2.5');
+  timeSvg.appendChild(curveT);
+  const axisT=document.createElementNS('http://www.w3.org/2000/svg','line');
+  axisT.setAttribute('x1',10); axisT.setAttribute('y1',100); axisT.setAttribute('x2',190); axisT.setAttribute('y2',100);
+  axisT.setAttribute('stroke','#94A3B8');
+  timeSvg.appendChild(axisT);
+
+  const freqSvg=document.getElementById('freqSvg2');
+  freqSvg.innerHTML='';
+  const originF={x:100,y:100};
+  const freqScale=Math.min(200, 8/sigmaF);
+  let dF='M';
+  for(let f=-4;f<=4;f+=0.05){
+    const y=Math.exp(-(f*f)/(2*sigmaF*sigmaF));
+    dF+=(originF.x+f*freqScale*sigmaF*3)+','+(originF.y-y*70)+' L';
+  }
+  const curveF=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curveF.setAttribute('d',dF.slice(0,-1)); curveF.setAttribute('fill','none'); curveF.setAttribute('stroke','var(--part-highlight)'); curveF.setAttribute('stroke-width','2.5');
+  freqSvg.appendChild(curveF);
+  const axisF=document.createElementNS('http://www.w3.org/2000/svg','line');
+  axisF.setAttribute('x1',10); axisF.setAttribute('y1',100); axisF.setAttribute('x2',190); axisF.setAttribute('y2',100);
+  axisF.setAttribute('stroke','#94A3B8');
+  freqSvg.appendChild(axisF);
+
+  document.getElementById('readout7').innerHTML =
+    'Pulse width (\u03c3_t) = '+sigmaT.toFixed(2)+'<br>Spectrum width (\u03c3_f) = '+sigmaF.toFixed(4)+'<br>Product \u03c3_t \u00d7 \u03c3_f = '+product.toFixed(4)+' (constant, always 1/2\u03c0 \u2248 0.1592)';
+  document.getElementById('fb7').innerHTML = sigmaT<0.5
+    ? 'A genuinely brief pulse (narrow in time) — its spectrum has necessarily spread out wide, exactly as the tradeoff requires.'
+    : (sigmaT>1.5
+      ? 'A long, drawn-out pulse (wide in time) — its spectrum has necessarily narrowed to a sharp peak, exactly as the tradeoff requires.'
+      : 'A moderate pulse width — neither extreme, with a correspondingly moderate spectrum width.');
+}
+document.getElementById('widthSlider2').addEventListener('input', draw7);
+draw7();
+document.getElementById('aha7').innerHTML="<strong>Aha:</strong> drag pulse width to its narrowest setting and watch the left graph shrink into a sharp spike while the right graph spreads out flat and wide - then drag to the widest setting and watch the exact opposite happen. The product of the two widths NEVER changes, no matter where you drag the slider - this isn't a limitation of any particular microphone or measurement device; it's a provable mathematical theorem following directly from the Fourier transform's own definition, true for every possible signal without exception.";
+</script>
+</body></html>

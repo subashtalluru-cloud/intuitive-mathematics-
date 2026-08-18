@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#B45309; --part-accent-light:#FEF3C7; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FFFBEB; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+table{ width:100%; border-collapse:collapse; font-size:clamp(0.8rem,0.95vw,0.92rem); }
+td,th{ border:1px solid var(--line); padding:10px; text-align:center; }
+th{ background:var(--part-accent-light); }
+.obs{ font-weight:700; font-size:1.1em; }
+.exp{ color:var(--ink-soft); font-size:0.85em; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin-top:14px; }
+.mb-btn:hover{ background:var(--part-accent); color:#fff; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:14px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">If Age and Product Preference Were Truly Unrelated, You'd See This Instead</div>
+<div class="mb-sub">200 survey respondents, split by age group and product preference. Bold numbers are what was actually observed; small gray numbers are what independence alone would predict. Click to measure the gap.</div>
+<div class="mb-stage">
+<table>
+<tr><th></th><th>Favor</th><th>Oppose</th><th>Row total</th></tr>
+<tr><th>Under 40</th><td><span class="obs">60</span><br><span class="exp">expected: 45.0</span></td><td><span class="obs">40</span><br><span class="exp">expected: 55.0</span></td><td>100</td></tr>
+<tr><th>40 and Over</th><td><span class="obs">30</span><br><span class="exp">expected: 45.0</span></td><td><span class="obs">70</span><br><span class="exp">expected: 55.0</span></td><td>100</td></tr>
+<tr><th>Column total</th><td>90</td><td>110</td><td>200</td></tr>
+</table>
+<button class="mb-btn" onclick="compute()">Compute the chi-square statistic</button>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">A significant chi-square result establishes only a genuine statistical relationship, never a causal mechanism — exactly the same confounding-variable caution from Chapter 60's correlation discussion applies here too.</div>
+</div>
+<script>
+function compute(){
+  const obs = [[60,40],[30,70]];
+  const rowTotals = [100,100];
+  const colTotals = [90,110];
+  const grand = 200;
+  const exp = rowTotals.map(r => colTotals.map(c => r*c/grand));
+  let chi2 = 0;
+  const contributions = [];
+  for(let i=0;i<2;i++){
+    for(let j=0;j<2;j++){
+      const contrib = Math.pow(obs[i][j]-exp[i][j],2)/exp[i][j];
+      chi2 += contrib;
+      contributions.push(contrib.toFixed(2));
+    }
+  }
+  document.getElementById('readout').innerHTML =
+    'Cell contributions: '+contributions.join(', ')+'<br>'+
+    'Chi-square statistic = '+chi2.toFixed(2)+'<br>'+
+    'Degrees of freedom = (2-1)x(2-1) = 1<br>'+
+    'p-value: far below 0.001';
+  document.getElementById('fb').innerHTML = 'A chi-square of '+chi2.toFixed(1)+' with just 1 degree of freedom is dramatically larger than chance alone would produce — strong statistical evidence that age group and product preference are genuinely associated, not independent.';
+}
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> look closely at the Under-40-and-Favor cell: 60 observed vs only 45.0 expected under independence - a genuinely large gap. Every cell in this table shows a similar meaningful deviation, all in a consistent direction (younger respondents favor the feature more than independence would predict). This consistent pattern across all four cells, not just one outlier cell, is exactly what drives the large chi-square value.";
+</script>
+</body></html>

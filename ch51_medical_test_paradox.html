@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#DC2626; --part-accent-light:#FEE2E2; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FEF2F2; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.layout-row{ display:grid; grid-template-columns:1.3fr 1fr; gap:28px; align-items:start; }
+@media (max-width:800px){ .layout-row{ grid-template-columns:1fr; } }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#treeSvg{ width:100%; height:auto; aspect-ratio:1.4/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">A 99% Accurate Test — Only 16.7% Chance You're Actually Sick</div>
+<div class="mb-sub">1% of the population has a rare disease. A test is 99% accurate for true positives, 95% accurate for true negatives. You test positive. Drag the disease's own rarity and watch how dramatically that changes what your positive result actually means.</div>
+<div class="layout-row">
+<div class="mb-stage"><svg id="treeSvg" viewBox="0 0 320 260"></svg></div>
+<div>
+<div class="slider-row"><label>Disease prevalence in population: <span id="prevVal">1.0</span>%</label><input type="range" id="prevSlider" min="1" max="500" value="10"></div>
+<div class="readout" id="readout"></div>
+</div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">Confusing P(positive|disease) with P(disease|positive) — the exact error Bayes' theorem corrects — is precisely the error that has caused real wrongful courtroom convictions and genuine patient panic over false-positive medical results.</div>
+</div>
+<script>
+function compute(){
+  const prevRaw=parseInt(document.getElementById('prevSlider').value);
+  const prev=prevRaw/1000;
+  document.getElementById('prevVal').textContent=(prev*100).toFixed(2);
+
+  const pPosGivenDisease=0.99, pPosGivenNoDisease=0.05;
+  const pNoDisease=1-prev;
+  const pPos = pPosGivenDisease*prev + pPosGivenNoDisease*pNoDisease;
+  const pDiseaseGivenPos = (pPosGivenDisease*prev)/pPos;
+
+  const svg=document.getElementById('treeSvg');
+  svg.innerHTML='';
+  const rootX=30, rootY=130;
+  const diseaseY=50, noDiseaseY=210;
+  const posDiseaseY=30, negDiseaseY=70, posNoDiseaseY=190, negNoDiseaseY=230;
+
+  [[diseaseY,'Disease: '+(prev*100).toFixed(2)+'%'],[noDiseaseY,'No Disease: '+(pNoDisease*100).toFixed(2)+'%']].forEach(([y,label])=>{
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',rootX); line.setAttribute('y1',rootY); line.setAttribute('x2',130); line.setAttribute('y2',y);
+    line.setAttribute('stroke','var(--ink-soft)'); line.setAttribute('stroke-width','1.5');
+    svg.appendChild(line);
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',132); t.setAttribute('y',y+3); t.setAttribute('font-size','9');
+    t.textContent=label;
+    svg.appendChild(t);
+  });
+
+  const branches=[
+    [diseaseY,posDiseaseY,'Positive: 99%','var(--bad)',true],
+    [diseaseY,negDiseaseY,'Negative: 1%','#94A3B8',false],
+    [noDiseaseY,posNoDiseaseY,'Positive: 5%','var(--bad)',true],
+    [noDiseaseY,negNoDiseaseY,'Negative: 95%','#94A3B8',false]
+  ];
+  branches.forEach(([fromY,toY,label,color,isPos])=>{
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',130); line.setAttribute('y1',fromY); line.setAttribute('x2',230); line.setAttribute('y2',toY);
+    line.setAttribute('stroke',color); line.setAttribute('stroke-width', isPos?'2.5':'1.5');
+    svg.appendChild(line);
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',232); t.setAttribute('y',toY+3); t.setAttribute('font-size','9'); t.setAttribute('fill',color);
+    t.textContent=label;
+    svg.appendChild(t);
+  });
+
+  document.getElementById('readout').innerHTML =
+    'P(disease) = '+(prev*100).toFixed(2)+'%<br>'+
+    'P(positive) = '+(pPos*100).toFixed(2)+'%<br>'+
+    'P(disease AND positive) = '+(pPosGivenDisease*prev*100).toFixed(3)+'%<br>'+
+    'P(disease | positive) = '+(pDiseaseGivenPos*100).toFixed(1)+'%';
+  document.getElementById('fb').innerHTML = 'Despite the test\'s own impressive 99%/95% accuracy figures, testing positive here means only a '+(pDiseaseGivenPos*100).toFixed(1)+'% actual chance of having the disease — because with the disease this rare, false positives from the healthy majority genuinely swamp true positives from the small affected minority.';
+}
+document.getElementById('prevSlider').addEventListener('input', compute);
+compute();
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> drag the disease prevalence way up (toward 50%) and watch P(disease given positive) climb dramatically toward the test's own raw accuracy figures. The test's OWN accuracy never changed at all across your entire drag - only how RARE the condition is in the population changed, yet that alone swings the answer from 'barely more likely than a coin flip' to 'quite reliable.' This is exactly why the same test can be excellent for a common condition yet nearly useless for a rare one.";
+</script>
+</body></html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#DC2626; --part-accent-light:#FEE2E2; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FEF2F2; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#coinSvg{ width:100%; height:auto; aspect-ratio:2.2/1; display:block; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin-top:10px; margin-right:8px; }
+.mb-btn:hover{ background:var(--part-accent); color:#fff; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Each Flip Is Pure Chaos — the Running Fraction Isn't</div>
+<div class="mb-sub">Individual coin flips are completely unpredictable. Click to flip 500 times and watch the RUNNING FRACTION of heads — genuinely noisy at first, but settling toward exactly 0.5 as flips accumulate. This settling value IS what "probability" means.</div>
+<div class="mb-stage">
+<svg id="coinSvg" viewBox="0 0 440 200"></svg>
+<button class="mb-btn" onclick="runFlips()">Flip 500 times</button>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">This settling behavior directly echoes Chapter 35's limits and Chapter 46's convergence, now applied to a genuinely random process rather than a deterministic sequence.</div>
+</div>
+<script>
+function runFlips(){
+  const n=500;
+  let total=0;
+  const running=[];
+  for(let i=0;i<n;i++){
+    const flip = Math.random()<0.5 ? 1 : 0;
+    total+=flip;
+    running.push(total/(i+1));
+  }
+  const svg=document.getElementById('coinSvg');
+  svg.innerHTML='';
+  const scaleX=420/n, origin={x:10,y:180};
+  const line05=document.createElementNS('http://www.w3.org/2000/svg','line');
+  line05.setAttribute('x1',origin.x); line05.setAttribute('y1',origin.y-160*0.5); line05.setAttribute('x2',430); line05.setAttribute('y2',origin.y-160*0.5);
+  line05.setAttribute('stroke','var(--good)'); line05.setAttribute('stroke-dasharray','4,3'); line05.setAttribute('stroke-width','2');
+  svg.appendChild(line05);
+  const label=document.createElementNS('http://www.w3.org/2000/svg','text');
+  label.setAttribute('x',400); label.setAttribute('y',origin.y-160*0.5-6); label.setAttribute('font-size','10'); label.setAttribute('fill','var(--good)');
+  label.textContent='p=0.5';
+  svg.appendChild(label);
+
+  let d='M';
+  running.forEach((r,i)=>{
+    const x=origin.x+i*scaleX;
+    const y=origin.y-r*160;
+    d+=x+','+y+' L';
+  });
+  const curve=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve.setAttribute('d',d.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke','var(--part-accent)'); curve.setAttribute('stroke-width','2');
+  svg.appendChild(curve);
+
+  document.getElementById('readout').innerHTML =
+    'After 10 flips: '+running[9].toFixed(3)+'<br>After 50 flips: '+running[49].toFixed(3)+'<br>After 100 flips: '+running[99].toFixed(3)+'<br>After 500 flips: '+running[499].toFixed(3);
+  document.getElementById('fb').innerHTML = 'Notice the early wild swings (first 10-20 flips) versus the later near-flat settling — the curve genuinely narrows toward 0.5 as flips accumulate, exactly the "long-run behavior" probability actually describes.';
+}
+runFlips();
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> click 'Flip 500 times' several times in a row - the early portion of the curve looks wildly different each run, but the later portion always settles near 0.5. Probability was never a claim about any SPECIFIC flip or any SPECIFIC short run - it is a rigorous statement about where this running fraction is mathematically guaranteed to end up, no matter how chaotic any individual segment looks.";
+</script>
+</body></html>

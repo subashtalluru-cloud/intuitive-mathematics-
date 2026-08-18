@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C2D92; --part-accent-light:#F3E8FF; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FAF5FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#freqSvg{ width:100%; height:auto; aspect-ratio:2.5/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Higher Frequency, Shorter Period — Same Fixed Window, More Cycles Packed In</div>
+<div class="mb-sub">sin(nx) for different n. Drag n and watch the wave squeeze more complete oscillations into the exact same horizontal stretch — frequency and period move in opposite directions.</div>
+<div class="mb-stage">
+<svg id="freqSvg" viewBox="0 0 400 160"></svg>
+<div class="slider-row"><label>Harmonic n = <span id="nVal">1</span></label><input type="range" id="nSlider2" min="1" max="8" value="1"></div>
+<div class="readout" id="readout2"></div>
+</div>
+<div id="fb2" class="mb-feedback"></div>
+<div class="aha" id="aha2"></div>
+<div class="mb-caption">The n=1 harmonic (sine and cosine themselves) is called the fundamental; harmonics with n>1 are overtones — a musical instrument's distinctive tone color comes from its own specific mixture of overtone strengths.</div>
+</div>
+<script>
+function draw2(){
+  const n=parseInt(document.getElementById('nSlider2').value);
+  document.getElementById('nVal').textContent=n;
+  const period=(2*Math.PI/n);
+
+  const svg=document.getElementById('freqSvg');
+  svg.innerHTML='';
+  const scaleX=60, scaleY=50, origin={x:20,y:80};
+
+  const axis=document.createElementNS('http://www.w3.org/2000/svg','line');
+  axis.setAttribute('x1',origin.x); axis.setAttribute('y1',origin.y); axis.setAttribute('x2',380); axis.setAttribute('y2',origin.y);
+  axis.setAttribute('stroke','#94A3B8');
+  svg.appendChild(axis);
+
+  let d='M';
+  for(let x=0;x<=2*Math.PI;x+=0.02){
+    const y=Math.sin(n*x);
+    d+=(origin.x+x*scaleX)+','+(origin.y-y*scaleY)+' L';
+  }
+  const curve=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve.setAttribute('d',d.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke','var(--part-accent)'); curve.setAttribute('stroke-width','2.5');
+  svg.appendChild(curve);
+
+  const periodLine=document.createElementNS('http://www.w3.org/2000/svg','line');
+  periodLine.setAttribute('x1',origin.x); periodLine.setAttribute('y1',130); periodLine.setAttribute('x2',origin.x+period*scaleX); periodLine.setAttribute('y2',130);
+  periodLine.setAttribute('stroke','var(--good)'); periodLine.setAttribute('stroke-width','2');
+  svg.appendChild(periodLine);
+  const periodLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  periodLbl.setAttribute('x',origin.x+period*scaleX/2); periodLbl.setAttribute('y',145); periodLbl.setAttribute('text-anchor','middle'); periodLbl.setAttribute('font-size','10'); periodLbl.setAttribute('fill','var(--good)');
+  periodLbl.textContent='1 period = '+period.toFixed(3);
+  svg.appendChild(periodLbl);
+
+  document.getElementById('readout2').innerHTML =
+    'sin('+n+'x): frequency = '+n+', period = 2\u03c0/'+n+' = '+period.toFixed(4)+'<br>'+
+    'Number of complete cycles visible in [0, 2\u03c0]: '+n;
+  document.getElementById('fb2').innerHTML = n===1
+    ? 'This is the fundamental — exactly 1 complete cycle across the full 2\u03c0 window shown.'
+    : 'This is overtone #'+n+' — exactly '+n+' complete cycles packed into the identical 2\u03c0 window, each one correspondingly shorter than the fundamental\u2019s own single cycle.';
+}
+document.getElementById('nSlider2').addEventListener('input', draw2);
+draw2();
+document.getElementById('aha2').innerHTML="<strong>Aha:</strong> drag n up to 8 and count the peaks - sin(8x) squeezes 8 complete oscillations into the exact same horizontal window where sin(x) fits only 1. Frequency and period are genuinely inversely related: doubling frequency exactly halves the period, tripling frequency exactly divides the period by 3 - this is precisely why sin(3x) from the worked example has period 2π/3, one-third of the fundamental's own 2π period.";
+</script>
+</body></html>

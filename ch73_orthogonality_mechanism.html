@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C2D92; --part-accent-light:#F3E8FF; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FAF5FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#orthoSvg{ width:100%; height:auto; aspect-ratio:2.3/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:8px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Different Frequencies Cancel Out. The Same Frequency Never Does.</div>
+<div class="mb-sub">Drag two different frequencies and watch sin(mx)·sin(nx)'s positive and negative regions balance to zero area. Set them equal and watch that cancellation disappear completely.</div>
+<div class="mb-stage">
+<svg id="orthoSvg" viewBox="0 0 400 160"></svg>
+<div class="slider-row"><label>Frequency m = <span id="mVal">2</span></label><input type="range" id="mSlider" min="1" max="6" value="2"></div>
+<div class="slider-row"><label>Frequency n = <span id="nVal2">3</span></label><input type="range" id="nSlider3" min="1" max="6" value="3"></div>
+<div class="readout" id="readout3"></div>
+</div>
+<div id="fb3" class="mb-feedback"></div>
+<div class="aha" id="aha3"></div>
+<div class="mb-caption">This single structural fact is what allows every Fourier coefficient formula to isolate one frequency's exact contribution while every other frequency's contribution silently collapses to zero.</div>
+</div>
+<script>
+function integrate(f,a,b,steps){
+  const dx=(b-a)/steps;
+  let sum=0;
+  for(let i=0;i<steps;i++) sum+=f(a+i*dx)*dx;
+  return sum;
+}
+function draw3(){
+  const m=parseInt(document.getElementById('mSlider').value);
+  const n=parseInt(document.getElementById('nSlider3').value);
+  document.getElementById('mVal').textContent=m;
+  document.getElementById('nVal2').textContent=n;
+
+  const svg=document.getElementById('orthoSvg');
+  svg.innerHTML='';
+  const scaleX=60, scaleY=40, origin={x:20,y:80};
+
+  const axis=document.createElementNS('http://www.w3.org/2000/svg','line');
+  axis.setAttribute('x1',origin.x); axis.setAttribute('y1',origin.y); axis.setAttribute('x2',380); axis.setAttribute('y2',origin.y);
+  axis.setAttribute('stroke','#94A3B8');
+  svg.appendChild(axis);
+
+  let d='M';
+  let posPath='M', negPath='M';
+  for(let x=0;x<=2*Math.PI;x+=0.02){
+    const y=Math.sin(m*x)*Math.sin(n*x);
+    const px=origin.x+x*scaleX, py=origin.y-y*scaleY;
+    d+=px+','+py+' L';
+  }
+  const curve=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve.setAttribute('d',d.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke','var(--part-accent)'); curve.setAttribute('stroke-width','2');
+  svg.appendChild(curve);
+
+  const integral=integrate(x=>Math.sin(m*x)*Math.sin(n*x), 0, 2*Math.PI, 2000);
+
+  document.getElementById('readout3').innerHTML =
+    '\u222b sin('+m+'x)\u00b7sin('+n+'x) dx over [0,2\u03c0] = '+integral.toFixed(4)+
+    (m===n ? ' (expected: \u03c0 = '+Math.PI.toFixed(4)+')' : ' (expected: 0)');
+  document.getElementById('fb3').innerHTML = m===n
+    ? 'Same frequency (m=n='+m+'): the product sin('+m+'x)\u00b2 is never negative, so positive area accumulates with nothing to cancel it — the integral evaluates to exactly \u03c0, a fixed nonzero value.'
+    : 'Different frequencies (m='+m+', n='+n+'): the product oscillates between positive and negative regions that balance out EXACTLY — the total integral vanishes to zero, no matter which two distinct frequencies are chosen.';
+}
+document.getElementById('mSlider').addEventListener('input', draw3);
+document.getElementById('nSlider3').addEventListener('input', draw3);
+draw3();
+document.getElementById('aha3').innerHTML="<strong>Aha:</strong> drag m and n to match each other exactly (say both to 4) and watch the curve become entirely non-negative, with the integral jumping from 0 straight to π. Then separate them again to any two different values - the integral collapses back to 0 every single time, regardless of which specific pair you choose. This is the entire secret behind Fourier's coefficient recipe: asking 'how much of frequency n is present' by multiplying against sin(nx) and integrating makes every OTHER frequency vanish automatically, leaving only that one frequency's true strength standing.";
+</script>
+</body></html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C2D92; --part-accent-light:#F3E8FF; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FAF5FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#coefSvg{ width:100%; height:auto; aspect-ratio:2.3/1; display:block; cursor:pointer; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Click Each Bar to See Which Harmonics the Square Wave Actually Contains</div>
+<div class="mb-sub">Fourier's recipe mechanically extracts every b_n coefficient — no guessing required. Click a bar to see its exact value; notice which frequencies contribute nothing at all.</div>
+<div class="mb-stage">
+<svg id="coefSvg" viewBox="0 0 400 160"></svg>
+<div class="readout" id="readout4">Click a bar to see its exact coefficient value.</div>
+</div>
+<div id="fb4" class="mb-feedback"></div>
+<div class="aha" id="aha4"></div>
+<div class="mb-caption">Checking a function's even/odd symmetry BEFORE integrating (here, the square wave's odd symmetry) can eliminate up to half the required computational work immediately, with zero risk of an arithmetic error in an integral that was always going to be zero anyway.</div>
+</div>
+<script>
+function bn(n){
+  return (n%2===1) ? 4/(n*Math.PI) : 0;
+}
+function draw4(){
+  const svg=document.getElementById('coefSvg');
+  svg.innerHTML='';
+  const origin={x:30,y:130};
+  for(let n=1;n<=8;n++){
+    const val=bn(n);
+    const x=origin.x+(n-1)*44;
+    const h=val*80;
+    const bar=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    bar.setAttribute('x',x); bar.setAttribute('y',origin.y-h); bar.setAttribute('width',30); bar.setAttribute('height',Math.max(h,2));
+    bar.setAttribute('fill', n%2===1 ? 'var(--part-accent)' : '#E2E8F0');
+    bar.setAttribute('data-n',n);
+    bar.setAttribute('style','cursor:pointer');
+    svg.appendChild(bar);
+    const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',x+15); lbl.setAttribute('y',145); lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('font-size','9');
+    lbl.textContent='b'+n;
+    svg.appendChild(lbl);
+  }
+}
+document.getElementById('coefSvg').addEventListener('click', e=>{
+  if(e.target.tagName!=='rect') return;
+  const n=parseInt(e.target.getAttribute('data-n'));
+  const val=bn(n);
+  document.getElementById('readout4').innerHTML = 'b<sub>'+n+'</sub> = '+(n%2===1 ? '4/('+n+'\u03c0)' : '0')+' = '+val.toFixed(4);
+  document.getElementById('fb4').innerHTML = n%2===1
+    ? 'This odd harmonic genuinely contributes — its strength is 4/('+n+'\u03c0), diminishing steadily as n grows, but never fully vanishing for any odd n.'
+    : 'This even harmonic contributes EXACTLY zero — no computation was even needed to know this in advance, since the square wave\u2019s odd symmetry guarantees every even-n coefficient vanishes.';
+});
+draw4();
+document.getElementById('aha4').innerHTML="<strong>Aha:</strong> click through the bars in order - odd-numbered bars (b1, b3, b5, b7) are always present, steadily shrinking, while even-numbered bars (b2, b4, b6, b8) are all exactly zero, with total certainty, before any integral was even computed. This is Fourier's coefficient formula in direct action: given only the square wave's own defining shape, the recipe mechanically reveals exactly which frequencies are hiding inside it and exactly how strong each one is - no trial and error, no guessing.";
+</script>
+</body></html>

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C2D92; --part-accent-light:#F3E8FF; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FAF5FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#waveSvg{ width:100%; height:auto; aspect-ratio:2.5/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Adding Sine Waves, One Odd Harmonic at a Time — Watch a Square Emerge</div>
+<div class="mb-sub">sin(x) + sin(3x)/3 + sin(5x)/5 + ... Drag the number of terms and watch a smooth curve gradually sharpen into the jagged square wave's flat plateaus and sudden jumps.</div>
+<div class="mb-stage">
+<svg id="waveSvg" viewBox="0 0 400 180"></svg>
+<div class="slider-row"><label>Number of harmonics: <span id="nVal">1</span></label><input type="range" id="nSlider" min="1" max="30" value="1"></div>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">Adding more harmonics generally improves accuracy across the whole period, but at any single specific point the approximation's error can occasionally increase — overall convergence and pointwise behavior are related but genuinely distinct questions.</div>
+</div>
+<script>
+function squareWaveApprox(x, nTerms){
+  let total=0;
+  for(let k=0;k<nTerms;k++){
+    const n=2*k+1;
+    total += Math.sin(n*x)/n;
+  }
+  return total;
+}
+function draw(){
+  const nTerms=parseInt(document.getElementById('nSlider').value);
+  document.getElementById('nVal').textContent=nTerms;
+
+  const svg=document.getElementById('waveSvg');
+  svg.innerHTML='';
+  const scaleX=60, scaleY=50, origin={x:20,y:90};
+
+  const idealPath=document.createElementNS('http://www.w3.org/2000/svg','path');
+  let idealD='M';
+  for(let x=0.01;x<2*Math.PI;x+=0.01){
+    const y = Math.sin(x)>0 ? 1 : -1;
+    idealD+=(origin.x+x*scaleX)+','+(origin.y-y*scaleY)+' L';
+  }
+  idealPath.setAttribute('d',idealD.slice(0,-1)); idealPath.setAttribute('fill','none'); idealPath.setAttribute('stroke','#CBD5E1'); idealPath.setAttribute('stroke-width','1.5'); idealPath.setAttribute('stroke-dasharray','3,2');
+  svg.appendChild(idealPath);
+
+  let d='M';
+  for(let x=0;x<=2*Math.PI;x+=0.02){
+    const y=squareWaveApprox(x,nTerms);
+    d+=(origin.x+x*scaleX)+','+(origin.y-y*scaleY)+' L';
+  }
+  const curve=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve.setAttribute('d',d.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke','var(--part-accent)'); curve.setAttribute('stroke-width','2.5');
+  svg.appendChild(curve);
+
+  const valAtQuarterPeriod=squareWaveApprox(Math.PI/2,nTerms);
+  document.getElementById('readout').innerHTML =
+    'Terms used: '+nTerms+' (odd harmonics 1 through '+(2*nTerms-1)+')<br>'+
+    'Value at x=\u03c0/2: '+valAtQuarterPeriod.toFixed(4)+' (ideal square wave: 1.0000)';
+  document.getElementById('fb').innerHTML = nTerms===1
+    ? 'With just 1 term, this is simply a pure sine wave — no square-wave character yet.'
+    : (nTerms<10
+      ? 'The curve is visibly sharpening — flat "shoulders" forming near the peaks, steeper transitions at the jumps, but still clearly wavy rather than sharp-cornered.'
+      : 'With '+nTerms+' terms, the curve now closely tracks the dashed ideal square wave across most of the period — though notice the small overshoot spikes right at the jumps, a genuine, persistent feature (Gibbs phenomenon) that never fully disappears no matter how many terms are added.');
+}
+document.getElementById('nSlider').addEventListener('input', draw);
+draw();
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> drag the slider up slowly and watch the smooth sine wave progressively grow flat plateaus and sharp vertical jumps, approaching the dashed gray ideal square wave. Notice the small spike that persists right at each jump, even at 30 terms - this is the Gibbs phenomenon, a genuine mathematical fact: the overshoot's HEIGHT never shrinks to zero no matter how many harmonics you add, even though the overshoot's WIDTH does shrink toward zero. Perfectly smooth sine waves really can build a function with genuine sharp corners - Fourier's original, once-doubted claim, made directly visible here.";
+</script>
+</body></html>

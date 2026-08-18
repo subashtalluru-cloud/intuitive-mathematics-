@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#DC2626; --part-accent-light:#FEE2E2; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FEF2F2; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#gamblerSvg{ width:100%; height:auto; aspect-ratio:2.5/1; display:block; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin-top:10px; }
+.mb-btn:hover{ background:var(--part-accent); color:#fff; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Five Tails in a Row — Is Heads "Due"? Click to Find Out.</div>
+<div class="mb-sub">A fair coin just landed tails five times in a row. Click to flip again and see what the coin's own memory (or lack of it) actually produces — repeated many times, to see the true long-run pattern.</div>
+<div class="mb-stage">
+<svg id="gamblerSvg" viewBox="0 0 360 100"></svg>
+<button class="mb-btn" onclick="runTrials()">Run 1000 trials of 'flip after a 5-tail streak'</button>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">The Law of Large Numbers guarantees convergence toward the true mean over MANY trials — it says nothing whatsoever about compensating for a short-run streak, and coins have no memory of their own recent history.</div>
+</div>
+<script>
+function runTrials(){
+  let headsAfterStreak=0;
+  const trials=1000;
+  for(let t=0;t<trials;t++){
+    // simulate until we get 5 tails in a row, then check next flip
+    let streak=0;
+    let flip;
+    while(streak<5){
+      flip = Math.random()<0.5;
+      if(!flip) streak++; else streak=0;
+    }
+    const nextFlip = Math.random()<0.5;
+    if(nextFlip) headsAfterStreak++;
+  }
+  const rate = headsAfterStreak/trials;
+
+  const svg=document.getElementById('gamblerSvg');
+  svg.innerHTML='';
+  const bar=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  bar.setAttribute('x',30); bar.setAttribute('y',30); bar.setAttribute('width',rate*300); bar.setAttribute('height',30);
+  bar.setAttribute('fill','var(--part-accent)');
+  svg.appendChild(bar);
+  const line50=document.createElementNS('http://www.w3.org/2000/svg','line');
+  line50.setAttribute('x1',30+150); line50.setAttribute('y1',10); line50.setAttribute('x2',30+150); line50.setAttribute('y2',70);
+  line50.setAttribute('stroke','var(--good)'); line50.setAttribute('stroke-dasharray','3,2');
+  svg.appendChild(line50);
+  const label=document.createElementNS('http://www.w3.org/2000/svg','text');
+  label.setAttribute('x',30+150); label.setAttribute('y',85); label.setAttribute('text-anchor','middle'); label.setAttribute('font-size','10'); label.setAttribute('fill','var(--good)');
+  label.textContent='expected: 50%';
+  svg.appendChild(label);
+
+  document.getElementById('readout').innerHTML =
+    'Across '+trials+' independent 5-tail streaks, heads occurred next '+(rate*100).toFixed(1)+'% of the time.';
+  document.getElementById('fb').innerHTML = 'Despite EVERY single trial starting from a 5-tail losing streak, the very next flip still landed heads almost exactly 50% of the time — genuinely no different from any other flip. The coin carries no memory of its own recent history.';
+}
+document.getElementById('gamblerSvg').innerHTML='';
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> run the 1000-trial simulation several times - the result always lands close to 50%, never noticeably higher, no matter how many 5-tail streaks were involved. The gambler's fallacy confuses the Law of Large Numbers (many trials converge to the true mean OVERALL) with a nonexistent 'coin memory' compensating any SPECIFIC short streak - these are genuinely different claims, and only the first one is actually true.";
+</script>
+</body></html>

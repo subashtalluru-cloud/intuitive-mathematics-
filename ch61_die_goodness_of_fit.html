@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#B45309; --part-accent-light:#FEF3C7; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FFFBEB; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#dieSvg{ width:100%; height:auto; aspect-ratio:2.5/1; display:block; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">60 Rolls, Not Exactly 10 of Each Face — Is This Die Rigged?</div>
+<div class="mb-sub">A fair die predicts about 10 rolls per face out of 60. Actual counts: 12, 8, 11, 9, 13, 7. Each bar's real, unscaled deviation is shown — but the chi-square statistic scales each one by the expected count first.</div>
+<div class="mb-stage">
+<svg id="dieSvg" viewBox="0 0 380 160"></svg>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">A commonly cited rule of thumb requires expected counts of at least 5 in each cell for the chi-square approximation to remain reliable — with smaller expected counts, alternative methods like Fisher's exact test are more appropriate.</div>
+</div>
+<script>
+function draw(){
+  const observed=[12,8,11,9,13,7];
+  const expected=10;
+  const svg=document.getElementById('dieSvg');
+  svg.innerHTML='';
+  const origin={x:30,y:130};
+  observed.forEach((o,i)=>{
+    const x=origin.x+i*55;
+    const expLine=document.createElementNS('http://www.w3.org/2000/svg','line');
+    expLine.setAttribute('x1',x); expLine.setAttribute('y1',origin.y-expected*7); expLine.setAttribute('x2',x+40); expLine.setAttribute('y2',origin.y-expected*7);
+    expLine.setAttribute('stroke','var(--good)'); expLine.setAttribute('stroke-dasharray','3,2');
+    svg.appendChild(expLine);
+    const bar=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    bar.setAttribute('x',x); bar.setAttribute('y',origin.y-o*7); bar.setAttribute('width',40); bar.setAttribute('height',o*7);
+    bar.setAttribute('fill','var(--part-accent)'); bar.setAttribute('fill-opacity','0.7');
+    svg.appendChild(bar);
+    const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',x+20); lbl.setAttribute('y',145); lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('font-size','10');
+    lbl.textContent='face '+(i+1);
+    svg.appendChild(lbl);
+    const valLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    valLbl.setAttribute('x',x+20); valLbl.setAttribute('y',origin.y-o*7-5); valLbl.setAttribute('text-anchor','middle'); valLbl.setAttribute('font-size','10'); valLbl.setAttribute('font-weight','700');
+    valLbl.textContent=o;
+    svg.appendChild(valLbl);
+  });
+
+  const chi2 = observed.reduce((s,o)=>s+Math.pow(o-expected,2)/expected,0);
+  document.getElementById('readout').innerHTML =
+    'Chi-square statistic = '+chi2.toFixed(2)+'<br>Degrees of freedom = 6-1 = 5<br>This value is genuinely small for 5 degrees of freedom — well within what ordinary chance alone would produce.';
+  document.getElementById('fb').innerHTML = 'Despite face 5 showing 13 rolls (30% above expected) and face 6 showing only 7 (30% below), the combined chi-square value of '+chi2.toFixed(2)+' is unremarkable — this specific pattern is entirely consistent with a genuinely fair die, providing no evidence of bias.';
+}
+draw();
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> face 5 (13 rolls) and face 2 (8 rolls) both deviate from the expected 10, yet neither deviation, nor their combination across all six faces, is large enough to flag bias. This is exactly the discipline the chi-square statistic enforces: individual bars can wobble noticeably around the dashed green expected line purely from ordinary chance, and only a genuinely LARGE combined, scaled deviation - not merely a visually uneven-looking chart - should raise suspicion of a rigged die.";
+</script>
+</body></html>
