@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4A5568;
+  --part-accent-light: #E2E8F0;
+  --part-highlight: #D97706;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F3F1EA; }
+  .bridge-track{ display:flex; align-items:flex-end; gap:6px; justify-content:center; min-height:180px; padding:10px 0; overflow-x:auto; }
+  .platform{
+    width:70px; height:50px; background: var(--part-accent); color:#fff;
+    display:flex; align-items:center; justify-content:center; text-align:center;
+    font-size:0.7rem; font-weight:700; border-radius:6px 6px 0 0; flex-shrink:0;
+  }
+  .domino{
+    width:46px; height:100px; background:#fff; border:2px solid var(--line);
+    border-radius:4px; display:flex; align-items:center; justify-content:center;
+    text-align:center; font-size:0.62rem; padding:4px; cursor:pointer;
+    transition: transform 0.4s, background 0.3s, border-color 0.3s; flex-shrink:0;
+    transform-origin:bottom center;
+  }
+  .domino.fallen{ transform: rotate(78deg) translateX(6px); background: var(--part-accent-light); border-color:var(--part-accent); }
+  .domino.next{ border-color: var(--part-highlight); box-shadow: 0 0 0 2px rgba(217,119,6,0.3); }
+  .pool{ display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin-top:14px; }
+  .pool .domino{ height:70px; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Build the Domino Bridge — Proof by Contradiction</div>
+  <div class="mb-sub">Claim: <em>there is no largest natural number.</em> Click each step below, in the correct logical order, to tip the dominoes and complete the bridge from axioms to conclusion.</div>
+
+  <div class="mb-stage">
+    <div class="bridge-track" id="track">
+      <div class="platform">AXIOMS</div>
+      <div id="bridgeSlots"></div>
+      <div class="platform">CONCLUSION</div>
+    </div>
+    <div class="pool" id="pool"></div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Every domino must be forced by the one before it. If you click out of order, the bridge won't connect — a proof with one broken link isn't "mostly a proof," it isn't a proof at all.</div>
+</div>
+
+<script>
+const steps = [
+  {id:1, text:"Assume a largest natural number N exists.", correct:1},
+  {id:2, text:"N + 1 is also a natural number.", correct:2},
+  {id:3, text:"N + 1 > N.", correct:3},
+  {id:4, text:"This contradicts N being the largest.", correct:4},
+  {id:5, text:"Therefore the assumption is false — no largest natural number exists.", correct:5}
+];
+let shuffled = [...steps].sort(()=> Math.random()-0.5);
+let placed = [];
+
+function renderPool(){
+  const pool = document.getElementById('pool');
+  pool.innerHTML = '';
+  shuffled.forEach(s=>{
+    if(placed.includes(s.id)) return;
+    const d = document.createElement('div');
+    d.className = 'domino';
+    d.textContent = s.text;
+    d.onclick = ()=> tryPlace(s.id);
+    pool.appendChild(d);
+  });
+}
+
+function renderBridge(){
+  const slots = document.getElementById('bridgeSlots');
+  slots.innerHTML = '';
+  slots.style.display = 'flex';
+  slots.style.gap = '6px';
+  for(let i=0;i<steps.length;i++){
+    const d = document.createElement('div');
+    d.className = 'domino';
+    if(i < placed.length){
+      const s = steps.find(x=>x.id===placed[i]);
+      d.textContent = `${i+1}. ${s.text}`;
+      d.classList.add('fallen');
+    } else {
+      d.textContent = '?';
+      d.style.opacity = 0.3;
+      if(i === placed.length) d.classList.add('next');
+    }
+    slots.appendChild(d);
+  }
+}
+
+function tryPlace(id){
+  const fb = document.getElementById('fb');
+  const expectedNext = steps[placed.length].id;
+  if(id === expectedNext){
+    placed.push(id);
+    renderBridge();
+    renderPool();
+    if(placed.length === steps.length){
+      fb.className = 'mb-feedback show good';
+      fb.innerHTML = "<strong>Bridge complete.</strong> Every domino was forced by the one before it — that's what makes this a proof, not just a plausible story. Notice this proof never draws a single 'sample' natural number to check; it reasons about ALL of them at once, which is exactly what a hundred marble draws could never do.";
+    } else {
+      fb.className = 'mb-feedback show info';
+      fb.innerHTML = `Good — domino ${placed.length} locked in. ${steps.length - placed.length} to go.`;
+    }
+  } else {
+    fb.className = 'mb-feedback show bad';
+    fb.innerHTML = "That domino doesn't logically follow yet — find the step that is directly forced by what's already on the bridge.";
+  }
+}
+
+renderBridge();
+renderPool();
+</script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4A5568;
+  --part-accent-light: #E2E8F0;
+  --part-highlight: #D97706;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F3F1EA; }
+  .step-card{
+    background:#fff; border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin-bottom:8px;
+    font-family:var(--font-mono); font-size:0.85rem; cursor:pointer; opacity:0.4;
+  }
+  .step-card.done{ opacity:1; border-color:var(--part-accent); background:var(--part-accent-light); }
+  .num-picker{ display:flex; gap:8px; justify-content:center; margin-bottom:12px; }
+  .num-picker input{ width:60px; font-family:var(--font-mono); padding:6px; border:1px solid var(--line); border-radius:6px; text-align:center; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Building a Direct Proof — Step by Step</div>
+  <div class="mb-sub">Claim: the sum of two even numbers is even. Pick any two even numbers, then click each proof step in order to see it apply to YOUR numbers — not just one fixed example.</div>
+
+  <div class="mb-stage">
+    <div class="num-picker">
+      <label>a = <input type="number" id="aInput" value="4" step="2"></label>
+      <label>b = <input type="number" id="bInput" value="6" step="2"></label>
+      <button class="mb-btn" onclick="applyNums()">Use these numbers</button>
+    </div>
+    <div id="stepsContainer"></div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Notice: a and b were never fixed to specific values inside the proof itself — they stood for ANY even numbers. That's what makes the conclusion apply to every possible pair, not just the one you picked.</div>
+</div>
+
+<script>
+let revealed = 0;
+function getSteps(){
+  const a = parseInt(document.getElementById('aInput').value) || 4;
+  const b = parseInt(document.getElementById('bInput').value) || 6;
+  const m = a/2, n = b/2;
+  return [
+    `Step 1 — Define even: an integer x is even if x = 2k for some whole number k.`,
+    `Step 2 — Let a = ${a} = 2×${m}, so m = ${m}. Let b = ${b} = 2×${n}, so n = ${n}.`,
+    `Step 3 — Compute a + b = ${a} + ${b} = 2×${m} + 2×${n} = 2×(${m}+${n}) = 2×${m+n}.`,
+    `Step 4 — Since ${m+n} is a whole number, a+b = ${a+b} is exactly 2 times a whole number: even.`,
+    `Step 5 — Since a=${a}, b=${b} were arbitrary even numbers (any even a, b would produce the same algebra), this holds for EVERY possible pair, forever — not just this one.`
+  ];
+}
+function render(){
+  const container = document.getElementById('stepsContainer');
+  container.innerHTML = '';
+  getSteps().forEach((s,i)=>{
+    const card = document.createElement('div');
+    card.className = 'step-card' + (i<revealed?' done':'');
+    card.textContent = s;
+    card.onclick = ()=> { if(i===revealed) advance(); };
+    container.appendChild(card);
+  });
+}
+function advance(){
+  revealed++;
+  render();
+  const fb = document.getElementById('fb');
+  if(revealed === 5){
+    fb.className = 'mb-feedback show good';
+    fb.innerHTML = `Proof complete — and it works identically no matter what even a and b you typed in above. Try changing the numbers and notice the algebra structure never changes, only the specific numerals do.`;
+  } else {
+    fb.className = 'mb-feedback show info';
+    fb.innerHTML = `Step ${revealed} revealed. Click the next dimmed card.`;
+  }
+}
+function applyNums(){
+  const a = parseInt(document.getElementById('aInput').value);
+  const b = parseInt(document.getElementById('bInput').value);
+  const fb = document.getElementById('fb');
+  if(a%2!==0 || b%2!==0){
+    fb.className = 'mb-feedback show bad';
+    fb.innerHTML = 'Both numbers need to be even for this proof to apply — try again with even numbers.';
+    return;
+  }
+  revealed = 0;
+  render();
+  fb.className = 'mb-feedback show info';
+  fb.innerHTML = `Now click through the proof steps below using a=${a}, b=${b}.`;
+}
+render();
+</script>
+</body>
+</html>

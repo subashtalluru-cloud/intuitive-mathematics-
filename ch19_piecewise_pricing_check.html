@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #7C3AED;
+  --part-accent-light: #EDE9FE;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part04-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FAF5FF; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Is This Pricing Scheme Truly Linear?</div>
+  <div class="mb-sub">A ride costs $3 base + $2/mile for the first 5 miles, then $4/mile beyond. Test the rate at different mileages.</div>
+
+  <div class="mb-stage">
+    <svg id="pricingSvg" viewBox="0 0 300 180" style="width:100%; height:180px; max-width:320px; display:block; margin:0 auto;"></svg>
+  </div>
+  <div class="mb-controls" style="justify-content:center;">
+    <button class="mb-btn" onclick="testRate(2,3)">Rate from mile 2 to 3</button>
+    <button class="mb-btn" onclick="testRate(7,8)">Rate from mile 7 to 8</button>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Recognizing whether a real situation is genuinely, fully linear (one constant rate everywhere) or only piecewise-linear (constant within sub-ranges but changing at a breakpoint) is a crucial modeling judgment call — get it wrong and a single formula silently produces wrong answers past the breakpoint.</div>
+</div>
+
+<script>
+function cost(miles){
+  if(miles<=5) return 3+2*miles;
+  return 3+2*5+4*(miles-5);
+}
+function draw(){
+  const svg = document.getElementById('pricingSvg');
+  svg.innerHTML = '';
+  const cx=20, cy=160, scaleX=25, scaleY=3;
+  let path='M';
+  for(let m=0;m<=10;m+=0.2){
+    path += `${cx+m*scaleX},${cy-cost(m)*scaleY} L`;
+  }
+  const curve = document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve.setAttribute('d',path.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke','var(--part-accent)'); curve.setAttribute('stroke-width','2.5');
+  svg.appendChild(curve);
+  const breakLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+  breakLine.setAttribute('x1',cx+5*scaleX);breakLine.setAttribute('y1',5);breakLine.setAttribute('x2',cx+5*scaleX);breakLine.setAttribute('y2',175);
+  breakLine.setAttribute('stroke','var(--part-highlight)'); breakLine.setAttribute('stroke-dasharray','3,2');
+  svg.appendChild(breakLine);
+}
+function testRate(m1,m2){
+  const rate = (cost(m2)-cost(m1))/(m2-m1);
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show info';
+  fb.innerHTML = `Rate from mile ${m1} to ${m2}: ($${cost(m2).toFixed(2)}−$${cost(m1).toFixed(2)})/(${m2}−${m1}) = $${rate.toFixed(2)}/mile. ${m2<=5 ? 'Within the first tier: $2/mile as expected.' : 'Past mile 5: $4/mile — a DIFFERENT rate. This confirms the pricing is NOT one single linear function across its whole domain — it needs a piecewise structure with two separate linear pieces.'}`;
+}
+draw();
+</script>
+</body>
+</html>

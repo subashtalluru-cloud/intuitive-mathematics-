@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #0F766E;
+  --part-accent-light: #CCFBF1;
+  --part-highlight: #EA580C;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part03-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F0FBF9; }
+  .deriv-step{ font-family:var(--font-mono); font-size:0.85rem; background:#fff; border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin-bottom:8px; opacity:0.3; }
+  .deriv-step.shown{ opacity:1; border-color:var(--part-accent); }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Why (−1) × (−1) = 1 — Not a Convention, a Forced Consequence</div>
+  <div class="mb-sub">Click through this derivation. Watch the number line show what "(−1) × 0 = 0" and "(−1) × 1 = −1" mean visually, before the final step forces the answer.</div>
+
+  <div class="mb-stage">
+    <svg id="derivSvg" viewBox="0 0 260 60" style="width:100%; height:69px; max-width:280px; display:block; margin:0 auto;"></svg>
+    <div id="stepsContainer"></div>
+  </div>
+  <button class="mb-btn primary" onclick="advance()" style="display:block; margin:0 auto;">Reveal next line</button>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">This is the first place in the book where a "rule" turns out to be a strict logical consequence of rules already established — not an arbitrary convention. The same method later derives the properties of i (Chapter 60) and infinite series rules (Chapter 46).</div>
+</div>
+
+<script>
+const steps = [
+  {text:"Start from something everyone already accepts: (−1) × 0 = 0", mark:0},
+  {text:"Rewrite 0 as 1 + (−1): (−1) × (1 + (−1)) = 0", mark:0},
+  {text:"Apply the distributive property: (−1)×1 + (−1)×(−1) = 0", mark:-1},
+  {text:"Simplify (−1)×1 = −1: −1 + (−1)×(−1) = 0", mark:-1},
+  {text:"Solve for the unknown piece: (−1)×(−1) must equal +1 — the ONLY value making −1+(that value)=0", mark:1},
+  {text:"Conclusion: (−1) × (−1) = 1 is FORCED by distribution + 'anything × 0 = 0.' Never a convention.", mark:1}
+];
+let revealed = 0;
+function drawLine(mark){
+  const svg = document.getElementById('derivSvg');
+  svg.innerHTML = '';
+  const toX = v => 130+v*40;
+  const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1',10);line.setAttribute('y1',30);line.setAttribute('x2',250);line.setAttribute('y2',30);
+  line.setAttribute('stroke','var(--ink-soft)');
+  svg.appendChild(line);
+  [-1,0,1].forEach(v=>{
+    const x=toX(v);
+    const tick = document.createElementNS('http://www.w3.org/2000/svg','line');
+    tick.setAttribute('x1',x);tick.setAttribute('y1',25);tick.setAttribute('x2',x);tick.setAttribute('y2',35);
+    tick.setAttribute('stroke','var(--line)');
+    svg.appendChild(tick);
+    const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',x);lbl.setAttribute('y',48);lbl.setAttribute('text-anchor','middle');lbl.setAttribute('font-size','10');
+    lbl.textContent = v;
+    svg.appendChild(lbl);
+  });
+  const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  dot.setAttribute('cx',toX(mark));dot.setAttribute('cy',30);dot.setAttribute('r',6);dot.setAttribute('fill','var(--part-highlight)');
+  svg.appendChild(dot);
+}
+function render(){
+  const container = document.getElementById('stepsContainer');
+  container.innerHTML = '';
+  steps.forEach((s,i)=>{
+    const div = document.createElement('div');
+    div.className = 'deriv-step' + (i<revealed?' shown':'');
+    div.textContent = `${i+1}. ${s.text}`;
+    container.appendChild(div);
+  });
+}
+function advance(){
+  if(revealed < steps.length){
+    revealed++;
+    render();
+    drawLine(steps[revealed-1].mark);
+    const fb = document.getElementById('fb');
+    if(revealed === steps.length){
+      fb.className = 'mb-feedback show good';
+      fb.innerHTML = `Complete. Every line followed necessarily from the line before it — exactly the "domino bridge" structure from Chapter 3's definition of proof, applied here to something usually just memorized as a rule.`;
+    } else {
+      fb.className = 'mb-feedback show info';
+    }
+  }
+}
+drawLine(0);
+render();
+</script>
+</body>
+</html>

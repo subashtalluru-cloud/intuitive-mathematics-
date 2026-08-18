@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #0F766E;
+  --part-accent-light: #CCFBF1;
+  --part-highlight: #EA580C;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part03-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F0FBF9; }
+  .compare-item{ background:#fff; border:1px solid var(--line); border-radius:8px; padding:12px; margin-bottom:10px; }
+  .frac-pair{ font-family:var(--font-mono); font-size:1.1rem; text-align:center; margin-bottom:8px; }
+  .btn-row{ display:flex; gap:8px; justify-content:center; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Which Fraction Is Bigger? Test Your Instinct</div>
+  <div class="mb-sub">"Bigger denominator always means smaller number" — is that actually always true? Compare these pairs using cross-multiplication and find out.</div>
+
+  <div class="mb-stage" id="itemsContainer"></div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Cross-multiplication (a/b vs c/d: compare a×d vs c×b) always gives the right answer instantly — engineers use this exact trick to recognize equivalent gear ratios like 3:1 and 12:4 without re-deriving anything.</div>
+</div>
+
+<script>
+const pairs = [
+  {a:1,b:2,c:1,d:4, trickyNote:"Same numerator, denominator 4>2 — HERE bigger denominator does mean smaller fraction (more pieces, same amount taken = smaller pieces)."},
+  {a:3,b:4,c:5,d:8, trickyNote:"3/4 has smaller denominator but is actually BIGGER than 5/8 — the 'bigger denominator = smaller number' rule already breaks here since numerators differ too."},
+  {a:2,b:3,c:7,d:10, trickyNote:"2/3 ≈ 0.667, 7/10 = 0.7 — very close, and the smaller denominator (3) doesn't win this time. Only cross-multiplication resolves it cleanly: 2×10=20 vs 7×3=21."}
+];
+
+function render(){
+  const container = document.getElementById('itemsContainer');
+  container.innerHTML = '';
+  pairs.forEach((p,i)=>{
+    const div = document.createElement('div');
+    div.className = 'compare-item';
+    div.innerHTML = `<div class="frac-pair">${p.a}/${p.b}  vs  ${p.c}/${p.d}</div>
+      <div class="btn-row">
+        <button class="mb-btn" onclick="check(${i}, 'left', this)">${p.a}/${p.b} is bigger</button>
+        <button class="mb-btn" onclick="check(${i}, 'right', this)">${p.c}/${p.d} is bigger</button>
+        <button class="mb-btn" onclick="check(${i}, 'equal', this)">They're equal</button>
+      </div>`;
+    container.appendChild(div);
+  });
+}
+function check(i, choice, btn){
+  const p = pairs[i];
+  const leftVal = p.a*p.d, rightVal = p.c*p.b; // cross multiply
+  let actual = leftVal===rightVal ? 'equal' : (leftVal>rightVal ? 'left' : 'right');
+  const fb = document.getElementById('fb');
+  const correct = choice===actual;
+  fb.className = `mb-feedback show ${correct?'good':'bad'}`;
+  fb.innerHTML = `<strong>Cross-multiply:</strong> ${p.a}×${p.d}=${leftVal} vs ${p.c}×${p.b}=${rightVal} → ${actual==='equal'?'EQUAL':(actual==='left'?p.a+'/'+p.b+' is bigger':p.c+'/'+p.d+' is bigger')}. ${correct?'Your answer matches.':"Not quite — but here's the resolution:"} ${p.trickyNote}`;
+}
+render();
+</script>
+</body>
+</html>

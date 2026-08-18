@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4A5568;
+  --part-accent-light: #E2E8F0;
+  --part-highlight: #D97706;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F3F1EA; }
+  .compare-row{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin:14px 0; }
+  .infinity-card{
+    border:2px solid var(--line); border-radius:10px; padding:14px; width:220px; text-align:center; background:#fff;
+  }
+  .infinity-card h5{ margin:0 0 8px 0; font-family:var(--font-serif); color:var(--part-accent); }
+  .size-tag{ font-family:var(--font-mono); font-size:1.3rem; font-weight:700; margin-top:8px; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Not All Infinities Are the Same Size</div>
+  <div class="mb-sub">Click each pair below. Some infinite sets CAN be perfectly paired (same size). Some provably CANNOT — no matter how cleverly you try.</div>
+
+  <div class="mb-stage">
+    <div class="compare-row">
+      <div class="infinity-card">
+        <h5>ℕ (naturals)<br>vs. Even numbers</h5>
+        <button class="mb-btn" onclick="reveal('naturals-evens')">Test pairability</button>
+        <div class="size-tag" id="tag-naturals-evens"></div>
+      </div>
+      <div class="infinity-card">
+        <h5>ℕ (naturals)<br>vs. ℝ (reals, 0 to 1)</h5>
+        <button class="mb-btn" onclick="reveal('naturals-reals')">Test pairability</button>
+        <div class="size-tag" id="tag-naturals-reals"></div>
+      </div>
+    </div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Cantor's diagonal argument proves the reals form a strictly LARGER infinity than the naturals — a "countable" infinity (ℕ, evens, even the rationals) is a fundamentally different size than an "uncountable" one (ℝ). Infinity isn't one thing; it's a whole hierarchy of different sizes.</div>
+</div>
+
+<script>
+function reveal(key){
+  const tag = document.getElementById('tag-'+key);
+  const fb = document.getElementById('fb');
+  if(key==='naturals-evens'){
+    tag.textContent = 'SAME SIZE';
+    tag.style.color = 'var(--good)';
+    fb.className = 'mb-feedback show good';
+    fb.innerHTML = `A complete bijection exists: n ↔ 2n pairs every natural with exactly one even, none left over on either side (see the bijection-pairer element). Both are "countably infinite."`;
+  } else {
+    tag.textContent = 'DIFFERENT SIZE';
+    tag.style.color = 'var(--bad)';
+    fb.className = 'mb-feedback show bad';
+    fb.innerHTML = `Cantor's diagonal argument PROVES no bijection can ever exist here — for ANY proposed complete list of reals between 0 and 1, you can construct a new real number guaranteed to be missing from that list (see the Cantor diagonal element). The reals are "uncountably infinite" — a strictly bigger infinity than ℕ.`;
+  }
+}
+</script>
+</body>
+</html>

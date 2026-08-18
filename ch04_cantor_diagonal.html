@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4A5568;
+  --part-accent-light: #E2E8F0;
+  --part-highlight: #D97706;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F3F1EA; }
+  table.diag{ border-collapse:collapse; margin:14px auto; font-family:var(--font-mono); font-size:0.95rem; }
+  table.diag td{ padding:6px 9px; text-align:center; }
+  table.diag td.rowlabel{ color:var(--ink-soft); font-size:0.8rem; text-align:right; padding-right:10px; }
+  table.diag td.diag-cell{ background: var(--part-highlight); color:#fff; border-radius:4px; font-weight:700; cursor:pointer; }
+  table.diag td.diag-cell:hover{ opacity:0.85; }
+  .newnum-row td{ border-top:2px solid var(--part-accent); font-weight:700; color:var(--part-accent); }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Cantor's Diagonal Argument</div>
+  <div class="mb-sub">Suppose someone claims they've listed <em>every</em> real number between 0 and 1 (rows 1–5 below, an infinite list in principle). Click each highlighted diagonal digit to flip it, building a new number guaranteed to differ from every row.</div>
+
+  <div class="mb-stage">
+    <table class="diag" id="diagTable"></table>
+    <div style="text-align:center; margin-top:6px;">
+      <button class="mb-btn primary" onclick="flipAll()">Flip every diagonal digit at once</button>
+      <button class="mb-btn" onclick="resetTable()">Reset</button>
+    </div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">The new number differs from row 1 in its 1st decimal place, from row 2 in its 2nd, from row 3 in its 3rd — and so on forever. By construction it cannot equal any row on the list, no matter how the list was built or how long it is. So no such complete list can exist: the reals in (0,1) are a strictly larger infinity than the naturals used to number the rows.</div>
+</div>
+
+<script>
+const rows = [
+  {label:'r₁', digits:[3,1,4,1,5,9]},
+  {label:'r₂', digits:[7,0,7,1,0,6]},
+  {label:'r₃', digits:[2,7,1,8,2,8]},
+  {label:'r₄', digits:[1,4,1,4,2,1]},
+  {label:'r₅', digits:[5,7,7,2,1,5]}
+];
+let flipped = [false,false,false,false,false];
+
+function digitAt(i){
+  const d = rows[i].digits[i];
+  return flipped[i] ? (d+1)%10 : d;
+}
+
+function render(){
+  const table = document.getElementById('diagTable');
+  table.innerHTML = '';
+  const header = document.createElement('tr');
+  header.innerHTML = `<td></td><td>0.</td>` + rows[0].digits.map((_,j)=>`<td style="color:var(--ink-soft); font-size:0.7rem;">d${j+1}</td>`).join('');
+  table.appendChild(header);
+
+  rows.forEach((row,i)=>{
+    const tr = document.createElement('tr');
+    let cells = `<td class="rowlabel">${row.label} =</td><td>0.</td>`;
+    row.digits.forEach((d,j)=>{
+      if(j===i){
+        cells += `<td class="diag-cell" onclick="toggle(${i})">${flipped[i]?(d+1)%10:d}</td>`;
+      } else {
+        cells += `<td>${d}</td>`;
+      }
+    });
+    tr.innerHTML = cells;
+    table.appendChild(tr);
+  });
+
+  const newRow = document.createElement('tr');
+  newRow.className = 'newnum-row';
+  let newCells = `<td class="rowlabel">new =</td><td>0.</td>`;
+  rows.forEach((row,i)=> newCells += `<td>${digitAt(i)}</td>`);
+  newRow.innerHTML = newCells;
+  table.appendChild(newRow);
+}
+
+function toggle(i){
+  flipped[i] = !flipped[i];
+  render();
+  const fb = document.getElementById('fb');
+  const count = flipped.filter(Boolean).length;
+  if(count === 0){
+    fb.className = 'mb-feedback show info';
+    fb.innerHTML = "Flip a diagonal digit — this guarantees the new number disagrees with that row at that exact decimal place.";
+  } else if(count < rows.length){
+    fb.className = 'mb-feedback show info';
+    fb.innerHTML = `${count} diagonal digit(s) flipped. The new number already provably differs from ${count} of the ${rows.length} listed rows — it can never equal any row you've touched.`;
+  } else {
+    fb.className = 'mb-feedback show good';
+    fb.innerHTML = "<strong>Every diagonal digit flipped.</strong> The new number now differs from every single row on the list, in at least one decimal place each. It cannot appear anywhere on this list — yet it's a perfectly valid real number between 0 and 1. Extend the same idea to an infinite list and the conclusion doesn't change: no list, however constructed, could ever contain every real number. That's why |ℝ| is a strictly larger infinity than |ℕ|.";
+  }
+}
+function flipAll(){ flipped = [true,true,true,true,true]; render(); toggle(-1); render();
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show good';
+  fb.innerHTML = "<strong>Every diagonal digit flipped.</strong> The new number now differs from every single row on the list, in at least one decimal place each. It cannot appear anywhere on this list — yet it's a perfectly valid real number between 0 and 1. Extend the same idea to an infinite list and the conclusion doesn't change: no list, however constructed, could ever contain every real number. That's why |ℝ| is a strictly larger infinity than |ℕ|.";
+}
+function resetTable(){ flipped=[false,false,false,false,false]; render(); document.getElementById('fb').className='mb-feedback'; }
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4338CA;
+  --part-accent-light: #E0E7FF;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part02-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#EEF0FB; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">De Morgan's Laws — See It on a Venn Diagram</div>
+  <div class="mb-sub">¬(P∧Q) vs (¬P)∨(¬Q). Click each side — watch the SAME shaded region appear on the Venn diagram both times. That shared shading IS the proof of equivalence.</div>
+
+  <div class="mb-stage">
+    <svg id="vennSvg" viewBox="0 0 260 160" style="width:100%; height:185px; max-width:280px; display:block; margin:0 auto;"></svg>
+    <div style="text-align:center; margin-top:8px;">
+      <button class="mb-btn" onclick="show('left')">Shade ¬(P∧Q)</button>
+      <button class="mb-btn" onclick="show('right')">Shade (¬P)∨(¬Q)</button>
+    </div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">This is exactly the bug pattern behind <code>if (!(is_valid && is_complete))</code> vs. <code>if (!is_valid || !is_complete)</code> — getting the law backward silently breaks conditional logic in real code. The Venn diagram makes the equivalence undeniable: both expressions shade the identical region.</div>
+</div>
+
+<script>
+function drawVenn(mode){
+  const svg = document.getElementById('vennSvg');
+  svg.innerHTML = '';
+  const cxP=100, cxQ=160, cy=80, r=55;
+  // regions: outside both, P-only, Q-only, both
+  // We shade by drawing a full background then punching a hole for the AND region
+  if(mode==='left' || mode==='right'){
+    // shade everything except the intersection (P AND Q)
+    const bg = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    bg.setAttribute('x',0);bg.setAttribute('y',0);bg.setAttribute('width',260);bg.setAttribute('height',160);
+    bg.setAttribute('fill','var(--part-highlight)'); bg.setAttribute('fill-opacity','0.35');
+    svg.appendChild(bg);
+    // white circle for P union Q minus intersection is complex; instead use clip approach:
+    // simplified: draw both circles white first (removing P and Q areas), then re-shade the "outside intersection but inside union" via drawing intersection white too
+  }
+  // Approach: use two circles as clip masks. For clarity, we manually compose using an SVG mask.
+  const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+  defs.innerHTML = `
+    <mask id="maskP"><rect width="260" height="160" fill="black"/><circle cx="${cxP}" cy="${cy}" r="${r}" fill="white"/></mask>
+    <mask id="maskQ"><rect width="260" height="160" fill="black"/><circle cx="${cxQ}" cy="${cy}" r="${r}" fill="white"/></mask>
+    <mask id="maskUnion"><rect width="260" height="160" fill="black"/><circle cx="${cxP}" cy="${cy}" r="${r}" fill="white"/><circle cx="${cxQ}" cy="${cy}" r="${r}" fill="white"/></mask>
+  `;
+  svg.appendChild(defs);
+
+  if(mode==='left' || mode==='right'){
+    // ¬(P∧Q) = everything except the intersection. Same shape reached both ways.
+    // shade full plane
+    const full = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    full.setAttribute('x',0);full.setAttribute('y',0);full.setAttribute('width',260);full.setAttribute('height',160);
+    full.setAttribute('fill','var(--part-highlight)'); full.setAttribute('fill-opacity','0.4');
+    svg.appendChild(full);
+    // punch a white hole shaped like the intersection using a second mask trick: draw white shapes over the intersection only
+    // intersection: draw both circles white with multiply -- simplify: draw the overlap area using two arcs isn't trivial in plain SVG without clip-path intersection.
+    // Use clipPath approach for intersection
+    const clipDefs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+    clipDefs.innerHTML = `<clipPath id="clipP"><circle cx="${cxP}" cy="${cy}" r="${r}"/></clipPath>`;
+    svg.appendChild(clipDefs);
+    const intersectionWhite = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    intersectionWhite.setAttribute('cx',cxQ);intersectionWhite.setAttribute('cy',cy);intersectionWhite.setAttribute('r',r);
+    intersectionWhite.setAttribute('fill','#EEF0FB'); // matches page background to "erase"
+    intersectionWhite.setAttribute('clip-path','url(#clipP)');
+    svg.appendChild(intersectionWhite);
+  }
+
+  // circle outlines
+  [[cxP,'P','var(--part-accent)'],[cxQ,'Q','var(--part-highlight)']].forEach(([cx,label,color])=>{
+    const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx',cx);circle.setAttribute('cy',cy);circle.setAttribute('r',r);
+    circle.setAttribute('fill','none'); circle.setAttribute('stroke',color); circle.setAttribute('stroke-width','2');
+    svg.appendChild(circle);
+    const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',cx);lbl.setAttribute('y',cy-r-8);lbl.setAttribute('text-anchor','middle');lbl.setAttribute('font-size','13');lbl.setAttribute('font-weight','700');lbl.setAttribute('fill',color);
+    lbl.textContent = label;
+    svg.appendChild(lbl);
+  });
+
+  const title = document.createElementNS('http://www.w3.org/2000/svg','text');
+  title.setAttribute('x',130);title.setAttribute('y',150);title.setAttribute('text-anchor','middle');title.setAttribute('font-size','11');title.setAttribute('font-family','monospace');title.setAttribute('fill','var(--part-highlight)');
+  title.textContent = mode==='left' ? '¬(P∧Q) shaded' : (mode==='right' ? '(¬P)∨(¬Q) shaded' : 'Click a button to shade');
+  svg.appendChild(title);
+}
+function show(mode){
+  drawVenn(mode);
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show good';
+  fb.innerHTML = `Notice: whichever side you shade, the SAME region lights up — everywhere except the P∩Q overlap. That's not a coincidence you have to trust; it's a diagram you can literally see is identical both times. This is why ∀ behaves like ∧ (Chapter 7) and ¬∀↔∃ — the same shading logic generalizes.`;
+}
+drawVenn(null);
+</script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4338CA;
+  --part-accent-light: #E0E7FF;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part02-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#EEF0FB; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Fermat's False Guess — Killed by One Number</div>
+  <div class="mb-sub">Fermat conjectured: every number of the form 2^(2ⁿ)+1 is prime. It held for n=0,1,2,3,4. Click to test the next n on the visual timeline — watch where it breaks.</div>
+
+  <div class="mb-stage">
+    <svg id="fermatSvg" viewBox="0 0 280 90" style="width:100%; height:96px; max-width:300px; display:block; margin:0 auto;"></svg>
+  </div>
+  <button class="mb-btn primary" onclick="testNext()" style="display:block; margin:10px auto;">Test the next n</button>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">This actually happened — Fermat's conjecture held for 5 confirmed cases before Euler found n=5 breaks it in 1732, nearly a century later. One counterexample, after ANY number of successes, ends a "for all" claim instantly and permanently.</div>
+</div>
+
+<script>
+const results = [
+  {n:0, val:3, prime:true}, {n:1, val:5, prime:true}, {n:2, val:17, prime:true},
+  {n:3, val:257, prime:true}, {n:4, val:65537, prime:true},
+  {n:5, val:4294967297, prime:false, factor:641}
+];
+let idx = 0;
+
+function draw(){
+  const svg = document.getElementById('fermatSvg');
+  svg.innerHTML = '';
+  for(let i=0;i<results.length;i++){
+    const x = 15+i*45;
+    const tested = i<idx;
+    const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx',x);circle.setAttribute('cy',30);circle.setAttribute('r',16);
+    circle.setAttribute('fill', tested ? (results[i].prime ? '#F0FDF4':'#FEF2F2') : '#fff');
+    circle.setAttribute('stroke', tested ? (results[i].prime?'var(--good)':'var(--bad)') : 'var(--line)');
+    circle.setAttribute('stroke-width','2');
+    svg.appendChild(circle);
+    const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+    label.setAttribute('x',x);label.setAttribute('y',34);label.setAttribute('text-anchor','middle');label.setAttribute('font-size','10');label.setAttribute('font-weight','700');
+    label.setAttribute('fill', tested ? (results[i].prime?'var(--good)':'var(--bad)') : 'var(--ink-soft)');
+    label.textContent = tested ? (results[i].prime?'✓':'✗') : '?';
+    svg.appendChild(label);
+    const nLabel = document.createElementNS('http://www.w3.org/2000/svg','text');
+    nLabel.setAttribute('x',x);nLabel.setAttribute('y',55);nLabel.setAttribute('text-anchor','middle');nLabel.setAttribute('font-size','9');
+    nLabel.textContent = 'n='+i;
+    svg.appendChild(nLabel);
+    if(i>0){
+      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1',x-45+16);line.setAttribute('y1',30);line.setAttribute('x2',x-16);line.setAttribute('y2',30);
+      line.setAttribute('stroke', 'var(--line)');
+      svg.insertBefore(line,svg.firstChild);
+    }
+  }
+  const status = document.createElementNS('http://www.w3.org/2000/svg','text');
+  status.setAttribute('x',140);status.setAttribute('y',78);status.setAttribute('text-anchor','middle');status.setAttribute('font-size','10');status.setAttribute('font-weight','700');
+  status.setAttribute('fill', idx>=6 ? 'var(--bad)':'var(--ink-soft)');
+  status.textContent = idx>=6 ? 'Conjecture BROKEN at n=5' : (idx>0 ? `${idx} confirmations so far` : 'Click to begin testing');
+  svg.appendChild(status);
+}
+function testNext(){
+  if(idx >= results.length) return;
+  const r = results[idx];
+  idx++;
+  draw();
+  const fb = document.getElementById('fb');
+  if(r.prime){
+    fb.className = 'mb-feedback show info';
+    fb.innerHTML = `n=${r.n}: 2^(2^${r.n})+1 = ${r.val} → PRIME ✓. ${idx} confirmations so far — Fermat himself stopped checking around here.`;
+  } else {
+    fb.className = 'mb-feedback show bad';
+    fb.innerHTML = `<strong>n=5 breaks it.</strong> 4,294,967,297 = 641 × 6,700,417 — NOT prime, despite 5 previous confirmations (see the red ✗ above). Euler found this in 1732. Five confirming cases, then one counterexample, and the "for all" claim is permanently dead.`;
+  }
+}
+draw();
+</script>
+</body>
+</html>

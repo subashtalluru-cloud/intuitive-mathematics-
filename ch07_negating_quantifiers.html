@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4338CA;
+  --part-accent-light: #E0E7FF;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part02-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#EEF0FB; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Negating Quantifiers — The Flip Rule</div>
+  <div class="mb-sub">Negating a quantified statement always flips the quantifier type AND negates what's inside. Click to watch the flip happen visually, then try it yourself.</div>
+
+  <div class="mb-stage">
+    <svg id="flipSvg" viewBox="0 0 280 130" style="width:100%; height:139px; max-width:300px; display:block; margin:0 auto;"></svg>
+    <div style="text-align:center;">
+      <button class="mb-btn" onclick="showFlip('forall')">¬∀x P(x)</button>
+      <button class="mb-btn" onclick="showFlip('exists')">¬∃x P(x)</button>
+    </div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">This mirrors De Morgan's Laws exactly — ∀ behaves like ∧ (a giant AND across every element), ∃ behaves like ∨ (a giant OR), and negation flips one into the other.</div>
+</div>
+
+<script>
+function draw(kind){
+  const svg = document.getElementById('flipSvg');
+  svg.innerHTML = '';
+  const leftSym = kind==='forall' ? '¬∀' : '¬∃';
+  const rightSym = kind==='forall' ? '∃¬' : '∀¬';
+  [[70,leftSym+'x P(x)','var(--part-accent)'],[210,rightSym+'x P(x)','var(--part-highlight)']].forEach(([x,text,color])=>{
+    const box = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    box.setAttribute('x',x-55);box.setAttribute('y',40);box.setAttribute('width',110);box.setAttribute('height',40);box.setAttribute('rx',8);
+    box.setAttribute('fill','#fff'); box.setAttribute('stroke',color); box.setAttribute('stroke-width','2');
+    svg.appendChild(box);
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',x);t.setAttribute('y',65);t.setAttribute('text-anchor','middle');t.setAttribute('font-size','13');t.setAttribute('font-family','monospace');t.setAttribute('fill',color);
+    t.textContent = text;
+    svg.appendChild(t);
+  });
+  const equals = document.createElementNS('http://www.w3.org/2000/svg','text');
+  equals.setAttribute('x',140);equals.setAttribute('y',65);equals.setAttribute('text-anchor','middle');equals.setAttribute('font-size','16');equals.setAttribute('fill','var(--good)');
+  equals.textContent = '≡';
+  svg.appendChild(equals);
+  const arrow = document.createElementNS('http://www.w3.org/2000/svg','path');
+  arrow.setAttribute('d','M105,25 Q140,5 175,25');
+  arrow.setAttribute('fill','none'); arrow.setAttribute('stroke','var(--part-highlight)'); arrow.setAttribute('stroke-width','1.5'); arrow.setAttribute('marker-end','url(#flipArrow)');
+  svg.appendChild(arrow);
+  const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+  defs.innerHTML = `<marker id="flipArrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="var(--part-highlight)"/></marker>`;
+  svg.insertBefore(defs,svg.firstChild);
+  const swapLabel = document.createElementNS('http://www.w3.org/2000/svg','text');
+  swapLabel.setAttribute('x',140);swapLabel.setAttribute('y',15);swapLabel.setAttribute('text-anchor','middle');swapLabel.setAttribute('font-size','8');swapLabel.setAttribute('fill','var(--part-highlight)');
+  swapLabel.textContent = 'flip quantifier + negate inside';
+  svg.appendChild(swapLabel);
+  const plainEnglish = document.createElementNS('http://www.w3.org/2000/svg','text');
+  plainEnglish.setAttribute('x',140);plainEnglish.setAttribute('y',105);plainEnglish.setAttribute('text-anchor','middle');plainEnglish.setAttribute('font-size','10');
+  plainEnglish.textContent = kind==='forall' ? '"Not everyone did it" = "someone didn\'t do it"' : '"No one did it" = "everyone didn\'t do it"';
+  svg.appendChild(plainEnglish);
+}
+function showFlip(kind){
+  draw(kind);
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show good';
+  fb.innerHTML = kind==='forall'
+    ? `¬∀x P(x) ≡ ∃x ¬P(x). "Not everyone did it" simply means "at least one person didn't."`
+    : `¬∃x P(x) ≡ ∀x ¬P(x). "No one did it" means "everyone, without exception, didn't."`;
+}
+draw('forall');
+</script>
+</body>
+</html>

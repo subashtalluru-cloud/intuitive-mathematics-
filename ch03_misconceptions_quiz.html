@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4A5568;
+  --part-accent-light: #E2E8F0;
+  --part-highlight: #D97706;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F3F1EA; }
+  .stmt-card{ background:#fff; border:2px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:10px; cursor:pointer; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">True or False — Test Your Proof Instincts</div>
+  <div class="mb-sub">Click each statement — watch the meter swing to TRUE or MISCONCEPTION and track your running score.</div>
+
+  <div class="mb-stage">
+    <svg id="meterSvg" viewBox="0 0 280 70" style="width:100%; height:75px; max-width:300px; display:block; margin:0 auto;"></svg>
+    <div class="mb-stage" id="cardsContainer"></div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Fermat's Last Theorem's 1993 proof had a subtle gap that took a full year to fix — even world-class mathematicians must check every domino, because a proof with one gap isn't 99% complete.</div>
+</div>
+
+<script>
+const items = [
+  {text:"Once something is proven true, it stays true forever, no matter what.", verdict:false,
+   explain:"MISCONCEPTION. Every proof rests on its starting axioms. Change the axioms — as non-Euclidean geometry does — and what's provable can change."},
+  {text:"A proof by contradiction is just as rigorous as a direct proof.", verdict:true,
+   explain:"CORRECT. Assuming the opposite, deriving a contradiction, and concluding the original claim must be true is a fully valid logical strategy."},
+  {text:"If you check a claim for the first 1000 cases and it holds every time, that's essentially a proof.", verdict:false,
+   explain:"MISCONCEPTION. This is the marble-bag fallacy — overwhelming evidence is not proof unless the argument reasons about ALL cases at once."},
+  {text:"A lemma is just a smaller theorem, used as a stepping stone toward a bigger one.", verdict:true,
+   explain:"CORRECT. Lemmas are proven with the same rigor as any theorem."},
+  {text:"Mathematical proof and strong scientific evidence are basically the same idea, just with different names.", verdict:false,
+   explain:"MISCONCEPTION. There's a category difference, not a difference of degree. Proof reasons about the mechanism that forces an outcome, achieving total certainty no evidence can reach."}
+];
+let score = {correct:0, total:0};
+function drawMeter(lastVerdict){
+  const svg = document.getElementById('meterSvg');
+  svg.innerHTML='';
+  const cx=140, cy=60, r=50;
+  const arc = document.createElementNS('http://www.w3.org/2000/svg','path');
+  arc.setAttribute('d',`M${cx-r},${cy} A${r},${r} 0 0 1 ${cx+r},${cy}`);
+  arc.setAttribute('fill','none'); arc.setAttribute('stroke','var(--line)'); arc.setAttribute('stroke-width','8');
+  svg.appendChild(arc);
+  const leftLbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+  leftLbl.setAttribute('x',cx-r);leftLbl.setAttribute('y',cy+15);leftLbl.setAttribute('font-size','9');leftLbl.setAttribute('fill','var(--bad)');
+  leftLbl.textContent = 'MISCONCEPTION';
+  svg.appendChild(leftLbl);
+  const rightLbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+  rightLbl.setAttribute('x',cx+r-35);rightLbl.setAttribute('y',cy+15);rightLbl.setAttribute('font-size','9');rightLbl.setAttribute('fill','var(--good)');
+  rightLbl.textContent = 'TRUE';
+  svg.appendChild(rightLbl);
+  const angle = lastVerdict===null ? 90 : (lastVerdict ? 30 : 150);
+  const rad = angle*Math.PI/180;
+  const needleX = cx - r*0.85*Math.cos(rad), needleY = cy - r*0.85*Math.sin(rad);
+  const needle = document.createElementNS('http://www.w3.org/2000/svg','line');
+  needle.setAttribute('x1',cx);needle.setAttribute('y1',cy);needle.setAttribute('x2',needleX);needle.setAttribute('y2',needleY);
+  needle.setAttribute('stroke', lastVerdict===null?'var(--ink-soft)':(lastVerdict?'var(--good)':'var(--bad)')); needle.setAttribute('stroke-width','3');
+  svg.appendChild(needle);
+  const scoreLbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+  scoreLbl.setAttribute('x',cx);scoreLbl.setAttribute('y',cy+5);scoreLbl.setAttribute('text-anchor','middle');scoreLbl.setAttribute('font-size','10');scoreLbl.setAttribute('font-weight','700');
+  scoreLbl.textContent = `${score.total}/5 explored`;
+  svg.appendChild(scoreLbl);
+}
+function render(){
+  const container = document.getElementById('cardsContainer');
+  container.innerHTML = '';
+  items.forEach((it,i)=>{
+    const card = document.createElement('div');
+    card.className = 'stmt-card';
+    card.innerHTML = `<div>${i+1}. "${it.text}"</div><div id="verdict${i}"></div>`;
+    card.onclick = ()=> reveal(i);
+    container.appendChild(card);
+  });
+}
+function reveal(i){
+  const it = items[i];
+  const v = document.getElementById('verdict'+i);
+  if(!v.innerHTML) score.total++;
+  drawMeter(it.verdict);
+  v.style.cssText = `margin-top:8px; padding:8px; border-radius:6px; background:${it.verdict?'#F0FDF4':'#FEF2F2'}; color:${it.verdict?'var(--good)':'var(--bad)'};`;
+  v.innerHTML = `<strong>${it.verdict?'TRUE':'MISCONCEPTION'}:</strong> ${it.explain}`;
+}
+render();
+drawMeter(null);
+</script>
+</body>
+</html>

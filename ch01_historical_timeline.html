@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4A5568;
+  --part-accent-light: #E2E8F0;
+  --part-highlight: #D97706;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F3F1EA; }
+  .timeline-track{ position:relative; height:8px; background:var(--part-accent-light); border-radius:4px; margin:30px 20px 10px; }
+  .timeline-fill{ position:absolute; height:100%; background:var(--part-accent); border-radius:4px; width:0%; transition: width 0.3s; }
+  .timeline-dot{
+    position:absolute; top:-8px; width:24px; height:24px; border-radius:50%;
+    background:#fff; border:3px solid var(--part-accent); cursor:pointer;
+    transform:translateX(-12px); transition: background 0.2s;
+  }
+  .timeline-dot.active{ background: var(--part-highlight); border-color:var(--part-highlight); }
+  .era-card{
+    margin-top:20px; padding:16px; background:#fff; border:1px solid var(--line);
+    border-radius:10px; min-height:100px;
+  }
+  .era-title{ font-family:var(--font-serif); font-weight:700; color:var(--part-accent); margin-bottom:6px; }
+  .era-year{ font-family:var(--font-mono); font-size:0.75rem; color:var(--part-highlight); font-weight:700; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">From Notches to Numbers: A 32,000-Year Walk</div>
+  <div class="mb-sub">Drag the marker (or click a dot) along the timeline to see how "a collection of things" slowly became "an abstract, portable idea."</div>
+
+  <div class="mb-stage">
+    <div class="timeline-track" id="track">
+      <div class="timeline-fill" id="fill"></div>
+    </div>
+    <div class="era-card" id="eraCard"></div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Each stop is a real, physical increase in abstraction — from "one notch per sheep" (still tied to specific sheep) to "the symbol 5" (tied to nothing at all). That escalating detachment from any one physical situation is the thread running through all of Chapter 1.</div>
+</div>
+
+<script>
+const eras = [
+  {year:"~30,000 BCE", title:"The Wolf Bone of Dolní Věstonice", text:"55 notches, in groups of five, cut into a wolf's bone. One notch stood for one thing — a day, an animal, a debt. The mark and the thing it counted were still tightly bound together."},
+  {year:"~20,000 BCE", title:"The Ishango Bone", text:"Groupings on a baboon's fibula that some researchers read as early primes or a lunar tally. Marks are now organized into meaningful clusters — a first hint of structure beyond simple one-to-one counting."},
+  {year:"~3000 BCE", title:"Sumerian Clay Tokens & Cuneiform", text:"Merchants sealed clay tokens inside envelopes as receipts, then began pressing number-symbols directly into wet clay. For the first time, a symbol could represent a quantity without any physical tokens present at all."},
+  {year:"~300 BCE", title:"Euclid's Elements (Alexandria)", text:"Numbers and shapes are now reasoned about as pure objects, governed by proof rather than physical measurement — the abstraction has become strong enough to support entire logical structures."},
+  {year:"1st–5th century CE", title:"India: Base-10 Positional Zero", text:"A digit's value now depends purely on its position, and zero is treated as a number in its own right — the abstraction is complete enough to be manipulated mechanically, with no physical objects involved at any step."},
+  {year:"Today", title:"The Symbol \"5\"", text:"Written on a page, spoken aloud, encoded in binary inside a computer — completely detached from any specific five things. This is the finished distillation: reality poured in 32,000 years ago, a portable rule remaining today."}
+];
+let idx = 0;
+
+function render(){
+  const fill = document.getElementById('fill');
+  fill.style.width = (idx/(eras.length-1)*100)+'%';
+  const track = document.getElementById('track');
+  track.querySelectorAll('.timeline-dot').forEach(d=>d.remove());
+  eras.forEach((e,i)=>{
+    const dot = document.createElement('div');
+    dot.className = 'timeline-dot' + (i===idx?' active':'');
+    dot.style.left = (i/(eras.length-1)*100)+'%';
+    dot.onclick = ()=>{ idx=i; render(); };
+    track.appendChild(dot);
+  });
+  const e = eras[idx];
+  document.getElementById('eraCard').innerHTML =
+    `<div class="era-year">${e.year}</div><div class="era-title">${e.title}</div><div>${e.text}</div>`;
+
+  const fb = document.getElementById('fb');
+  if(idx === eras.length-1){
+    fb.className = 'mb-feedback show good';
+    fb.innerHTML = "You've walked the entire arc: from a notch that meant one specific sheep, to a symbol that means nothing but 'five-ness' itself, usable for sheep, apples, bridges, or planets. That arc — concrete to abstract — is the single idea every later chapter in this book builds on.";
+  } else {
+    fb.className = 'mb-feedback show info';
+    fb.innerHTML = `Step ${idx+1} of ${eras.length}. Keep moving forward to watch the abstraction deepen.`;
+  }
+}
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4A5568;
+  --part-accent-light: #E2E8F0;
+  --part-highlight: #D97706;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F3F1EA; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">How Do You Compare Sizes You Can't Count?</div>
+  <div class="mb-sub">You're in a dark room. You can't count the chairs or the people — but you can check if everyone has a seat with none left over. Click to pair them up and see how this solves an "impossible" counting problem.</div>
+
+  <div class="mb-stage">
+    <svg id="roomSvg" viewBox="0 0 280 100" style="width:100%; height:107px; max-width:300px; display:block; margin:0 auto;"></svg>
+  </div>
+  <button class="mb-btn primary" onclick="pairUp()" style="display:block; margin:10px auto;">Everyone sit down (pair up)</button>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">You never counted "5 chairs" or "5 people" — you only checked "does everyone have a seat, with none left over?" This pairing test is EXACTLY the tool that lets mathematicians compare infinite sets, where actual counting is impossible but pairing still works perfectly.</div>
+</div>
+
+<script>
+let paired = false;
+function draw(){
+  const svg = document.getElementById('roomSvg');
+  svg.innerHTML='';
+  const n=5;
+  for(let i=0;i<n;i++){
+    const x = 30+i*45;
+    const chair = document.createElementNS('http://www.w3.org/2000/svg','text');
+    chair.setAttribute('x',x);chair.setAttribute('y',35);chair.setAttribute('font-size','20');chair.setAttribute('text-anchor','middle');
+    chair.textContent = '💺';
+    svg.appendChild(chair);
+    const person = document.createElementNS('http://www.w3.org/2000/svg','text');
+    person.setAttribute('x',x);person.setAttribute('y',75);person.setAttribute('font-size','20');person.setAttribute('text-anchor','middle');
+    person.textContent = '🧍';
+    svg.appendChild(person);
+    if(paired){
+      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1',x);line.setAttribute('y1',40);line.setAttribute('x2',x);line.setAttribute('y2',60);
+      line.setAttribute('stroke','var(--good)'); line.setAttribute('stroke-width','2'); line.setAttribute('stroke-dasharray','2,2');
+      svg.appendChild(line);
+    }
+  }
+  if(paired){
+    const check = document.createElementNS('http://www.w3.org/2000/svg','text');
+    check.setAttribute('x',140);check.setAttribute('y',95);check.setAttribute('text-anchor','middle');check.setAttribute('font-size','10');check.setAttribute('fill','var(--good)');check.setAttribute('font-weight','700');
+    check.textContent = '✓ every chair paired, every person paired — same size';
+    svg.appendChild(check);
+  }
+}
+function pairUp(){
+  paired = true;
+  draw();
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show good';
+  fb.innerHTML = `This is precisely how Chapter 4 proves ℕ and the even numbers are "the same size" — nobody counts to infinity (impossible). Instead, the rule n↔2n pairs every natural with exactly one even, with none left over — the exact same logic as the dark room, just applied to an infinite collection instead of 5 chairs.`;
+}
+draw();
+</script>
+</body>
+</html>

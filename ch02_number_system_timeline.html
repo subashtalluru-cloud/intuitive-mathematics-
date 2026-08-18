@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4A5568;
+  --part-accent-light: #E2E8F0;
+  --part-highlight: #D97706;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F3F1EA; }
+  .civ-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:10px; margin:14px 0; }
+  .civ-card{
+    border:1px solid var(--line); border-radius:8px; padding:10px; background:#fff;
+    text-align:center; cursor:pointer; transition: box-shadow 0.15s, border-color 0.15s;
+  }
+  .civ-card:hover{ box-shadow: var(--shadow); }
+  .civ-card.active{ border-color: var(--part-accent); box-shadow: 0 0 0 2px var(--part-accent-light); }
+  .civ-name{ font-size:0.72rem; font-weight:700; color:var(--part-accent); margin-bottom:6px; }
+  .civ-rep{ font-size:1.3rem; font-family: var(--font-mono); min-height:34px; }
+  .civ-detail{
+    margin-top:14px; padding:14px; background:#fff; border:1px solid var(--line);
+    border-radius:8px; font-size:0.85rem; line-height:1.5;
+  }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Five Civilizations, One Number: 47</div>
+  <div class="mb-sub">Click each system to see how differently "forty-seven" was written — and why only one of these makes mechanical multiplication possible.</div>
+
+  <div class="mb-stage">
+    <div class="civ-grid" id="civGrid"></div>
+    <div class="civ-detail" id="civDetail"></div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Roman numerals are excellent for carving in stone and terrible for arithmetic — try multiplying XLVII × XII in your head using only Roman symbols, with no mental conversion to base 10. That difficulty is precisely the real-world problem positional notation was invented to solve.</div>
+</div>
+
+<script>
+const civs = [
+  {name:'Sumerian (base 60)', rep:'𒐐𒐈', can_mult:false,
+   detail:"Cuneiform wedges pressed into wet clay, base 60. Powerful for astronomy (still why we have 60 minutes and 360°), but each new magnitude needed new wedge groupings — no clean mechanical multiplication procedure."},
+  {name:'Egyptian (base 10, non-positional)', rep:'𓎆𓎆𓎆𓎆𓏺𓏺𓏺𓏺𓏺𓏺𓏺', can_mult:false,
+   detail:"Repeated symbols for tens and ones, no positional meaning — four 'ten' symbols plus seven 'one' symbols. Addition works by literally combining symbol piles; multiplication required a separate doubling algorithm, not a mechanical digit-by-digit procedure."},
+  {name:'Roman numerals', rep:'XLVII', can_mult:false,
+   detail:"XL (=40, 'ten before fifty') VII (=7). Excellent for carving into stone and reading at a glance. Offers no clean, mechanical column-by-column procedure for multiplication — Roman merchants used counting boards (abacuses), not the numerals themselves, to actually calculate."},
+  {name:'Mayan (base 20, true zero)', rep:'●●▬▬▬▬▬▬▬●●', can_mult:false,
+   detail:"Dots and bars, base 20, with a genuine shell-shaped zero glyph — one of only a few independent inventions of true zero in history. Positional, but base 20 with an unusual base-18 twist in the calendar count made general arithmetic more complex than base 10."},
+  {name:'Hindu-Arabic (base 10, positional, zero)', rep:'47', can_mult:true,
+   detail:"4 in the tens bucket, 7 in the ones bucket. A digit's meaning depends purely on position, and zero holds empty buckets in place. This is the only system among the five with a clean, mechanical column-by-column procedure for multiplication — which is exactly why it displaced all the others worldwide."}
+];
+
+function render(){
+  const grid = document.getElementById('civGrid');
+  grid.innerHTML = '';
+  civs.forEach((c,i)=>{
+    const card = document.createElement('div');
+    card.className = 'civ-card' + (i===current?' active':'');
+    card.innerHTML = `<div class="civ-name">${c.name.split('(')[0].trim()}</div><div class="civ-rep">${c.rep}</div>`;
+    card.onclick = ()=>{ current=i; render(); };
+    grid.appendChild(card);
+  });
+  const c = civs[current];
+  document.getElementById('civDetail').innerHTML = `<strong>${c.name}</strong><br>${c.detail}`;
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show ' + (c.can_mult ? 'good':'info');
+  fb.innerHTML = c.can_mult
+    ? "This is the only system of the five that turns multiplication into a mechanical, position-by-position procedure — the real-world problem every other system on this list failed to solve."
+    : "Try to imagine multiplying two three-digit numbers using only this system's symbols, with no mental translation to base 10. That difficulty is the gap positional notation with zero was built to close.";
+}
+let current = 4;
+render();
+</script>
+</body>
+</html>

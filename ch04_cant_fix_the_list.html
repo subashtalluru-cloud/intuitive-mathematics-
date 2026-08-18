@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4A5568;
+  --part-accent-light: #E2E8F0;
+  --part-highlight: #D97706;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F3F1EA; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">"Just Add It to the List!" — Why That Doesn't Work</div>
+  <div class="mb-sub">Cantor's diagonal number is missing from the list. Obvious fix: add it! Click to try — watch the list grow and a NEW diagonal gap open every single time.</div>
+
+  <div class="mb-stage">
+    <svg id="listSvg" viewBox="0 0 280 140" style="width:100%; height:150px; max-width:300px; display:block; margin:0 auto;"></svg>
+  </div>
+  <button class="mb-btn primary" onclick="addAttempt()" style="display:block; margin:10px auto;">Add the missing number to the list</button>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Every "fix" just creates a brand new list — which has its OWN new diagonal number, missing all over again. This isn't a failure to try hard enough; it's a proof that NO possible list can ever be complete.</div>
+</div>
+
+<script>
+let attempts = 0;
+function draw(){
+  const svg = document.getElementById('listSvg');
+  svg.innerHTML = '';
+  const rowH = 20;
+  for(let i=0;i<Math.min(attempts+3,6);i++){
+    const y = 15+i*rowH;
+    const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('x',20);rect.setAttribute('y',y);rect.setAttribute('width',200);rect.setAttribute('height',16);rect.setAttribute('rx',3);
+    rect.setAttribute('fill', i<3 ? 'var(--part-accent-light)' : '#FDF2F8');
+    rect.setAttribute('stroke', i<3 ? 'var(--part-accent)' : 'var(--part-highlight)');
+    svg.appendChild(rect);
+    const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+    label.setAttribute('x',30);label.setAttribute('y',y+12);label.setAttribute('font-size','9');label.setAttribute('font-family','monospace');
+    label.textContent = i<3 ? `original row ${i+1}` : `attempt ${i-2} fix`;
+    svg.appendChild(label);
+  }
+  if(attempts>0){
+    const newGap = document.createElementNS('http://www.w3.org/2000/svg','text');
+    newGap.setAttribute('x',20);newGap.setAttribute('y',130);newGap.setAttribute('font-size','9');newGap.setAttribute('fill','var(--bad)');
+    newGap.textContent = `⚠ new diagonal number still missing after ${attempts} fix(es)`;
+    svg.appendChild(newGap);
+  }
+}
+function addAttempt(){
+  attempts++;
+  draw();
+  const fb = document.getElementById('fb');
+  if(attempts < 3){
+    fb.className = 'mb-feedback show info';
+    fb.innerHTML = `You "fixed" the list by adding the missing number — but the diagonal argument can be applied AGAIN to this new, longer list, producing a NEW missing number. Keep trying.`;
+  } else {
+    fb.className = 'mb-feedback show bad';
+    fb.innerHTML = `<strong>This will never terminate.</strong> Every "fix" produces a new complete list, and Cantor's diagonal argument applies to ANY complete list — generating a fresh missing number every time, forever. This is a rigorous proof that no complete list of real numbers can exist at all.`;
+  }
+}
+draw();
+</script>
+</body>
+</html>

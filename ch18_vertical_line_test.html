@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #7C3AED;
+  --part-accent-light: #EDE9FE;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part04-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FAF5FF; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">The Vertical Line Test</div>
+  <div class="mb-sub">Drag the vertical line across each curve. If it ever crosses the curve more than once, the curve is NOT a function.</div>
+
+  <div class="mb-stage">
+    <div style="text-align:center; margin-bottom:8px;">
+      <button class="mb-btn" onclick="setCurve('parabola')">Curve A: sideways parabola</button>
+      <button class="mb-btn" onclick="setCurve('normal')">Curve B: y = x²</button>
+    </div>
+    <svg id="vltSvg" viewBox="0 0 320 220" style="width:100%; height:206px; max-width:340px; display:block; margin:0 auto;"></svg>
+    <input type="range" min="0" max="320" value="160" id="lineSlider" class="mb-slider" style="width:90%; display:block; margin:8px auto;">
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">This test is the direct visual embodiment of "one output per input": a vertical line represents a single x-value, and if it crosses the curve twice, that x-value would need to produce two different y-values — exactly the ambiguity a function forbids.</div>
+</div>
+
+<script>
+let curve = 'normal';
+function draw(){
+  const svg = document.getElementById('vltSvg');
+  svg.innerHTML = '';
+  const cx=160, cy=110;
+
+  if(curve==='normal'){
+    let path='M';
+    for(let px=-10;px<=10;px+=0.3){
+      const sx = cx + px*13;
+      const sy = cy - (px*px)*1.5 + 90;
+      path += `${sx},${Math.max(10,Math.min(210,sy))} L`;
+    }
+    const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d',path.slice(0,-1)); p.setAttribute('fill','none'); p.setAttribute('stroke','var(--part-accent)'); p.setAttribute('stroke-width','2.5');
+    svg.appendChild(p);
+  } else {
+    // sideways parabola x = y^2 (not a function of x)
+    let path='M';
+    for(let py=-10;py<=10;py+=0.3){
+      const sy = cy + py*10;
+      const sx = cx + (py*py)*1.2 - 60;
+      path += `${sx},${Math.max(10,Math.min(210,sy))} L`;
+    }
+    const pp = document.createElementNS('http://www.w3.org/2000/svg','path');
+    pp.setAttribute('d',path.slice(0,-1)); pp.setAttribute('fill','none'); pp.setAttribute('stroke','var(--part-highlight)'); pp.setAttribute('stroke-width','2.5');
+    svg.appendChild(pp);
+  }
+
+  const lineX = parseInt(document.getElementById('lineSlider').value);
+  const vline = document.createElementNS('http://www.w3.org/2000/svg','line');
+  vline.setAttribute('x1',lineX);vline.setAttribute('y1',5);vline.setAttribute('x2',lineX);vline.setAttribute('y2',215);
+  vline.setAttribute('stroke','#1F2937');vline.setAttribute('stroke-width','2');vline.setAttribute('stroke-dasharray','4,3');
+  svg.appendChild(vline);
+
+  checkCrossings(lineX);
+}
+
+function checkCrossings(lineX){
+  const fb = document.getElementById('fb');
+  const px = (lineX - 160) / 13;
+  let crossings = 0;
+  if(curve==='normal'){
+    crossings = 1; // y=x^2 always exactly one crossing per vertical line
+  } else {
+    // x = y^2 - 60/1.2 offset; crossings = 2 if lineX > cx-60, else 0
+    crossings = lineX > (160-60) ? 2 : 0;
+  }
+  if(curve==='normal'){
+    fb.className = 'mb-feedback show good';
+    fb.innerHTML = `Curve B (y=x²): the vertical line crosses exactly ONCE everywhere — this IS a function.`;
+  } else {
+    fb.className = crossings===2 ? 'mb-feedback show bad' : 'mb-feedback show info';
+    fb.innerHTML = crossings===2
+      ? `Curve A (sideways parabola): the vertical line crosses TWICE here — this FAILS the test. It is NOT a function of x (one x-value maps to two different y-values).`
+      : `Curve A: no crossings at this x-position (the curve doesn't extend this far left). Drag right to find where it fails the test.`;
+  }
+}
+function setCurve(c){ curve=c; draw(); }
+document.getElementById('lineSlider').addEventListener('input', draw);
+draw();
+</script>
+</body>
+</html>

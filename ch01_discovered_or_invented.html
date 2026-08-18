@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4A5568;
+  --part-accent-light: #E2E8F0;
+  --part-highlight: #D97706;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F3F1EA; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Is Mathematics Discovered or Invented?</div>
+  <div class="mb-sub">An open philosophical question with no settled answer. Click each side of the scale to weigh its strongest case.</div>
+
+  <div class="mb-stage">
+    <svg id="scaleSvg" viewBox="0 0 280 160" style="width:100%; height:171px; max-width:300px; display:block; margin:0 auto;"></svg>
+    <div style="text-align:center;">
+      <button class="mb-btn" onclick="weigh('discovered')">🔭 Discovered (Platonism)</button>
+      <button class="mb-btn" onclick="weigh('invented')">🔨 Invented (Formalism)</button>
+    </div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">What's certain, regardless of which side you find more persuasive: mathematics develops in response to real human problems — the Nile flood, the merchant's need to count, the search for certainty. That practical origin is not in dispute, even when the deeper philosophical question remains open.</div>
+</div>
+
+<script>
+let weights = {discovered:0, invented:0};
+function draw(){
+  const svg = document.getElementById('scaleSvg');
+  svg.innerHTML = '';
+  const tilt = (weights.invented - weights.discovered) * 8;
+  const beamY = 40 + Math.max(-20,Math.min(20,tilt));
+  // fulcrum
+  const fulcrum = document.createElementNS('http://www.w3.org/2000/svg','path');
+  fulcrum.setAttribute('d','M140,60 L120,120 L160,120 Z');
+  fulcrum.setAttribute('fill','var(--part-accent)');
+  svg.appendChild(fulcrum);
+  // beam
+  const beam = document.createElementNS('http://www.w3.org/2000/svg','line');
+  beam.setAttribute('x1',40);beam.setAttribute('y1',60-Math.max(-20,Math.min(20,-tilt)));beam.setAttribute('x2',240);beam.setAttribute('y2',60+Math.max(-20,Math.min(20,-tilt)));
+  beam.setAttribute('stroke','var(--part-accent)'); beam.setAttribute('stroke-width','4');
+  svg.appendChild(beam);
+  // pans
+  const leftY = 60-Math.max(-20,Math.min(20,-tilt));
+  const rightY = 60+Math.max(-20,Math.min(20,-tilt));
+  [[40,leftY,'🔭 Discovered',weights.discovered],[240,rightY,'🔨 Invented',weights.invented]].forEach(([x,y,lbl,w])=>{
+    const pan = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    pan.setAttribute('cx',x);pan.setAttribute('cy',y+15);pan.setAttribute('r',18);
+    pan.setAttribute('fill','#fff'); pan.setAttribute('stroke','var(--part-highlight)'); pan.setAttribute('stroke-width','2');
+    svg.appendChild(pan);
+    const wLabel = document.createElementNS('http://www.w3.org/2000/svg','text');
+    wLabel.setAttribute('x',x);wLabel.setAttribute('y',y+19);wLabel.setAttribute('text-anchor','middle');wLabel.setAttribute('font-size','11');wLabel.setAttribute('font-weight','700');
+    wLabel.textContent = w;
+    svg.appendChild(wLabel);
+    const nameLabel = document.createElementNS('http://www.w3.org/2000/svg','text');
+    nameLabel.setAttribute('x',x);nameLabel.setAttribute('y',y+45);nameLabel.setAttribute('text-anchor','middle');nameLabel.setAttribute('font-size','9');
+    nameLabel.textContent = lbl;
+    svg.appendChild(nameLabel);
+  });
+}
+const cases = {
+  discovered: "Mathematical truths like '2+2=4' or the Pythagorean relationship seem to hold whether or not any human thinks about them — an alien civilization would find the exact same prime numbers. This suggests mathematical objects exist independently, waiting to be found, much like a new planet is discovered rather than invented.",
+  invented: "Mathematics is a human-built symbolic system — we chose the axioms, the notation, even which questions count as interesting. Different axiom systems (Chapter 3's non-Euclidean geometries) produce different 'truths,' suggesting we're building structures with rules we picked, not uncovering a pre-existing landscape."
+};
+function weigh(side){
+  weights[side]++;
+  draw();
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show info';
+  fb.innerHTML = `<strong>${side==='discovered'?'Discovered (Platonism)':'Invented (Formalism)'}:</strong> ${cases[side]}`;
+}
+draw();
+</script>
+</body>
+</html>

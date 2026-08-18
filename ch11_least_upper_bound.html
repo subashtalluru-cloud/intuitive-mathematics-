@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #0F766E;
+  --part-accent-light: #CCFBF1;
+  --part-highlight: #EA580C;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part03-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F0FBF9; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Least Upper Bound — The Tightest Possible Ceiling</div>
+  <div class="mb-sub">Set: all rationals whose square is less than 2. Click each candidate "ceiling" — watch the number line show it squeezed tighter, and tighter, never quite settling.</div>
+
+  <div class="mb-stage">
+    <svg id="ceilingSvg" viewBox="0 0 300 100" style="width:100%; height:100px; max-width:320px; display:block; margin:0 auto;"></svg>
+    <div style="text-align:center;">
+      <button class="mb-btn" onclick="testBound(1.5)">Test ceiling: 1.5</button>
+      <button class="mb-btn" onclick="testBound(1.42)">Test ceiling: 1.42</button>
+      <button class="mb-btn" onclick="testBound(1.415)">Test ceiling: 1.415</button>
+    </div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Within the rationals alone, this set has NO least upper bound — candidates keep shrinking without ever reaching a smallest one. Within the reals, completeness guarantees a least upper bound must exist — exactly √2.</div>
+</div>
+
+<script>
+const sqrt2 = Math.sqrt(2);
+function draw(candidate, tighter){
+  const svg = document.getElementById('ceilingSvg');
+  svg.innerHTML = '';
+  const lo=1.35, hi=1.55;
+  const toX = v => 20+((v-lo)/(hi-lo))*260;
+  const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1',20);line.setAttribute('y1',60);line.setAttribute('x2',280);line.setAttribute('y2',60);
+  line.setAttribute('stroke','var(--ink-soft)');
+  svg.appendChild(line);
+
+  // shaded region: set S (up to sqrt2)
+  const setRect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+  setRect.setAttribute('x',toX(lo));setRect.setAttribute('y',55);setRect.setAttribute('width',toX(sqrt2)-toX(lo));setRect.setAttribute('height',10);
+  setRect.setAttribute('fill','var(--part-accent-light)');
+  svg.appendChild(setRect);
+
+  // sqrt2 marker
+  const s2x = toX(sqrt2);
+  const s2line = document.createElementNS('http://www.w3.org/2000/svg','line');
+  s2line.setAttribute('x1',s2x);s2line.setAttribute('y1',20);s2line.setAttribute('x2',s2x);s2line.setAttribute('y2',80);
+  s2line.setAttribute('stroke','var(--good)'); s2line.setAttribute('stroke-width','2');
+  svg.appendChild(s2line);
+  const s2lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+  s2lbl.setAttribute('x',s2x);s2lbl.setAttribute('y',15);s2lbl.setAttribute('text-anchor','middle');s2lbl.setAttribute('font-size','9');s2lbl.setAttribute('fill','var(--good)');
+  s2lbl.textContent = '√2 (the real LUB)';
+  svg.appendChild(s2lbl);
+
+  if(candidate){
+    const cx = toX(candidate);
+    const cdot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    cdot.setAttribute('cx',cx);cdot.setAttribute('cy',60);cdot.setAttribute('r',5);cdot.setAttribute('fill','var(--part-highlight)');
+    svg.appendChild(cdot);
+    const clbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    clbl.setAttribute('x',cx);clbl.setAttribute('y',80);clbl.setAttribute('text-anchor','middle');clbl.setAttribute('font-size','9');clbl.setAttribute('fill','var(--part-highlight)');
+    clbl.textContent = 'candidate: '+candidate;
+    svg.appendChild(clbl);
+  }
+  if(tighter){
+    const tx = toX(tighter);
+    const tdot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    tdot.setAttribute('cx',tx);tdot.setAttribute('cy',60);tdot.setAttribute('r',4);tdot.setAttribute('fill','var(--part-accent)');
+    svg.appendChild(tdot);
+  }
+}
+function testBound(candidate){
+  const tighter = (candidate + sqrt2)/2;
+  draw(candidate, tighter);
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show info';
+  fb.innerHTML = `${candidate} is a valid upper bound (see the pink dot right of the shaded set) — but not the tightest. A tighter valid bound, ${tighter.toFixed(4)} (small dot), still works. Within the rationals, this squeezing never terminates. Only in the REALS does completeness guarantee it terminates: exactly at √2 (green line).`;
+}
+draw(null,null);
+</script>
+</body>
+</html>

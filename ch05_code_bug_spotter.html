@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4338CA;
+  --part-accent-light: #E0E7FF;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part02-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#EEF0FB; }
+  .code-block{
+    font-family: var(--font-mono); font-size:0.82rem; background:#1E1E2E; color:#E5E7EB;
+    border-radius:8px; padding:14px; line-height:1.7; white-space:pre;
+  }
+  .code-block .kw{ color:#C084FC; } .code-block .cm{ color:#6B7280; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Spot the Bug — Coded Logical Fallacy</div>
+  <div class="mb-sub">Read this snippet, then diagnose it. Click to reveal the actual causal flow diagram this code silently assumes.</div>
+
+  <div class="mb-stage">
+    <div class="code-block" id="codeBlock"></div>
+    <svg id="flowSvg" viewBox="0 0 280 130" style="width:100%; height:139px; max-width:300px; display:block; margin:10px auto;"></svg>
+    <div style="text-align:center; margin-top:8px;">
+      <button class="mb-btn" onclick="diagnose('correct')">This logic is correct</button>
+      <button class="mb-btn" onclick="diagnose('bug')">This has an affirming-the-consequent bug</button>
+    </div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">This exact bug pattern is one of the most common sources of silently wrong conditional logic in real software.</div>
+</div>
+
+<script>
+document.getElementById('codeBlock').innerHTML =
+`<span class="cm"># Intent: "if it rained, the ground should be wet"</span>
+<span class="kw">if</span> ground_is_wet:
+    rained = <span class="kw">True</span>  <span class="cm"># is this valid?</span>`;
+
+function drawFlow(revealBug){
+  const svg = document.getElementById('flowSvg');
+  svg.innerHTML = '';
+  const nodes = [[40,30,'rain'],[240,30,'wet ground'],[40,100,'sprinkler'],[240,100,'wet ground']];
+  // true causal arrow: rain -> wet ground
+  const arrow1 = document.createElementNS('http://www.w3.org/2000/svg','line');
+  arrow1.setAttribute('x1',65);arrow1.setAttribute('y1',30);arrow1.setAttribute('x2',215);arrow1.setAttribute('y2',30);
+  arrow1.setAttribute('stroke','var(--good)'); arrow1.setAttribute('stroke-width','2'); arrow1.setAttribute('marker-end','url(#arrowhead)');
+  svg.appendChild(arrow1);
+  const label1 = document.createElementNS('http://www.w3.org/2000/svg','text');
+  label1.setAttribute('x',140);label1.setAttribute('y',20);label1.setAttribute('text-anchor','middle');label1.setAttribute('font-size','8');label1.setAttribute('fill','var(--good)');
+  label1.textContent = 'true causal path';
+  svg.appendChild(label1);
+
+  if(revealBug){
+    const arrow2 = document.createElementNS('http://www.w3.org/2000/svg','line');
+    arrow2.setAttribute('x1',65);arrow2.setAttribute('y1',100);arrow2.setAttribute('x2',215);arrow2.setAttribute('y2',100);
+    arrow2.setAttribute('stroke','var(--bad)'); arrow2.setAttribute('stroke-width','2'); arrow2.setAttribute('marker-end','url(#arrowhead2)');
+    svg.appendChild(arrow2);
+    const label2 = document.createElementNS('http://www.w3.org/2000/svg','text');
+    label2.setAttribute('x',140);label2.setAttribute('y',90);label2.setAttribute('text-anchor','middle');label2.setAttribute('font-size','8');label2.setAttribute('fill','var(--bad)');
+    label2.textContent = 'ALSO a valid path!';
+    svg.appendChild(label2);
+    const codeArrow = document.createElementNS('http://www.w3.org/2000/svg','path');
+    codeArrow.setAttribute('d','M240,45 Q140,65 240,90');
+    codeArrow.setAttribute('fill','none'); codeArrow.setAttribute('stroke','var(--bad)'); codeArrow.setAttribute('stroke-width','1.5'); codeArrow.setAttribute('stroke-dasharray','3,2');
+    svg.appendChild(codeArrow);
+    const codeLabel = document.createElementNS('http://www.w3.org/2000/svg','text');
+    codeLabel.setAttribute('x',260);codeLabel.setAttribute('y',70);codeLabel.setAttribute('font-size','8');codeLabel.setAttribute('fill','var(--bad)');codeLabel.setAttribute('text-anchor','middle');
+    codeLabel.textContent = 'code assumes THIS direction ↩';
+    svg.appendChild(codeLabel);
+  }
+  const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+  defs.innerHTML = `<marker id="arrowhead" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="var(--good)"/></marker>
+    <marker id="arrowhead2" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="var(--bad)"/></marker>`;
+  svg.insertBefore(defs, svg.firstChild);
+
+  nodes.forEach(([x,y,lbl])=>{
+    const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx',x);circle.setAttribute('cy',y);circle.setAttribute('r',22);
+    circle.setAttribute('fill','#fff'); circle.setAttribute('stroke','var(--part-accent)'); circle.setAttribute('stroke-width','2');
+    svg.appendChild(circle);
+    const text = document.createElementNS('http://www.w3.org/2000/svg','text');
+    text.setAttribute('x',x);text.setAttribute('y',y+3);text.setAttribute('text-anchor','middle');text.setAttribute('font-size','8');
+    text.textContent = lbl;
+    svg.appendChild(text);
+  });
+}
+function diagnose(choice){
+  const fb = document.getElementById('fb');
+  drawFlow(true);
+  if(choice === 'bug'){
+    fb.className = 'mb-feedback show good';
+    fb.innerHTML = `<strong>Correct diagnosis.</strong> This code checks the CONSEQUENT (ground_is_wet) and concludes the ANTECEDENT (rained) — affirming the consequent. The diagram shows why: "wet ground" has TWO valid incoming causal paths (rain OR sprinkler), but the code only travels backward along one of them. The valid direction would be: <code>if rained: ground_is_wet = True</code> (modus ponens).`;
+  } else {
+    fb.className = 'mb-feedback show bad';
+    fb.innerHTML = `<strong>Not quite.</strong> The diagram shows "wet ground" has TWO valid causes — rain AND sprinkler. This code has exactly the affirming-the-consequent bug: it observes the effect and concludes one specific cause, ignoring the other valid path.`;
+  }
+}
+drawFlow(false);
+</script>
+</body>
+</html>

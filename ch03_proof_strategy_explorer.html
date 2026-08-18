@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4A5568;
+  --part-accent-light: #E2E8F0;
+  --part-highlight: #D97706;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F3F1EA; }
+  .pyramid{ display:flex; flex-direction:column; align-items:center; gap:4px; margin:14px 0; }
+  .tier{
+    padding:10px 18px; border-radius:6px; text-align:center; cursor:pointer;
+    font-family:var(--font-sans); font-size:0.85rem; font-weight:700; color:#fff;
+    transition: transform 0.15s;
+  }
+  .tier:hover{ transform: scale(1.03); }
+  .tier.axiom{ background:#1A202C; width:200px; }
+  .tier.lemma{ background: var(--part-accent); width:280px; opacity:0.85; }
+  .tier.theorem{ background: var(--part-highlight); width:360px; }
+  .tier-detail{
+    margin-top:10px; padding:12px 14px; background:#fff; border:1px solid var(--line);
+    border-radius:8px; font-size:0.83rem; line-height:1.5; min-height:60px;
+  }
+  .strat-tabs{ display:flex; gap:6px; justify-content:center; margin:14px 0 10px; flex-wrap:wrap; }
+  .strat-tab{
+    font-size:0.8rem; padding:6px 12px; border-radius:16px; border:1px solid var(--part-accent);
+    color:var(--part-accent); background:#fff; cursor:pointer; font-weight:600;
+  }
+  .strat-tab.active{ background:var(--part-accent); color:#fff; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">The Anatomy of a Proof System</div>
+  <div class="mb-sub">Part 1 — click each tier to see how axioms support lemmas support theorems, like floors of a skyscraper.</div>
+
+  <div class="mb-stage">
+    <div class="pyramid" id="pyramid"></div>
+    <div class="tier-detail" id="tierDetail"></div>
+  </div>
+
+  <div class="mb-sub" style="margin-top:18px;">Part 2 — three ways to build the bridge from axioms to conclusion. Compare their shape.</div>
+  <div class="mb-stage">
+    <div class="strat-tabs" id="stratTabs"></div>
+    <div class="tier-detail" id="stratDetail"></div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+</div>
+
+<script>
+const tiers = [
+  {cls:'theorem', label:'THEOREM — e.g. "There is no largest natural number"', detail:"A statement proven to follow necessarily from the axioms (possibly via lemmas). This is usually the headline result — what a chapter or paper is 'about.'"},
+  {cls:'lemma', label:'LEMMA — supporting stepping-stone results', detail:"A smaller theorem, proved first, purely because the main theorem needs it as a building block. Lemmas are rarely interesting on their own — they exist to carry weight for something bigger."},
+  {cls:'axiom', label:'AXIOM — accepted without proof', detail:"A starting statement accepted as true by agreement, not derived from anything else. Change the axioms (as non-Euclidean geometry does in Part VI) and what's provable can change completely — the foundation determines what the whole structure can support."}
+];
+function renderPyramid(){
+  const p = document.getElementById('pyramid');
+  p.innerHTML = '';
+  tiers.forEach(t=>{
+    const d = document.createElement('div');
+    d.className = 'tier ' + t.cls;
+    d.textContent = t.label;
+    d.onclick = ()=>{ document.getElementById('tierDetail').innerHTML = `<strong>${t.cls.toUpperCase()}</strong> — ${t.detail}`; };
+    p.appendChild(d);
+  });
+  document.getElementById('tierDetail').innerHTML = `<strong>THEOREM</strong> — ${tiers[0].detail}`;
+}
+renderPyramid();
+
+const strategies = {
+  direct: {
+    label:'Direct Proof',
+    shape:"Axioms → Step 1 → Step 2 → … → Conclusion",
+    detail:"Walk forward from what you know, each step forced by the last, until you arrive at the target statement. Example (Ch.3): the sum of two even numbers is even — define even as 2k, add two such numbers, show the result is still 2×(something)."
+  },
+  contradiction: {
+    label:'Proof by Contradiction',
+    shape:"Assume NOT-Conclusion → derive a contradiction → Conclusion must be true",
+    detail:"Temporarily assume the opposite of what you want to prove, and show this assumption forces something impossible. Since the assumption breaks logic, it must be false — so the original claim is true. Example: assuming a largest natural number exists forces N+1 > N, contradicting 'largest.'"
+  },
+  induction: {
+    label:'Proof by Induction (preview — full treatment in Part II)',
+    shape:"Base case true → (case k true ⟹ case k+1 true) → true for ALL natural numbers",
+    detail:"Prove a statement for the smallest case, then prove that truth at any step forces truth at the next step. Like knocking over the first domino and proving each domino is close enough to knock over the next — you never touch dominoes 2 through infinity by hand, yet you're certain they all fall."
+  }
+};
+function renderTabs(){
+  const tabs = document.getElementById('stratTabs');
+  tabs.innerHTML = '';
+  Object.entries(strategies).forEach(([key,s],i)=>{
+    const t = document.createElement('div');
+    t.className = 'strat-tab' + (i===0?' active':'');
+    t.textContent = s.label;
+    t.onclick = ()=>{
+      document.querySelectorAll('.strat-tab').forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      showStrat(key);
+    };
+    tabs.appendChild(t);
+  });
+  showStrat('direct');
+}
+function showStrat(key){
+  const s = strategies[key];
+  document.getElementById('stratDetail').innerHTML =
+    `<div style="font-family:var(--font-mono); font-size:0.78rem; color:var(--part-accent); margin-bottom:8px;">${s.shape}</div>${s.detail}`;
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show info';
+  fb.innerHTML = key==='induction'
+    ? "Notice this strategy proves infinitely many cases using only two finite steps — that leap is exactly what makes induction feel almost magical the first time you see it, and exactly why Part II gives it a full chapter of its own."
+    : "Compare this shape to the other two tabs — same destination (a proven conclusion), structurally different route.";
+}
+renderTabs();
+</script>
+</body>
+</html>

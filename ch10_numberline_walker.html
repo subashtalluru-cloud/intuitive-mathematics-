@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #0F766E;
+  --part-accent-light: #CCFBF1;
+  --part-highlight: #EA580C;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part03-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F0FBF9; }
+  .walker-controls{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:10px; }
+  .expr-display{ font-family:var(--font-mono); font-size:1.1rem; text-align:center; margin:10px 0; color: var(--part-accent); font-weight:700; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Walking the Number Line</div>
+  <div class="mb-sub">Start at 8. Each button is a step: "+3" walks 3 steps right (east); "−5" walks 5 steps left (west). Watch where you land.</div>
+
+  <div class="mb-stage">
+    <div class="expr-display" id="exprDisplay">Starting position: 8</div>
+    <svg id="walkerSvg" viewBox="0 0 460 90" style="width:100%; height:59px; "></svg>
+  </div>
+  <div class="walker-controls">
+    <button class="mb-btn" onclick="step(3)">Walk +3 (east)</button>
+    <button class="mb-btn" onclick="step(-5)">Walk −5 (west)</button>
+    <button class="mb-btn" onclick="step(-4)">Walk −4 (west)</button>
+    <button class="mb-btn" onclick="step(6)">Walk +6 (east)</button>
+    <button class="mb-btn" onclick="reset()">Reset to 8</button>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">8 − 5 = 3: walking 5 steps west from 8 lands on 3. Notice subtracting is just "walk west" — and this is exactly why 8 + (−5) gives the identical landing spot as 8 − 5. Subtraction IS addition of the opposite.</div>
+</div>
+
+<script>
+let pos = 8;
+const svg = document.getElementById('walkerSvg');
+function toX(v){ return 30 + (v+5)*20; }
+
+function draw(){
+  svg.innerHTML = '';
+  const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1',10); line.setAttribute('y1',50); line.setAttribute('x2',450); line.setAttribute('y2',50);
+  line.setAttribute('stroke','var(--ink-soft)'); line.setAttribute('stroke-width','2');
+  svg.appendChild(line);
+  for(let v=-5;v<=15;v++){
+    const x = toX(v);
+    const tick = document.createElementNS('http://www.w3.org/2000/svg','line');
+    tick.setAttribute('x1',x); tick.setAttribute('y1',45); tick.setAttribute('x2',x); tick.setAttribute('y2',55);
+    tick.setAttribute('stroke','var(--line)');
+    svg.appendChild(tick);
+    if(v%5===0){
+      const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('x',x); t.setAttribute('y',70); t.setAttribute('text-anchor','middle'); t.setAttribute('font-size','10'); t.setAttribute('fill','var(--ink-soft)');
+      t.textContent = v;
+      svg.appendChild(t);
+    }
+  }
+  const walker = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  walker.setAttribute('cx', toX(pos)); walker.setAttribute('cy', 50); walker.setAttribute('r', 8);
+  walker.setAttribute('fill', 'var(--part-highlight)');
+  svg.appendChild(walker);
+  const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+  label.setAttribute('x', toX(pos)); label.setAttribute('y', 30); label.setAttribute('text-anchor','middle'); label.setAttribute('font-size','13'); label.setAttribute('font-weight','700'); label.setAttribute('fill','var(--part-highlight)');
+  label.textContent = pos;
+  svg.appendChild(label);
+}
+
+function step(delta){
+  const oldPos = pos;
+  pos += delta;
+  document.getElementById('exprDisplay').textContent = `${oldPos} ${delta>=0?'+':''}${delta} = ${pos}`;
+  draw();
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show info';
+  fb.innerHTML = `Walked ${Math.abs(delta)} steps ${delta>=0?'east (right)':'west (left)'}, landing on ${pos}. ${delta<0 ? 'Notice: walking west by '+Math.abs(delta)+' is identical to subtracting '+Math.abs(delta)+'.' : ''}`;
+}
+function reset(){ pos=8; document.getElementById('exprDisplay').textContent='Starting position: 8'; draw(); document.getElementById('fb').className='mb-feedback'; }
+draw();
+</script>
+</body>
+</html>

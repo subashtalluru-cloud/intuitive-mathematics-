@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #7C3AED;
+  --part-accent-light: #EDE9FE;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part04-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FAF5FF; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Injective, Surjective, Bijective — Three Independent Properties</div>
+  <div class="mb-sub">These are frequently confused. Click each case to see exactly which properties hold and which fail.</div>
+
+  <div class="mb-stage">
+    <svg id="propSvg" viewBox="0 0 320 160" style="width:100%; height:150px; max-width:340px; display:block; margin:0 auto;"></svg>
+    <div style="text-align:center; font-family:var(--font-mono); font-size:0.85rem; margin-top:8px;" id="propReadout"></div>
+  </div>
+  <div class="mb-controls" style="justify-content:center;">
+    <button class="mb-btn" onclick="showCase('bijection')">Bijection</button>
+    <button class="mb-btn" onclick="showCase('injOnly')">Injective only</button>
+    <button class="mb-btn" onclick="showCase('surjOnly')">Surjective only</button>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Verifying one property tells you NOTHING automatic about the other — that's why Chapter 4's "perfect pairing" bijections required checking both conditions, and why this chapter's own worked examples check them separately, never assuming one from the other.</div>
+</div>
+
+<script>
+function drawNode(svg,x,y,label,color){
+  const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  c.setAttribute('cx',x);c.setAttribute('cy',y);c.setAttribute('r',14);c.setAttribute('fill',color);
+  svg.appendChild(c);
+  const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+  t.setAttribute('x',x);t.setAttribute('y',y+4);t.setAttribute('text-anchor','middle');t.setAttribute('font-size','10');t.setAttribute('fill','#fff');t.setAttribute('font-weight','700');
+  t.textContent = label;
+  svg.appendChild(t);
+}
+function drawArrow(svg,x1,y1,x2,y2){
+  const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1',x1+14);line.setAttribute('y1',y1);line.setAttribute('x2',x2-14);line.setAttribute('y2',y2);
+  line.setAttribute('stroke','#888');line.setAttribute('stroke-width','1.8');
+  svg.appendChild(line);
+}
+function showCase(kind){
+  const svg = document.getElementById('propSvg');
+  svg.innerHTML = '';
+  const fb = document.getElementById('fb');
+  const readout = document.getElementById('propReadout');
+
+  if(kind==='bijection'){
+    const A = [[50,30],[50,80],[50,130]], B=[[270,30],[270,80],[270,130]];
+    A.forEach(([x,y],i)=>drawNode(svg,x,y,'a'+(i+1),'var(--part-accent)'));
+    B.forEach(([x,y],i)=>drawNode(svg,x,y,'b'+(i+1),'var(--part-highlight)'));
+    drawArrow(svg,50,30,270,30); drawArrow(svg,50,80,270,80); drawArrow(svg,50,130,270,130);
+    readout.textContent = 'Injective: YES (no sharing)  |  Surjective: YES (every b hit)';
+    fb.className='mb-feedback show good';
+    fb.innerHTML = `<strong>BIJECTION.</strong> Every element of A points to a distinct element of B, AND every element of B receives exactly one arrow. Both conditions hold simultaneously — this is Chapter 4's perfect pairing, fully formalized.`;
+  } else if(kind==='injOnly'){
+    const A = [[50,30],[50,80],[50,130]], B=[[270,10],[270,60],[270,110],[270,150]];
+    A.forEach(([x,y],i)=>drawNode(svg,x,y,'a'+(i+1),'var(--part-accent)'));
+    B.forEach(([x,y],i)=>drawNode(svg,x,y,'b'+(i+1),'var(--part-highlight)'));
+    drawArrow(svg,50,30,270,10); drawArrow(svg,50,80,270,60); drawArrow(svg,50,130,270,110);
+    readout.textContent = 'Injective: YES (no sharing)  |  Surjective: NO (b4 unmatched)';
+    fb.className='mb-feedback show info';
+    fb.innerHTML = `<strong>INJECTIVE but NOT surjective.</strong> No two elements of A share a target (injective holds) — but b4 receives no arrow at all, remaining unmatched. Injectivity alone does NOT guarantee surjectivity.`;
+  } else {
+    const A = [[50,10],[50,55],[50,100],[50,145]], B=[[270,50],[270,110]];
+    A.forEach(([x,y],i)=>drawNode(svg,x,y,'a'+(i+1),'var(--part-accent)'));
+    B.forEach(([x,y],i)=>drawNode(svg,x,y,'b'+(i+1),'var(--part-highlight)'));
+    drawArrow(svg,50,10,270,50); drawArrow(svg,50,55,270,50); drawArrow(svg,50,100,270,110); drawArrow(svg,50,145,270,110);
+    readout.textContent = 'Injective: NO (b1, b2 each hit twice)  |  Surjective: YES (all of B hit)';
+    fb.className='mb-feedback show info';
+    fb.innerHTML = `<strong>SURJECTIVE but NOT injective.</strong> Every element of B is hit (surjective holds) — but since there are more inputs than outputs, at least one output must receive two or more arrows, violating injectivity. Surjectivity alone does NOT guarantee injectivity either.`;
+  }
+}
+showCase('bijection');
+</script>
+</body>
+</html>

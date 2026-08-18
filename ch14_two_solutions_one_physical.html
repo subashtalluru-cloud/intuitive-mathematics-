@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #0F766E;
+  --part-accent-light: #CCFBF1;
+  --part-highlight: #EA580C;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part03-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F0FBF9; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">The Equation Doesn't Know Which Answer You Want</div>
+  <div class="mb-sub">A ball is launched: h(t) = −5t² + 20t + 1. Click to see the trajectory graph AND both roots of h(t)=0 — one is the real landing time, the other is before launch.</div>
+
+  <div class="mb-stage">
+    <svg id="trajSvg" viewBox="0 0 300 180" style="width:100%; height:180px; max-width:320px; display:block; margin:0 auto;"></svg>
+    <button class="mb-btn primary" onclick="solveIt()" style="display:block; margin:10px auto;">Solve h(t) = 0</button>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Solving correctly is necessary but not sufficient for answering the real-world question. A negative-time solution is mathematically valid — it satisfies the equation exactly — but physically meaningless, visible directly as sitting to the LEFT of the graph's start.</div>
+</div>
+
+<script>
+function h(t){ return -5*t*t+20*t+1; }
+function draw(showRoots){
+  const svg = document.getElementById('trajSvg');
+  svg.innerHTML='';
+  const cx=100, cy=150, scaleX=25, scaleY=6;
+  const xAxis = document.createElementNS('http://www.w3.org/2000/svg','line');
+  xAxis.setAttribute('x1',10);xAxis.setAttribute('y1',cy);xAxis.setAttribute('x2',290);xAxis.setAttribute('y2',cy);
+  xAxis.setAttribute('stroke','var(--line)');
+  svg.appendChild(xAxis);
+  // launch-time marker (t=0)
+  const launchLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+  launchLine.setAttribute('x1',cx);launchLine.setAttribute('y1',10);launchLine.setAttribute('x2',cx);launchLine.setAttribute('y2',170);
+  launchLine.setAttribute('stroke','var(--ink-soft)'); launchLine.setAttribute('stroke-dasharray','3,2');
+  svg.appendChild(launchLine);
+  const launchLbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+  launchLbl.setAttribute('x',cx);launchLbl.setAttribute('y',180);launchLbl.setAttribute('text-anchor','middle');launchLbl.setAttribute('font-size','9');
+  launchLbl.textContent = 't=0 (launch)';
+  svg.appendChild(launchLbl);
+
+  let path='M';
+  for(let t=-0.5; t<=4.2; t+=0.1){
+    const y = h(t);
+    path += `${cx+t*scaleX},${cy-y*scaleY} L`;
+  }
+  const curve = document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve.setAttribute('d',path.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke','var(--part-accent)'); curve.setAttribute('stroke-width','2.5');
+  svg.appendChild(curve);
+
+  if(showRoots){
+    const a=5,b=-20,c=-1;
+    const disc = b*b-4*a*c;
+    const t1 = (-b+Math.sqrt(disc))/(2*a);
+    const t2 = (-b-Math.sqrt(disc))/(2*a);
+    [[t1,'var(--good)','t₁ (real landing)'],[t2,'var(--bad)','t₂ (before launch!)']].forEach(([t,color,lbl])=>{
+      const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      dot.setAttribute('cx',cx+t*scaleX);dot.setAttribute('cy',cy);dot.setAttribute('r',6);dot.setAttribute('fill',color);
+      svg.appendChild(dot);
+      const t2lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+      t2lbl.setAttribute('x',cx+t*scaleX);t2lbl.setAttribute('y',cy-12);t2lbl.setAttribute('text-anchor','middle');t2lbl.setAttribute('font-size','8');t2lbl.setAttribute('fill',color);
+      t2lbl.textContent = lbl;
+      svg.appendChild(t2lbl);
+    });
+  }
+}
+function solveIt(){
+  draw(true);
+  const a=5,b=-20,c=-1;
+  const disc = b*b-4*a*c;
+  const t1 = (-b+Math.sqrt(disc))/(2*a);
+  const t2 = (-b-Math.sqrt(disc))/(2*a);
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show good';
+  fb.innerHTML = `Both t₁≈${t1.toFixed(2)}s and t₂≈${t2.toFixed(2)}s satisfy the equation exactly — visible above as the two points where the curve crosses the axis. t₂ sits to the LEFT of the launch line — "before the ball was launched," physically nonsensical. Only t₁ (green) is the real answer.`;
+}
+draw(false);
+</script>
+</body>
+</html>

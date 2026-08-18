@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #0F766E;
+  --part-accent-light: #CCFBF1;
+  --part-highlight: #EA580C;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part03-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F0FBF9; }
+  .cut-display{ text-align:center; font-family:var(--font-mono); font-size:0.95rem; margin-top:10px; }
+  .side-label{ font-size:0.75rem; color:var(--ink-soft); }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">The Dedekind Cut — A Knife Blade Along the Rationals</div>
+  <div class="mb-sub">Drag the blade. Every rational number sorts cleanly into "left of the blade" (L) or "right of the blade" (U). Watch what happens when the blade rests exactly at √2.</div>
+
+  <div class="mb-stage">
+    <svg id="cutSvg" viewBox="0 0 440 100" style="width:100%; height:68px; "></svg>
+    <div style="text-align:center; margin:8px 0;">
+      <input type="range" min="130" max="150" value="141" id="cutSlider" class="mb-slider" style="width:70%;">
+    </div>
+    <div class="cut-display" id="cutDisplay"></div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Move the blade to exactly 1.41421356 (as close as the slider allows) — you'll never find a rational sitting exactly ON the blade there. That gap-position, precisely specified by which rationals fall left vs. right, IS the real number √2 — defined into existence, not discovered as already sitting somewhere waiting.</div>
+</div>
+
+<script>
+function draw(){
+  const val = parseInt(document.getElementById('cutSlider').value) / 100;
+  const svg = document.getElementById('cutSvg');
+  svg.innerHTML = '';
+  const x0=20, x1=420, y=50;
+  const toX = v => x0 + (v-1.0)/(2.0-1.0)*(x1-x0);
+
+  const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1',x0); line.setAttribute('y1',y); line.setAttribute('x2',x1); line.setAttribute('y2',y);
+  line.setAttribute('stroke','var(--ink-soft)'); line.setAttribute('stroke-width','2');
+  svg.appendChild(line);
+
+  // sample rationals
+  for(let v=1.0; v<=2.0; v+=0.05){
+    const x = toX(v);
+    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',x); c.setAttribute('cy',y); c.setAttribute('r',3);
+    c.setAttribute('fill', v < val ? 'var(--part-accent)' : 'var(--part-highlight)');
+    svg.appendChild(c);
+  }
+  // blade
+  const blade = document.createElementNS('http://www.w3.org/2000/svg','line');
+  blade.setAttribute('x1',toX(val)); blade.setAttribute('y1',20); blade.setAttribute('x2',toX(val)); blade.setAttribute('y2',80);
+  blade.setAttribute('stroke','#1F2937'); blade.setAttribute('stroke-width','2'); blade.setAttribute('stroke-dasharray','3,2');
+  svg.appendChild(blade);
+
+  const isSqrt2 = Math.abs(val - Math.sqrt(2)) < 0.006;
+  document.getElementById('cutDisplay').innerHTML =
+    `Blade at ${val.toFixed(2)} &nbsp; <span class="side-label" style="color:var(--part-accent)">■ L (lower)</span> &nbsp; <span class="side-label" style="color:var(--part-highlight)">■ U (upper)</span>` +
+    (isSqrt2 ? `<br><strong style="color:var(--part-highlight);">√2 ≈ 1.41421356 — this position defines an IRRATIONAL cut. No rational sits exactly here.</strong>` : '');
+
+  const fb = document.getElementById('fb');
+  fb.className = isSqrt2 ? 'mb-feedback show good' : 'mb-feedback show info';
+  fb.innerHTML = isSqrt2
+    ? `You've found it. This exact split of the rationals — everything below goes in L, everything above (and including any point ≥ this) goes in U — has no rational sitting exactly on the boundary. That's the defining signature of an irrational cut.`
+    : `Try dragging closer to 1.41 — watch for the position where no rational ever seems to land exactly on the blade, no matter how finely you adjust.`;
+}
+document.getElementById('cutSlider').addEventListener('input', draw);
+draw();
+</script>
+</body>
+</html>

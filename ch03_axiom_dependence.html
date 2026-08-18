@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4A5568;
+  --part-accent-light: #E2E8F0;
+  --part-highlight: #D97706;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F3F1EA; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Same Question, Different Axioms, Different Answer</div>
+  <div class="mb-sub">"Do parallel lines ever meet?" Click each geometric world — watch actual lines drawn on each surface, then see what's provable there.</div>
+
+  <div class="mb-stage">
+    <svg id="worldSvg" viewBox="0 0 280 140" style="width:100%; height:150px; max-width:300px; display:block; margin:0 auto;"></svg>
+    <div style="text-align:center;">
+      <button class="mb-btn" onclick="showWorld('flat')">📐 Flat plane</button>
+      <button class="mb-btn" onclick="showWorld('sphere')">🌐 Sphere</button>
+      <button class="mb-btn" onclick="showWorld('saddle')">🎯 Saddle</button>
+    </div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Proof isn't "true independent of assumptions" — every proof rests on its starting axioms. Change the axioms, as non-Euclidean geometry does to Euclid's parallel postulate, and provability genuinely changes.</div>
+</div>
+
+<script>
+function drawFlat(){
+  const svg = document.getElementById('worldSvg');
+  svg.innerHTML='';
+  [40,70,100].forEach(y=>{
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',20);line.setAttribute('y1',y);line.setAttribute('x2',260);line.setAttribute('y2',y);
+    line.setAttribute('stroke','var(--part-accent)'); line.setAttribute('stroke-width','2');
+    svg.appendChild(line);
+  });
+  const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+  label.setAttribute('x',140);label.setAttribute('y',20);label.setAttribute('text-anchor','middle');label.setAttribute('font-size','10');
+  label.textContent = 'Parallel lines stay equidistant forever — never meet';
+  svg.appendChild(label);
+}
+function drawSphere(){
+  const svg = document.getElementById('worldSvg');
+  svg.innerHTML='';
+  const cx=140,cy=70,r=55;
+  const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  circle.setAttribute('cx',cx);circle.setAttribute('cy',cy);circle.setAttribute('r',r);
+  circle.setAttribute('fill','none'); circle.setAttribute('stroke','var(--line)');
+  svg.appendChild(circle);
+  // great circles (longitude-like lines) meeting at poles
+  [0,25,-25].forEach(offset=>{
+    const ellipse = document.createElementNS('http://www.w3.org/2000/svg','ellipse');
+    ellipse.setAttribute('cx',cx);ellipse.setAttribute('cy',cy);ellipse.setAttribute('rx',Math.abs(offset)<5?r*0.3:r*0.55);ellipse.setAttribute('ry',r);
+    ellipse.setAttribute('fill','none'); ellipse.setAttribute('stroke','var(--part-highlight)'); ellipse.setAttribute('stroke-width','2');
+    svg.appendChild(ellipse);
+  });
+  const poleTop = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  poleTop.setAttribute('cx',cx);poleTop.setAttribute('cy',cy-r);poleTop.setAttribute('r',3);poleTop.setAttribute('fill','var(--bad)');
+  svg.appendChild(poleTop);
+  const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+  label.setAttribute('x',140);label.setAttribute('y',20);label.setAttribute('text-anchor','middle');label.setAttribute('font-size','10');
+  label.textContent = 'Every "straight line" meets every other — at the poles';
+  svg.appendChild(label);
+}
+function drawSaddle(){
+  const svg = document.getElementById('worldSvg');
+  svg.innerHTML='';
+  let path='M20,70 Q140,20 260,70';
+  const surface = document.createElementNS('http://www.w3.org/2000/svg','path');
+  surface.setAttribute('d',path); surface.setAttribute('fill','none'); surface.setAttribute('stroke','var(--line)'); surface.setAttribute('stroke-width','1');
+  svg.appendChild(surface);
+  // diverging lines through a point
+  [-15,0,15].forEach(offset=>{
+    const line = document.createElementNS('http://www.w3.org/2000/svg','path');
+    line.setAttribute('d',`M20,${70+offset*0.3} Q140,${20+offset} 260,${70+offset*1.8}`);
+    line.setAttribute('fill','none'); line.setAttribute('stroke','var(--part-accent)'); line.setAttribute('stroke-width','2');
+    svg.appendChild(line);
+  });
+  const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+  label.setAttribute('x',140);label.setAttribute('y',110);label.setAttribute('text-anchor','middle');label.setAttribute('font-size','10');
+  label.textContent = 'Infinitely many non-intersecting lines through one point';
+  svg.appendChild(label);
+}
+const worlds = {
+  flat: {name:"Flat plane (Euclid's axioms)", answer:"NEVER meet", draw:drawFlat,
+    explain:"Euclid's parallel postulate: through a point not on a line, exactly one parallel line exists. On a flat plane, parallel lines maintain constant distance forever."},
+  sphere: {name:"Sphere's surface (spherical geometry)", answer:"ALWAYS meet", draw:drawSphere,
+    explain:"Drop Euclid's parallel postulate; use a sphere instead. Every 'straight line' (great circle) eventually crosses every other — there are no parallel lines at all."},
+  saddle: {name:"Saddle shape (hyperbolic geometry)", answer:"Infinitely many DON'T meet", draw:drawSaddle,
+    explain:"A different axiom again: through a point not on a line, infinitely many non-intersecting lines exist — not just one, as Euclid assumed."}
+};
+function showWorld(key){
+  const w = worlds[key];
+  w.draw();
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show good';
+  fb.innerHTML = `<strong>${w.name}: parallel lines ${w.answer}.</strong> ${w.explain}`;
+}
+drawFlat();
+</script>
+</body>
+</html>

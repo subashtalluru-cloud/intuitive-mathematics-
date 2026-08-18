@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4A5568;
+  --part-accent-light: #E2E8F0;
+  --part-highlight: #D97706;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F3F1EA; }
+  .quiz-item{ background:#fff; border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:10px; }
+  .quiz-q{ font-size:0.88rem; font-weight:600; margin-bottom:8px; }
+  .quiz-opts{ display:flex; gap:8px; flex-wrap:wrap; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Is Zero "Really" a Number?</div>
+  <div class="mb-sub">Zero behaves exactly like other numbers under arithmetic. Click an operation, then check the answer — the number line will show the actual move zero makes.</div>
+
+  <div class="mb-stage">
+    <svg id="zeroLineSvg" viewBox="0 0 280 60" style="width:100%; height:64px; max-width:300px; display:block; margin:0 auto;"></svg>
+    <div class="quiz-item">
+      <div class="quiz-q">5 + 0 = ?</div>
+      <div class="quiz-opts">
+        <button class="mb-btn" onclick="check(this,5,5,'add')">5</button>
+        <button class="mb-btn" onclick="check(this,0,5,'add')">0</button>
+        <button class="mb-btn" onclick="check(this,10,5,'add')">undefined</button>
+      </div>
+    </div>
+    <div class="quiz-item">
+      <div class="quiz-q">7 × 0 = ?</div>
+      <div class="quiz-opts">
+        <button class="mb-btn" onclick="check(this,7,0,'mul')">7</button>
+        <button class="mb-btn" onclick="check(this,0,0,'mul')">0</button>
+        <button class="mb-btn" onclick="check(this,-7,0,'mul')">-7</button>
+      </div>
+    </div>
+    <div class="quiz-item">
+      <div class="quiz-q">7 ÷ 0 = ?</div>
+      <div class="quiz-opts">
+        <button class="mb-btn" onclick="checkDivZero(this,0)">0</button>
+        <button class="mb-btn" onclick="checkDivZero(this,7)">7</button>
+        <button class="mb-btn" onclick="checkDivZero(this,null)">undefined</button>
+      </div>
+    </div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Zero passes every arithmetic test a "real" number should — except division, where it's the DIVISOR that breaks, not zero's status as a number.</div>
+</div>
+
+<script>
+function drawLine(highlight){
+  const svg = document.getElementById('zeroLineSvg');
+  svg.innerHTML = '';
+  const toX = v => 140+v*18;
+  const axis = document.createElementNS('http://www.w3.org/2000/svg','line');
+  axis.setAttribute('x1',10);axis.setAttribute('y1',30);axis.setAttribute('x2',270);axis.setAttribute('y2',30);
+  axis.setAttribute('stroke','var(--ink-soft)');
+  svg.appendChild(axis);
+  for(let v=-8;v<=8;v+=2){
+    const tick = document.createElementNS('http://www.w3.org/2000/svg','line');
+    tick.setAttribute('x1',toX(v));tick.setAttribute('y1',26);tick.setAttribute('x2',toX(v));tick.setAttribute('y2',34);
+    tick.setAttribute('stroke','var(--line)');
+    svg.appendChild(tick);
+    const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',toX(v));lbl.setAttribute('y',48);lbl.setAttribute('text-anchor','middle');lbl.setAttribute('font-size','8');
+    lbl.textContent = v;
+    svg.appendChild(lbl);
+  }
+  if(highlight){
+    const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',toX(highlight));dot.setAttribute('cy',30);dot.setAttribute('r',6);dot.setAttribute('fill','var(--part-highlight)');
+    svg.appendChild(dot);
+  }
+}
+function check(btn, val, expected, op){
+  drawLine(val);
+  const fb = document.getElementById('fb');
+  const correct = val === expected;
+  fb.className = `mb-feedback show ${correct?'good':'bad'}`;
+  fb.innerHTML = correct
+    ? `Correct — zero obeyed the exact same arithmetic rule any other number would. See the point land at ${val} on the line.`
+    : `Not quite. Zero follows ordinary arithmetic rules here just like any other number would.`;
+}
+function checkDivZero(btn, val){
+  drawLine(val);
+  const fb = document.getElementById('fb');
+  const correct = val===null;
+  fb.className = `mb-feedback show ${correct?'good':'bad'}`;
+  fb.innerHTML = correct
+    ? `Correct — division by zero is undefined (no point plotted). But this is a special property of DIVISION, not evidence zero isn't a "real" number.`
+    : `Not quite — division by zero is undefined, precisely because no number times 0 could ever equal 7.`;
+}
+drawLine(null);
+</script>
+</body>
+</html>

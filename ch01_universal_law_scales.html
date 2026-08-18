@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4A5568;
+  --part-accent-light: #E2E8F0;
+  --part-highlight: #D97706;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F3F1EA; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">One Formula, 46 Orders of Magnitude</div>
+  <div class="mb-sub">F = Gm₁m₂/r² — Newton's law of gravity. Click each pair of masses. Watch the SAME formula, unmodified, correctly span a scale range visualized on a single log bar.</div>
+
+  <div class="mb-stage">
+    <svg id="scaleBarSvg" viewBox="0 0 280 100" style="width:100%; height:107px; max-width:300px; display:block; margin:0 auto;"></svg>
+    <div id="scaleContainer"></div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">This is the aha moment Chapter 1 is really about: the rule doesn't know or care whether it's being asked about an apple or a galaxy. It was never built FOR apples or galaxies — it was distilled from the general relationship, so it works on both without modification.</div>
+</div>
+
+<script>
+const G = 6.674e-11;
+const cases = [
+  {label:"Two apples, 1m apart", icon:"🍎🍎", m1:0.2, m2:0.2, r:1},
+  {label:"You and a friend, 1m apart", icon:"🧍🧍", m1:70, m2:70, r:1},
+  {label:"Earth and Moon", icon:"🌍🌙", m1:5.97e24, m2:7.35e22, r:3.84e8},
+  {label:"Two galaxies (simplified)", icon:"🌌🌌", m1:1e42, m2:1e42, r:1e22}
+];
+let marked = [];
+function drawBar(){
+  const svg = document.getElementById('scaleBarSvg');
+  svg.innerHTML='';
+  const bar = document.createElementNS('http://www.w3.org/2000/svg','line');
+  bar.setAttribute('x1',20);bar.setAttribute('y1',50);bar.setAttribute('x2',260);bar.setAttribute('y2',50);
+  bar.setAttribute('stroke','var(--ink-soft)'); bar.setAttribute('stroke-width','2');
+  svg.appendChild(bar);
+  const minLog=-25, maxLog=25;
+  marked.forEach((F,i)=>{
+    const logF = Math.log10(F);
+    const clampedLog = Math.max(minLog,Math.min(maxLog,logF));
+    const x = 20+((clampedLog-minLog)/(maxLog-minLog))*240;
+    const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',x);dot.setAttribute('cy',50);dot.setAttribute('r',6);dot.setAttribute('fill','var(--part-highlight)');
+    svg.appendChild(dot);
+    const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+    label.setAttribute('x',x);label.setAttribute('y', i%2===0?35:75);label.setAttribute('text-anchor','middle');label.setAttribute('font-size','8');
+    label.textContent = cases[i].icon;
+    svg.appendChild(label);
+  });
+  const leftLbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+  leftLbl.setAttribute('x',20);leftLbl.setAttribute('y',65);leftLbl.setAttribute('font-size','8');leftLbl.setAttribute('fill','var(--ink-soft)');
+  leftLbl.textContent = 'tiny F';
+  svg.appendChild(leftLbl);
+  const rightLbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+  rightLbl.setAttribute('x',260);rightLbl.setAttribute('y',65);rightLbl.setAttribute('text-anchor','end');rightLbl.setAttribute('font-size','8');rightLbl.setAttribute('fill','var(--ink-soft)');
+  rightLbl.textContent = 'huge F';
+  svg.appendChild(rightLbl);
+}
+function render(){
+  const container = document.getElementById('scaleContainer');
+  container.innerHTML = '';
+  cases.forEach((c,i)=>{
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex; align-items:center; gap:10px; background:#fff; border:1px solid var(--line); border-radius:8px; padding:8px; margin-bottom:6px;';
+    row.innerHTML = `<span style="font-size:1.5rem;">${c.icon}</span>
+      <div style="flex:1;"><div>${c.label}</div><div id="result${i}" style="font-family:var(--font-mono); font-size:0.75rem; color:var(--ink-soft);">Click to compute</div></div>
+      <button class="mb-btn" onclick="compute(${i})">Compute F</button>`;
+    container.appendChild(row);
+  });
+}
+function compute(i){
+  const c = cases[i];
+  const F = G * c.m1 * c.m2 / (c.r*c.r);
+  document.getElementById('result'+i).textContent = `F = ${F.toExponential(3)} N`;
+  marked.push(F);
+  drawBar();
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show good';
+  fb.innerHTML = `Same formula, same G, same structure — just different numbers plugged in for m₁, m₂, r. Nobody rewrote the physics to handle galaxies differently from apples. See how far apart these dots land on the scale bar — that's the power of abstraction, made visible.`;
+}
+render();
+drawBar();
+</script>
+</body>
+</html>

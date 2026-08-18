@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4338CA;
+  --part-accent-light: #E0E7FF;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part02-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#EEF0FB; }
+  .xray-box{
+    border:2px solid var(--part-accent); border-radius:12px; padding:16px; position:relative; background:#fff;
+    min-height:140px;
+  }
+  .content-layer{ font-family:var(--font-mono); font-size:0.95rem; text-align:center; line-height:2; transition:opacity 0.4s; }
+  .skeleton-layer{
+    position:absolute; top:16px; left:16px; right:16px; bottom:16px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+    opacity:0; transition:opacity 0.4s;
+  }
+  .skeleton-layer.show{ opacity:1; }
+  .skel-node{ font-family:var(--font-mono); font-size:0.9rem; background:var(--part-accent-light); color:var(--part-accent); padding:4px 14px; border-radius:16px; font-weight:700; }
+  .skel-arrow{ color:var(--part-highlight); font-size:1.2rem; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">The Argument X-Ray — See the Skeleton Underneath</div>
+  <div class="mb-sub">Every argument has surface content (words, subject matter) and a hidden logical skeleton (P, Q, and how they connect). Click "X-ray vision" to see straight through the words to the shape underneath.</div>
+
+  <div class="mb-stage">
+    <div style="text-align:center; margin-bottom:10px;">
+      <button class="mb-btn" onclick="showCase(0)">Rain example</button>
+      <button class="mb-btn" onclick="showCase(1)">Prime number example</button>
+      <button class="mb-btn" onclick="showCase(2)">Fish example (absurd content)</button>
+    </div>
+    <div class="xray-box">
+      <div class="content-layer" id="contentLayer"></div>
+      <div class="skeleton-layer" id="skeletonLayer">
+        <div class="skel-node">P</div>
+        <div class="skel-arrow">↓ true</div>
+        <div class="skel-node">Q</div>
+        <div class="skel-arrow">∴ Q is true</div>
+      </div>
+    </div>
+    <button class="mb-btn primary" onclick="toggleXray()" id="xrayBtn" style="display:block; margin:10px auto;">Turn on X-ray vision</button>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Three wildly different subjects — weather, number theory, absurd fantasy — but click X-ray and every single one reveals the IDENTICAL skeleton: P→Q, P, therefore Q. The skeleton's validity never depended on which words filled it in.</div>
+</div>
+
+<script>
+const cases = [
+  {content:"If it rains, the ground gets wet.<br>It is raining.<br>Therefore, the ground is wet."},
+  {content:"If a number is divisible by 4, it's divisible by 2.<br>12 is divisible by 4.<br>Therefore, 12 is divisible by 2."},
+  {content:"If a creature is a fish, it breathes underwater.<br>My pet goldfish is a fish.<br>Therefore, my goldfish breathes underwater."}
+];
+let xrayOn = false;
+let lastShown = 0;
+function render(i){
+  document.getElementById('contentLayer').innerHTML = cases[i].content;
+  document.getElementById('contentLayer').style.opacity = xrayOn ? '0.15' : '1';
+  document.getElementById('skeletonLayer').classList.toggle('show', xrayOn);
+}
+function showCase(i){
+  lastShown = i;
+  render(i);
+}
+function toggleXray(){
+  xrayOn = !xrayOn;
+  document.getElementById('xrayBtn').textContent = xrayOn ? 'Turn off X-ray vision' : 'Turn on X-ray vision';
+  render(lastShown);
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show good';
+  fb.innerHTML = xrayOn
+    ? `X-ray ON: underneath every one of these three unrelated topics sits the exact same skeleton — P→Q, P is true, therefore Q. The skeleton is what "logical form" means, and it's what determines validity, not the subject matter.`
+    : `X-ray OFF: back to ordinary reading, where the surface content (rain, primes, fish) is all you normally notice.`;
+}
+showCase(0);
+</script>
+</body>
+</html>

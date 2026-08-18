@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #0F766E;
+  --part-accent-light: #CCFBF1;
+  --part-highlight: #EA580C;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part03-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F0FBF9; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">One Formula, Every Possible Fence Layout</div>
+  <div class="mb-sub">Farmer has 100m of fencing against a barn. Area = w(100−2w). Drag the slider — the SAME formula describes every possible rectangle at once.</div>
+
+  <div class="mb-stage">
+    <svg id="fenceSvg" viewBox="0 0 300 160" style="width:100%; height:160px; max-width:320px; display:block; margin:0 auto;"></svg>
+    <input type="range" min="5" max="45" value="25" id="wSlider" class="mb-slider" style="width:80%; display:block; margin:8px auto;">
+    <div style="text-align:center; font-family:var(--font-mono); font-size:0.9rem;" id="areaOut"></div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Trial-and-error can only test one rectangle at a time. The polynomial w(100−2w) is a single object describing the ENTIRE family — every possible width, all at once — which is exactly what let al-Khwarizmi-style algebra pinpoint the exact maximizing width (w=25) that no finite trial-and-error could guarantee finding.</div>
+</div>
+
+<script>
+function area(w){ return w*(100-2*w); }
+function draw(){
+  const w = parseInt(document.getElementById('wSlider').value);
+  const svg = document.getElementById('fenceSvg');
+  svg.innerHTML = '';
+  const scale = 2.2;
+  const rectW = w*scale, rectH = (100-2*w)*scale*0.4;
+  const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+  rect.setAttribute('x',150-rectW/2); rect.setAttribute('y',80-rectH/2); rect.setAttribute('width',rectW); rect.setAttribute('height',rectH);
+  rect.setAttribute('fill','var(--part-accent)'); rect.setAttribute('fill-opacity','0.3'); rect.setAttribute('stroke','var(--part-accent)'); rect.setAttribute('stroke-width','2');
+  svg.appendChild(rect);
+  const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+  label.setAttribute('x',150); label.setAttribute('y',30); label.setAttribute('text-anchor','middle'); label.setAttribute('font-size','12'); label.setAttribute('fill','var(--part-accent)');
+  label.textContent = `width=${w}m, length=${100-2*w}m`;
+  svg.appendChild(label);
+
+  document.getElementById('areaOut').innerHTML = `Area = ${w}×(100−2×${w}) = ${w}×${100-2*w} = <strong>${area(w)}m²</strong>` + (w===25 ? ' — MAXIMUM!' : '');
+  const fb = document.getElementById('fb');
+  fb.className = w===25 ? 'mb-feedback show good' : 'mb-feedback show info';
+  fb.innerHTML = w===25
+    ? `w=25 gives the maximum area of 1250m² — the single peak of the entire family. Every other width in this family produces strictly less area.`
+    : `This is ONE member of the family the polynomial describes. Slide to w=25 to find the peak.`;
+}
+document.getElementById('wSlider').addEventListener('input', draw);
+draw();
+</script>
+</body>
+</html>

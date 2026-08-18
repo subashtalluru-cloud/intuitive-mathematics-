@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4A5568;
+  --part-accent-light: #E2E8F0;
+  --part-highlight: #D97706;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F3F1EA; }
+  .proof-line{ font-family:var(--font-mono); font-size:0.83rem; padding:6px 10px; border-radius:6px; margin-bottom:4px; cursor:pointer; background:#fff; border:1px solid var(--line); }
+  .proof-line:hover{ border-color:var(--part-accent); }
+  .proof-line.flagged{ background:#FEF2F2; border-color:var(--bad); }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Find the Gap — A Proof That LOOKS Complete</div>
+  <div class="mb-sub">This "proof" that 1 = 2 has exactly one broken domino. Click the line where the logic actually fails — the chain diagram will show exactly where it breaks.</div>
+
+  <div class="mb-stage">
+    <svg id="chainSvg" viewBox="0 0 280 50" style="width:100%; height:54px; max-width:300px; display:block; margin:0 auto;"></svg>
+    <div id="proofLines"></div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">A proof with one gap isn't 99% complete — it isn't a proof at all. Fermat's Last Theorem's actual 1993 proof had a subtle gap that took a full year of expert scrutiny to find and repair.</div>
+</div>
+
+<script>
+const lines = [
+  {text:"Let a = b (assume two equal numbers)", broken:false},
+  {text:"Multiply both sides by a: a² = ab", broken:false},
+  {text:"Subtract b² from both sides: a² − b² = ab − b²", broken:false},
+  {text:"Factor: (a+b)(a−b) = b(a−b)", broken:false},
+  {text:"Divide both sides by (a−b): a+b = b", broken:true, explain:"THIS is the broken domino. Since a=b, we have a−b=0 — and we just divided both sides by ZERO. Every step before this was legitimate; this single illegal move is where the entire chain breaks."},
+  {text:"Since a=b, substitute: b+b = b, so 2b = b, so 2 = 1", broken:false}
+];
+function drawChain(brokenIdx){
+  const svg = document.getElementById('chainSvg');
+  svg.innerHTML='';
+  const n = lines.length;
+  const spacing = 260/(n-1);
+  for(let i=0;i<n;i++){
+    const x = 10+i*spacing;
+    const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx',x);circle.setAttribute('cy',25);circle.setAttribute('r',10);
+    circle.setAttribute('fill', brokenIdx===i ? '#FEF2F2' : '#fff');
+    circle.setAttribute('stroke', brokenIdx===i ? 'var(--bad)' : 'var(--part-accent)');
+    circle.setAttribute('stroke-width','2');
+    svg.appendChild(circle);
+    const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+    label.setAttribute('x',x);label.setAttribute('y',29);label.setAttribute('text-anchor','middle');label.setAttribute('font-size','9');
+    label.textContent = i+1;
+    svg.appendChild(label);
+    if(i<n-1){
+      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1',x+10);line.setAttribute('y1',25);line.setAttribute('x2',x+spacing-10);line.setAttribute('y2',25);
+      line.setAttribute('stroke', brokenIdx===i ? 'var(--bad)':'var(--line)'); line.setAttribute('stroke-width', brokenIdx===i?'3':'1');
+      line.setAttribute('stroke-dasharray', brokenIdx===i ? '3,2':'0');
+      svg.insertBefore(line,svg.firstChild);
+    }
+  }
+}
+function render(){
+  const container = document.getElementById('proofLines');
+  container.innerHTML = '';
+  lines.forEach((l,i)=>{
+    const div = document.createElement('div');
+    div.className = 'proof-line';
+    div.textContent = `${i+1}. ${l.text}`;
+    div.onclick = ()=> check(i,div);
+    container.appendChild(div);
+  });
+}
+function check(i,div){
+  const fb = document.getElementById('fb');
+  if(lines[i].broken){
+    div.classList.add('flagged');
+    drawChain(i);
+    fb.className = 'mb-feedback show good';
+    fb.innerHTML = `<strong>Found it.</strong> ${lines[i].explain}`;
+  } else {
+    fb.className = 'mb-feedback show bad';
+    fb.innerHTML = `Line ${i+1} is actually fine — every step here follows legitimately. Keep looking for the one illegal move.`;
+  }
+}
+render();
+drawChain(null);
+</script>
+</body>
+</html>

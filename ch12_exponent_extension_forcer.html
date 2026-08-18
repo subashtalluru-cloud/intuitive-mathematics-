@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #0F766E;
+  --part-accent-light: #CCFBF1;
+  --part-highlight: #EA580C;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part03-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F0FBF9; }
+  .exp-sequence{ display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin:14px 0; }
+  .exp-box{
+    font-family: var(--font-mono); font-size:0.85rem; padding:8px 10px; border-radius:6px;
+    background: var(--part-accent-light); color: var(--part-accent); text-align:center; min-width:60px;
+  }
+  .exp-box.highlight{ background: var(--part-highlight); color:#fff; font-weight:700; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Why 2⁰ = 1 and 2⁻¹ = 1/2 — Forced, Not Chosen</div>
+  <div class="mb-sub">The pattern of halving as you step left is not a convention — it's the ONLY way to keep the rule 2ᵃ×2ᵇ = 2^(a+b) consistent. Click to extend the pattern leftward.</div>
+
+  <div class="mb-stage">
+    <div class="exp-sequence" id="expSeq"></div>
+    <div style="text-align:center; margin-top:10px;">
+      <button class="mb-btn primary" onclick="extendLeft()">Extend one step left ←</button>
+      <button class="mb-btn" onclick="reset()">Reset</button>
+    </div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Each step left divides by 2 — not by choice, but because 2³=8, and to keep the pattern "each step right doubles" consistent when reversed, each step left must halve. This same forcing logic derives 2⁰=1, 2⁻¹=1/2, and ultimately fractional exponents as roots.</div>
+</div>
+
+<script>
+const powers = [3,2,1,0,-1,-2,-3];
+let revealed = 3; // start showing only 2^3, 2^2, 2^1
+function values(){
+  return powers.map(p => p>=0 ? Math.pow(2,p) : `1/${Math.pow(2,-p)}`);
+}
+function render(){
+  const seq = document.getElementById('expSeq');
+  seq.innerHTML = '';
+  const vals = values();
+  for(let i=0;i<powers.length;i++){
+    if(i > revealed) continue;
+    const box = document.createElement('div');
+    box.className = 'exp-box' + (i===revealed?' highlight':'');
+    box.innerHTML = `2<sup>${powers[i]}</sup> = ${vals[i]}`;
+    seq.appendChild(box);
+  }
+}
+function extendLeft(){
+  if(revealed < powers.length-1){
+    revealed++;
+    render();
+    const fb = document.getElementById('fb');
+    const p = powers[revealed];
+    fb.className = 'mb-feedback show good';
+    if(p===0){
+      fb.innerHTML = `2⁰ = 1. Forced by: 2¹ × 2⁰ must equal 2^(1+0) = 2¹ = 2. Since 2 × (something) = 2, that something MUST be 1.`;
+    } else if(p<0){
+      fb.innerHTML = `2${p} = 1/${Math.pow(2,-p)}. Forced by: 2¹ × 2${p} must equal 2^(1+${p}) = 2⁰ = 1. Since 2 × (something) = 1, that something MUST be 1/2, and the pattern continues by the same logic.`;
+    } else {
+      fb.innerHTML = `Pattern continues: each step left divides by 2, forced by the combining rule.`;
+    }
+  } else {
+    document.getElementById('fb').className = 'mb-feedback show good';
+    document.getElementById('fb').innerHTML = `Full pattern revealed. Not one of these values was chosen by convention — every single one was forced by insisting 2ᵃ×2ᵇ=2^(a+b) never breaks, no matter how far the exponent extends.`;
+  }
+}
+function reset(){ revealed=3; render(); document.getElementById('fb').className='mb-feedback'; }
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4338CA;
+  --part-accent-light: #E0E7FF;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part02-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#EEF0FB; }
+  .ad-box{ background:#fff; border:2px dashed var(--part-highlight); border-radius:10px; padding:12px; margin-bottom:8px; font-style:italic; cursor:pointer; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Advertising's Favorite Fallacy</div>
+  <div class="mb-sub">Real ad-style claims. Click each to see the reversed-arrow diagram that exposes the hidden logical structure.</div>
+
+  <div class="mb-stage">
+    <div id="adsContainer"></div>
+    <svg id="adFlowSvg" viewBox="0 0 280 90" style="width:100%; height:96px; max-width:300px; display:block; margin:8px auto;"></svg>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Recognizing invalid forms shows up in advertising and political rhetoric constantly, precisely because affirming the consequent FEELS persuasive even though it's structurally broken — the diagram makes the reversal visible every time.</div>
+</div>
+
+<script>
+const ads = [
+  {text:"\"Successful people wake up at 5am. I wake up at 5am!\"",
+   p:"successful", q:"wakes at 5am",
+   explain:"Affirming the consequent. Waking early is common among SOME successful people, not a guarantee — plenty wake at 5am for unrelated reasons without becoming successful."},
+  {text:"\"Every winning team in our study drank Brand X sports drink.\"",
+   p:"winning team", q:"drinks Brand X",
+   explain:"Affirming the consequent. Drinking a popular drink doesn't cause winning — most teams, winning or not, probably drink popular sports drinks."},
+  {text:"\"Geniuses like Einstein had messy desks. My desk is messy!\"",
+   p:"genius", q:"messy desk",
+   explain:"Affirming the consequent, almost comically direct. A messy desk is common among many non-geniuses."}
+];
+function drawFlow(ad){
+  const svg = document.getElementById('adFlowSvg');
+  svg.innerHTML='';
+  const px=60,py=45,qx=220,qy=45;
+  [[px,py,ad.p],[qx,qy,ad.q]].forEach(([x,y,lbl])=>{
+    const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx',x);circle.setAttribute('cy',y);circle.setAttribute('r',28);
+    circle.setAttribute('fill','#fff'); circle.setAttribute('stroke','var(--part-accent)'); circle.setAttribute('stroke-width','2');
+    svg.appendChild(circle);
+    const text = document.createElementNS('http://www.w3.org/2000/svg','text');
+    text.setAttribute('x',x);text.setAttribute('y',y+3);text.setAttribute('text-anchor','middle');text.setAttribute('font-size','8');
+    text.textContent = lbl;
+    svg.appendChild(text);
+  });
+  // correct arrow (small, top): P -> Q
+  const correct = document.createElementNS('http://www.w3.org/2000/svg','line');
+  correct.setAttribute('x1',88);correct.setAttribute('y1',30);correct.setAttribute('x2',192);correct.setAttribute('y2',30);
+  correct.setAttribute('stroke','var(--good)'); correct.setAttribute('stroke-width','1.5'); correct.setAttribute('marker-end','url(#adArrowGood)');
+  svg.appendChild(correct);
+  const correctLbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+  correctLbl.setAttribute('x',140);correctLbl.setAttribute('y',20);correctLbl.setAttribute('text-anchor','middle');correctLbl.setAttribute('font-size','7');correctLbl.setAttribute('fill','var(--good)');
+  correctLbl.textContent = 'what P→Q actually claims';
+  svg.appendChild(correctLbl);
+  // ad's reversed arrow (bottom): Q -> P
+  const reversed = document.createElementNS('http://www.w3.org/2000/svg','line');
+  reversed.setAttribute('x1',192);reversed.setAttribute('y1',65);reversed.setAttribute('x2',88);reversed.setAttribute('y2',65);
+  reversed.setAttribute('stroke','var(--bad)'); reversed.setAttribute('stroke-width','2'); reversed.setAttribute('marker-end','url(#adArrowBad)');
+  svg.appendChild(reversed);
+  const reversedLbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+  reversedLbl.setAttribute('x',140);reversedLbl.setAttribute('y',80);reversedLbl.setAttribute('text-anchor','middle');reversedLbl.setAttribute('font-size','7');reversedLbl.setAttribute('fill','var(--bad)');
+  reversedLbl.textContent = 'what the AD actually argues';
+  svg.appendChild(reversedLbl);
+  const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+  defs.innerHTML = `<marker id="adArrowGood" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="var(--good)"/></marker>
+    <marker id="adArrowBad" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="var(--bad)"/></marker>`;
+  svg.insertBefore(defs, svg.firstChild);
+}
+function render(){
+  const container = document.getElementById('adsContainer');
+  container.innerHTML = '';
+  ads.forEach((a,i)=>{
+    const div = document.createElement('div');
+    div.className = 'ad-box';
+    div.textContent = a.text;
+    div.onclick = ()=> reveal(i);
+    container.appendChild(div);
+  });
+}
+function reveal(i){
+  const a = ads[i];
+  drawFlow(a);
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show bad';
+  fb.innerHTML = a.explain;
+}
+render();
+drawFlow(ads[0]);
+</script>
+</body>
+</html>

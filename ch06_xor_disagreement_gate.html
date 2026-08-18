@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4338CA;
+  --part-accent-light: #E0E7FF;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part02-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#EEF0FB; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">XOR — The Hallway Light With Two Switches</div>
+  <div class="mb-sub">A real hallway light: flip EITHER switch alone, and the light changes state. Click each switch and watch the wire diagram light up (or not).</div>
+
+  <div class="mb-stage">
+    <svg id="hallwaySvg" viewBox="0 0 260 160" style="width:100%; height:185px; max-width:280px; display:block; margin:0 auto;"></svg>
+    <div style="text-align:center; margin-top:8px;">
+      <button class="mb-btn" onclick="flip('P')">Flip Switch P</button>
+      <button class="mb-btn" onclick="flip('Q')">Flip Switch Q</button>
+    </div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">This exact gate is the working core of a hallway light with two switches, and of binary addition's carry-free digit sum — XOR detects "exactly one is true," a genuinely different question from AND's "both" or OR's "at least one."</div>
+</div>
+
+<script>
+let P=false, Q=false;
+function draw(){
+  const svg = document.getElementById('hallwaySvg');
+  svg.innerHTML = '';
+  const lightOn = P !== Q;
+  // bulb
+  const bulb = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  bulb.setAttribute('cx',130);bulb.setAttribute('cy',30);bulb.setAttribute('r',22);
+  bulb.setAttribute('fill', lightOn ? '#FDE047' : '#E5E7EB');
+  bulb.setAttribute('stroke', lightOn ? '#CA8A04' : 'var(--ink-soft)');
+  bulb.setAttribute('stroke-width','2');
+  if(lightOn){
+    bulb.setAttribute('filter','drop-shadow(0 0 8px #FDE047)');
+  }
+  svg.appendChild(bulb);
+  const bulbLabel = document.createElementNS('http://www.w3.org/2000/svg','text');
+  bulbLabel.setAttribute('x',130);bulbLabel.setAttribute('y',36);bulbLabel.setAttribute('text-anchor','middle');bulbLabel.setAttribute('font-size','10');bulbLabel.setAttribute('fill', lightOn?'#78350F':'var(--ink-soft)');
+  bulbLabel.textContent = lightOn ? 'ON' : 'off';
+  svg.appendChild(bulbLabel);
+
+  // wires down to switches
+  ['M130,52 L60,90 L60,110','M130,52 L200,90 L200,110'].forEach((d,i)=>{
+    const wire = document.createElementNS('http://www.w3.org/2000/svg','path');
+    wire.setAttribute('d',d); wire.setAttribute('fill','none');
+    wire.setAttribute('stroke', lightOn ? 'var(--part-highlight)' : 'var(--line)'); wire.setAttribute('stroke-width','2');
+    svg.appendChild(wire);
+  });
+
+  // switches
+  [[60,'P',P],[200,'Q',Q]].forEach(([x,label,state])=>{
+    const switchBox = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    switchBox.setAttribute('x',x-20);switchBox.setAttribute('y',110);switchBox.setAttribute('width',40);switchBox.setAttribute('height',35);switchBox.setAttribute('rx',6);
+    switchBox.setAttribute('fill','#fff'); switchBox.setAttribute('stroke','var(--part-accent)'); switchBox.setAttribute('stroke-width','2');
+    svg.appendChild(switchBox);
+    const lever = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    lever.setAttribute('x',x-12);lever.setAttribute('y', state?115:132);lever.setAttribute('width',24);lever.setAttribute('height',10);lever.setAttribute('rx',3);
+    lever.setAttribute('fill', state ? 'var(--good)':'var(--ink-soft)');
+    svg.appendChild(lever);
+    const switchLabel = document.createElementNS('http://www.w3.org/2000/svg','text');
+    switchLabel.setAttribute('x',x);switchLabel.setAttribute('y',158);switchLabel.setAttribute('text-anchor','middle');switchLabel.setAttribute('font-size','11');switchLabel.setAttribute('font-weight','700');
+    switchLabel.textContent = `${label}=${state}`;
+    svg.appendChild(switchLabel);
+  });
+}
+function flip(which){
+  if(which==='P') P=!P; else Q=!Q;
+  draw();
+  const lightOn = P !== Q;
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show info';
+  fb.innerHTML = lightOn
+    ? `P=${P}, Q=${Q} → P⊕Q = TRUE. Bulb ON: the switches DISAGREE (one true, one false). Flip either switch alone from here, and the light will turn off — exactly how a real two-switch hallway light behaves.`
+    : `P=${P}, Q=${Q} → P⊕Q = FALSE. Bulb off: the switches AGREE (both true, or both false). Notice this differs from AND (needs both true) and OR (needs at least one true) — XOR asks a genuinely different question: do they disagree?`;
+}
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4338CA;
+  --part-accent-light: #E0E7FF;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part02-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#EEF0FB; }
+  .num-cell{
+    width:34px; height:34px; display:flex; align-items:center; justify-content:center;
+    font-family: var(--font-mono); font-size:0.72rem; border-radius:5px; background: var(--part-accent-light);
+    cursor:pointer;
+  }
+  .num-cell.highlighted{ background: var(--part-highlight); color:#fff; }
+  .grid-num{ display:grid; grid-template-columns: repeat(6, 1fr); gap:4px; margin-top:10px; max-width:260px; margin-left:auto; margin-right:auto; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Quantifier Order Matters</div>
+  <div class="mb-sub">Click a number x. Watch the ARROW appear on the number line — where does y have to be for "y &gt; x" to hold? The order of ∀ and ∃ decides whether that arrow's target can move.</div>
+
+  <div class="mb-stage">
+    <div class="order-toggle" style="text-align:center; margin-bottom:10px;">
+      <button class="mb-btn" id="orderBtn" onclick="toggleOrder()">Showing: ∀x ∃y (y &gt; x)</button>
+    </div>
+    <svg id="lineSvg" viewBox="0 0 280 70" style="width:100%; height:75px; max-width:300px; display:block; margin:0 auto;"></svg>
+    <div class="grid-num" id="numGrid"></div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">"∀x ∃y (y&gt;x)" reads: for EACH x, some (possibly different) bigger y exists — true, the arrow can always point somewhere new. "∃y ∀x (y&gt;x)" reads: ONE fixed y beats EVERY x — false, the arrow's target is locked and eventually fails.</div>
+</div>
+
+<script>
+let order = 'forall-exists';
+let fixedY = 5;
+
+function drawLine(currentX, currentY, holds){
+  const svg = document.getElementById('lineSvg');
+  svg.innerHTML = '';
+  const toX = v => 20+v*20;
+  const axis = document.createElementNS('http://www.w3.org/2000/svg','line');
+  axis.setAttribute('x1',10);axis.setAttribute('y1',40);axis.setAttribute('x2',270);axis.setAttribute('y2',40);
+  axis.setAttribute('stroke','var(--ink-soft)');
+  svg.appendChild(axis);
+  for(let v=1;v<=12;v++){
+    const tick = document.createElementNS('http://www.w3.org/2000/svg','line');
+    tick.setAttribute('x1',toX(v));tick.setAttribute('y1',36);tick.setAttribute('x2',toX(v));tick.setAttribute('y2',44);
+    tick.setAttribute('stroke','var(--line)');
+    svg.appendChild(tick);
+  }
+  if(order==='exists-forall'){
+    // fixed y marker always shown
+    const yLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+    yLine.setAttribute('x1',toX(fixedY));yLine.setAttribute('y1',15);yLine.setAttribute('x2',toX(fixedY));yLine.setAttribute('y2',40);
+    yLine.setAttribute('stroke','var(--part-highlight)'); yLine.setAttribute('stroke-width','2');
+    svg.appendChild(yLine);
+    const yLabel = document.createElementNS('http://www.w3.org/2000/svg','text');
+    yLabel.setAttribute('x',toX(fixedY));yLabel.setAttribute('y',12);yLabel.setAttribute('text-anchor','middle');yLabel.setAttribute('font-size','9');yLabel.setAttribute('fill','var(--part-highlight)');
+    yLabel.textContent = `y=${fixedY} (fixed first!)`;
+    svg.appendChild(yLabel);
+  }
+  if(currentX !== undefined){
+    const xDot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    xDot.setAttribute('cx',toX(currentX));xDot.setAttribute('cy',40);xDot.setAttribute('r',5);xDot.setAttribute('fill','var(--part-accent)');
+    svg.appendChild(xDot);
+    if(currentY !== undefined){
+      const arrow = document.createElementNS('http://www.w3.org/2000/svg','line');
+      arrow.setAttribute('x1',toX(currentX));arrow.setAttribute('y1',40);arrow.setAttribute('x2',toX(currentY));arrow.setAttribute('y2',40);
+      arrow.setAttribute('stroke', holds?'var(--good)':'var(--bad)'); arrow.setAttribute('stroke-width','3');
+      svg.appendChild(arrow);
+      const yDot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      yDot.setAttribute('cx',toX(currentY));yDot.setAttribute('cy',40);yDot.setAttribute('r',5);yDot.setAttribute('fill',holds?'var(--good)':'var(--bad)');
+      svg.appendChild(yDot);
+    }
+  }
+}
+function toggleOrder(){
+  order = order === 'forall-exists' ? 'exists-forall' : 'forall-exists';
+  document.getElementById('orderBtn').textContent = order === 'forall-exists'
+    ? 'Showing: ∀x ∃y (y > x)'
+    : 'Showing: ∃y ∀x (y > x)';
+  render();
+  drawLine();
+}
+function render(){
+  const grid = document.getElementById('numGrid');
+  grid.innerHTML = '';
+  for(let x=1;x<=12;x++){
+    const cell = document.createElement('div');
+    cell.className = 'num-cell';
+    cell.textContent = 'x='+x;
+    cell.onclick = ()=> demo(x, cell);
+    grid.appendChild(cell);
+  }
+}
+function demo(x, cell){
+  document.querySelectorAll('.num-cell').forEach(c=>c.classList.remove('highlighted'));
+  cell.classList.add('highlighted');
+  const fb = document.getElementById('fb');
+  if(order === 'forall-exists'){
+    const y = x+1;
+    drawLine(x,y,true);
+    fb.className = 'mb-feedback show good';
+    fb.innerHTML = `For x=${x}, choose y=${y} (arrow moves freely). Since ${y}&gt;${x}, satisfied. Every x you click gets its OWN fresh y — that's what "∃y" AFTER "∀x" allows.`;
+  } else {
+    const holds = fixedY > x;
+    drawLine(x,fixedY,holds);
+    fb.className = `mb-feedback show ${holds?'good':'bad'}`;
+    fb.innerHTML = holds
+      ? `With y FIXED at ${fixedY} (chosen before any x), x=${x} is beaten: ${fixedY}&gt;${x}. ✓`
+      : `With y FIXED at ${fixedY}, x=${x} is NOT beaten: ${fixedY} is not &gt; ${x}. ✗ This single fixed y fails to dominate every x — exactly why "∃y ∀x" is false, no matter which y you'd fixed.`;
+  }
+}
+render();
+drawLine();
+</script>
+</body>
+</html>

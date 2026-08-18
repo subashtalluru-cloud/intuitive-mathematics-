@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #7C3AED;
+  --part-accent-light: #EDE9FE;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part04-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FAF5FF; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Why Primary Keys MUST Be Injective</div>
+  <div class="mb-sub">A database's primary key must map every row to a UNIQUE identifier. Click "Add row" and watch the arrow diagram — the 4th row will collide with an existing key.</div>
+
+  <div class="mb-stage">
+    <svg id="keySvg" viewBox="0 0 280 200" style="width:100%; height:214px; max-width:300px; display:block; margin:0 auto;"></svg>
+    <button class="mb-btn primary" onclick="addRow()" style="display:block; margin:10px auto;">Add a new customer row</button>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">A database's primary key column establishes, by definition, an injective function from rows to key values. Two rows mapping to the identical ID isn't a minor bug — it's a visible violation of the injectivity arrow-diagram rule from earlier in this chapter, now with real financial or medical data at stake.</div>
+</div>
+
+<script>
+const names = ["Alice","Bob","Carla","David"];
+let rows = [];
+function addRow(){
+  const name = names[rows.length % names.length];
+  const id = rows.length === 3 ? 101 : 100+rows.length;
+  rows.push({name, id});
+  draw();
+}
+function draw(){
+  const svg = document.getElementById('keySvg');
+  svg.innerHTML = '';
+  if(rows.length===0){
+    const placeholder = document.createElementNS('http://www.w3.org/2000/svg','text');
+    placeholder.setAttribute('x',140);placeholder.setAttribute('y',100);placeholder.setAttribute('text-anchor','middle');placeholder.setAttribute('font-size','11');placeholder.setAttribute('fill','var(--ink-soft)');
+    placeholder.textContent = 'Click "Add a new customer row" to begin';
+    svg.appendChild(placeholder);
+    return;
+  }
+  const ids = rows.map(r=>r.id);
+  const leftX=50, rightX=230;
+  rows.forEach((r,i)=>{
+    const y = 25 + i*40;
+    const leftDot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    leftDot.setAttribute('cx',leftX);leftDot.setAttribute('cy',y);leftDot.setAttribute('r',5);leftDot.setAttribute('fill','var(--part-accent)');
+    svg.appendChild(leftDot);
+    const leftLbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    leftLbl.setAttribute('x',leftX-40);leftLbl.setAttribute('y',y+4);leftLbl.setAttribute('font-size','10');
+    leftLbl.textContent = r.name;
+    svg.appendChild(leftLbl);
+  });
+  // unique right-side positions for unique ids
+  const uniqueIds = [...new Set(ids)];
+  const idY = {};
+  uniqueIds.forEach((id,i)=>{ idY[id] = 25 + i*(180/Math.max(uniqueIds.length,1)); });
+  uniqueIds.forEach(id=>{
+    const y = idY[id];
+    const rightDot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    rightDot.setAttribute('cx',rightX);rightDot.setAttribute('cy',y);rightDot.setAttribute('r',5);
+    const conflict = ids.filter(x=>x===id).length>1;
+    rightDot.setAttribute('fill', conflict ? 'var(--bad)':'var(--part-highlight)');
+    svg.appendChild(rightDot);
+    const rightLbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    rightLbl.setAttribute('x',rightX+10);rightLbl.setAttribute('y',y+4);rightLbl.setAttribute('font-size','10');rightLbl.setAttribute('fill', conflict?'var(--bad)':'var(--ink)');
+    rightLbl.textContent = 'id='+id + (conflict?' ⚠':'');
+    svg.appendChild(rightLbl);
+  });
+  rows.forEach((r,i)=>{
+    const y1 = 25+i*40;
+    const y2 = idY[r.id];
+    const conflict = ids.filter(x=>x===r.id).length>1;
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',leftX);line.setAttribute('y1',y1);line.setAttribute('x2',rightX);line.setAttribute('y2',y2);
+    line.setAttribute('stroke', conflict?'var(--bad)':'#9CA3AF'); line.setAttribute('stroke-width', conflict?'2':'1');
+    svg.appendChild(line);
+  });
+
+  const fb = document.getElementById('fb');
+  const hasDup = ids.some((x,i)=>ids.indexOf(x)!==i);
+  if(hasDup){
+    fb.className = 'mb-feedback show bad';
+    fb.innerHTML = `<strong>Injectivity violated.</strong> customer_id=101 now has TWO incoming arrows (highlighted red) — exactly the "broken function" arrow-diagram pattern from earlier in this chapter. Which customer does "UPDATE ... WHERE customer_id=101" actually modify? The database can no longer answer unambiguously.`;
+  } else if(rows.length>0){
+    fb.className = 'mb-feedback show good';
+    fb.innerHTML = `Every customer_id still has exactly one incoming arrow — injectivity holds. Every update or lookup by ID is guaranteed unambiguous.`;
+  }
+}
+draw();
+</script>
+</body>
+</html>

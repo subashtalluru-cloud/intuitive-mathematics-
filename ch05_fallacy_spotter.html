@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4338CA;
+  --part-accent-light: #E0E7FF;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part02-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#EEF0FB; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">The Argument Machine — Watch It Jam</div>
+  <div class="mb-sub">Feed each reasoning pattern into the machine. Valid forms turn the gears smoothly through to a guaranteed conclusion. Invalid forms jam — the gears spin but nothing is actually guaranteed.</div>
+
+  <div class="mb-stage">
+    <svg id="gearSvg" viewBox="0 0 260 160" style="width:100%; height:185px; max-width:280px; display:block; margin:0 auto;"></svg>
+  </div>
+  <div id="formList"></div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Two of these four patterns are logically airtight (modus ponens, modus tollens) — the gears click into a guaranteed conclusion. Two feel similar but jam (affirming the consequent, denying the antecedent) — other causes could produce the same observed effect.</div>
+</div>
+
+<script>
+const forms = [
+  {name:"Modus Ponens", premises:"P→Q, P is true", conclusion:"∴ Q is true", valid:true,
+   explain:"VALID. 'If it rains, ground gets wet. It's raining. Therefore ground is wet.' Affirming the hypothesis directly forces the conclusion."},
+  {name:"Modus Tollens", premises:"P→Q, Q is false", conclusion:"∴ P is false", valid:true,
+   explain:"VALID. 'If it rains, ground gets wet. Ground is NOT wet. Therefore it did NOT rain.' Denying the conclusion forces denial of the hypothesis."},
+  {name:"Affirming the Consequent", premises:"P→Q, Q is true", conclusion:"∴ P is true (INVALID leap)", valid:false,
+   explain:"INVALID. 'Ground IS wet. Therefore it rained.' Ground could be wet from a sprinkler — other causes produce the same effect."},
+  {name:"Denying the Antecedent", premises:"P→Q, P is false", conclusion:"∴ Q is false (INVALID leap)", valid:false,
+   explain:"INVALID. 'It did NOT rain. Therefore ground is NOT wet.' The ground could still be wet for an unrelated reason."}
+];
+let gearAngle = 0;
+let jammed = false;
+
+function drawMachine(state){
+  const svg = document.getElementById('gearSvg');
+  svg.innerHTML = '';
+  const gearPositions = [[70,80,'var(--part-accent)'],[130,80,'var(--part-highlight)'],[190,80,'var(--part-accent)']];
+  gearPositions.forEach(([cx,cy,color],i)=>{
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('transform', `rotate(${state==='jam'?0:gearAngle*(i%2===0?1:-1)} ${cx} ${cy})`);
+    for(let t=0;t<8;t++){
+      const angle = t*45*Math.PI/180;
+      const tooth = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      tooth.setAttribute('x',cx-3);tooth.setAttribute('y',cy-24);tooth.setAttribute('width',6);tooth.setAttribute('height',8);
+      tooth.setAttribute('transform',`rotate(${t*45} ${cx} ${cy})`);
+      tooth.setAttribute('fill', state==='jam' ? 'var(--bad)' : color);
+      g.appendChild(tooth);
+    }
+    const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx',cx);circle.setAttribute('cy',cy);circle.setAttribute('r',18);
+    circle.setAttribute('fill', state==='jam' ? '#FEF2F2' : (state==='valid' ? '#F0FDF4' : '#fff'));
+    circle.setAttribute('stroke', state==='jam' ? 'var(--bad)' : color);
+    circle.setAttribute('stroke-width','2');
+    g.appendChild(circle);
+    svg.appendChild(g);
+  });
+  const statusText = document.createElementNS('http://www.w3.org/2000/svg','text');
+  statusText.setAttribute('x',130);statusText.setAttribute('y',140);statusText.setAttribute('text-anchor','middle');statusText.setAttribute('font-size','13');statusText.setAttribute('font-weight','700');
+  statusText.setAttribute('fill', state==='jam'?'var(--bad)':(state==='valid'?'var(--good)':'var(--ink-soft)'));
+  statusText.textContent = state==='jam' ? '⚠ JAMMED — conclusion not guaranteed' : (state==='valid' ? '✓ Gears mesh — conclusion guaranteed' : 'Feed a pattern in →');
+  svg.appendChild(statusText);
+}
+
+function render(){
+  const list = document.getElementById('formList');
+  list.innerHTML = '';
+  forms.forEach((f,i)=>{
+    const btn = document.createElement('button');
+    btn.className = 'mb-btn';
+    btn.style.display='block'; btn.style.width='100%'; btn.style.textAlign='left'; btn.style.marginBottom='4px';
+    btn.innerHTML = `<strong>${f.name}:</strong> ${f.premises} — ${f.conclusion}`;
+    btn.onclick = ()=> feed(f);
+    list.appendChild(btn);
+  });
+}
+function feed(f){
+  gearAngle += 40;
+  drawMachine(f.valid ? 'valid' : 'jam');
+  const fb = document.getElementById('fb');
+  fb.className = `mb-feedback show ${f.valid?'good':'bad'}`;
+  fb.innerHTML = `<strong>${f.name}:</strong> ${f.explain}`;
+}
+drawMachine('idle');
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4A5568;
+  --part-accent-light: #E2E8F0;
+  --part-highlight: #D97706;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F3F1EA; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Why ∅ ⊆ Every Set — Even One With Nothing in Common</div>
+  <div class="mb-sub">The subset test: "every element of ∅ is also in A." Click to search ∅ for an element that fails this test.</div>
+
+  <div class="mb-stage">
+    <svg id="emptySvg" viewBox="0 0 280 100" style="width:100%; height:107px; max-width:300px; display:block; margin:0 auto;"></svg>
+  </div>
+  <button class="mb-btn primary" onclick="tryCounterexample()" style="display:block; margin:10px auto;">Search ∅ for a counterexample element</button>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">This is called a "vacuous truth" — the subset condition is satisfied not because anything was actively checked and confirmed, but because there's nothing in ∅ that COULD fail the test.</div>
+</div>
+
+<script>
+let searched = 0;
+function draw(){
+  const svg = document.getElementById('emptySvg');
+  svg.innerHTML='';
+  // empty set box
+  const emptyBox = document.createElementNS('http://www.w3.org/2000/svg','rect');
+  emptyBox.setAttribute('x',20);emptyBox.setAttribute('y',20);emptyBox.setAttribute('width',100);emptyBox.setAttribute('height',60);emptyBox.setAttribute('rx',8);
+  emptyBox.setAttribute('fill','#fff'); emptyBox.setAttribute('stroke','var(--part-accent)'); emptyBox.setAttribute('stroke-width','2'); emptyBox.setAttribute('stroke-dasharray','4,3');
+  svg.appendChild(emptyBox);
+  const emptyLabel = document.createElementNS('http://www.w3.org/2000/svg','text');
+  emptyLabel.setAttribute('x',70);emptyLabel.setAttribute('y',55);emptyLabel.setAttribute('text-anchor','middle');emptyLabel.setAttribute('font-size','14');emptyLabel.setAttribute('fill','var(--part-accent)');
+  emptyLabel.textContent = searched>0 ? '(nothing here)' : '∅';
+  svg.appendChild(emptyLabel);
+  // set A box
+  const aBox = document.createElementNS('http://www.w3.org/2000/svg','rect');
+  aBox.setAttribute('x',180);aBox.setAttribute('y',20);aBox.setAttribute('width',80);aBox.setAttribute('height',60);aBox.setAttribute('rx',8);
+  aBox.setAttribute('fill','var(--part-accent-light)'); aBox.setAttribute('stroke','var(--part-highlight)'); aBox.setAttribute('stroke-width','2');
+  svg.appendChild(aBox);
+  const aLabel = document.createElementNS('http://www.w3.org/2000/svg','text');
+  aLabel.setAttribute('x',220);aLabel.setAttribute('y',55);aLabel.setAttribute('text-anchor','middle');aLabel.setAttribute('font-size','12');aLabel.setAttribute('fill','var(--part-highlight)');
+  aLabel.textContent = 'A';
+  svg.appendChild(aLabel);
+  if(searched>0){
+    const magnifier = document.createElementNS('http://www.w3.org/2000/svg','text');
+    magnifier.setAttribute('x',70);magnifier.setAttribute('y',95);magnifier.setAttribute('text-anchor','middle');magnifier.setAttribute('font-size','10');magnifier.setAttribute('fill','var(--good)');
+    magnifier.textContent = `search #${searched}: found nothing to check`;
+    svg.appendChild(magnifier);
+  }
+}
+function tryCounterexample(){
+  searched++;
+  draw();
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show good';
+  fb.innerHTML = `No counterexample can ever be found, for any set A whatsoever — not because ∅'s elements were checked and happened to pass, but because ∅ HAS no elements to fail the test in the first place. That's why ∅ ⊆ A is true for literally every set A.`;
+}
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #0F766E;
+  --part-accent-light: #CCFBF1;
+  --part-highlight: #EA580C;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part03-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F0FBF9; }
+  .ledger-cols{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; }
+  .ledger-col{ flex:1; min-width:160px; background:#fff; border:1px solid var(--line); border-radius:8px; padding:12px; }
+  .ledger-col h5{ margin:0 0 8px 0; font-family:var(--font-serif); color:var(--part-accent); font-size:0.9rem; text-align:center; }
+  .ledger-row{ font-family:var(--font-mono); font-size:0.8rem; padding:4px 0; border-bottom:1px dashed var(--line); }
+  .running-total{ font-weight:700; text-align:center; margin-top:8px; padding-top:8px; border-top:2px solid var(--part-accent); }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Two-Column Bookkeeping vs. One Signed Number</div>
+  <div class="mb-sub">A merchant starts with 40 units of grain, sells 65 on credit, then receives 30 from harvest. Watch both approaches side by side.</div>
+
+  <div class="mb-stage">
+    <div class="ledger-cols">
+      <div class="ledger-col">
+        <h5>Old way: two separate columns</h5>
+        <div id="oldWay"></div>
+      </div>
+      <div class="ledger-col">
+        <h5>Signed numbers: one running total</h5>
+        <div id="newWay"></div>
+      </div>
+    </div>
+  </div>
+  <div class="mb-controls" style="justify-content:center;">
+    <button class="mb-btn primary" onclick="nextEvent()">Next transaction →</button>
+    <button class="mb-btn" onclick="resetLedger()">Reset</button>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Brahmagupta's 628 CE rules weren't an abstract curiosity — they formalized exactly this: recognizing "debt" and "fortune" aren't two different kinds of quantity needing two rulebooks, but one signed quantity that ordinary addition handles automatically.</div>
+</div>
+
+<script>
+const events = [
+  {label:"Start", held:40, owed:0, delta:40},
+  {label:"Sell 65 on credit", held:40, owed:65, delta:-65},
+  {label:"Receive 30 harvest", held:70, owed:65, delta:30}
+];
+let idx = 0;
+let signedTotal = 0;
+
+function render(){
+  const oldDiv = document.getElementById('oldWay');
+  const newDiv = document.getElementById('newWay');
+  let oldHtml = '', newHtml = '';
+  let running = 0;
+  for(let i=0;i<=idx;i++){
+    const e = events[i];
+    oldHtml += `<div class="ledger-row">${e.label}: held=${e.held}, owed=${e.owed}<br><span style="font-size:0.7rem; color:var(--ink-soft);">→ must manually reconcile: ${e.held}−${e.owed}=${e.held-e.owed}</span></div>`;
+    running += e.delta;
+    newHtml += `<div class="ledger-row">${e.label}: ${e.delta>=0?'+':''}${e.delta}</div>`;
+  }
+  oldDiv.innerHTML = oldHtml + `<div class="running-total">Reconciled net: ${events[idx].held - events[idx].owed}</div>`;
+  newDiv.innerHTML = newHtml + `<div class="running-total">Running total: ${running}</div>`;
+  signedTotal = running;
+}
+
+function nextEvent(){
+  if(idx < events.length-1){
+    idx++;
+    render();
+    const fb = document.getElementById('fb');
+    fb.className = 'mb-feedback show info';
+    fb.innerHTML = idx === events.length-1
+      ? `Both methods agree: net position is ${signedTotal}. But notice the LEFT column needed a special reconciliation step every single time. The RIGHT column just... added. The sign carried all the "which column" information automatically.`
+      : `Transaction applied to both ledgers. Keep going.`;
+  }
+}
+function resetLedger(){ idx=0; render(); document.getElementById('fb').className='mb-feedback'; }
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #0F766E;
+  --part-accent-light: #CCFBF1;
+  --part-highlight: #EA580C;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part03-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F0FBF9; }
+  .step-card{ background:#fff; border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin-bottom:8px; opacity:0.3; font-family:var(--font-mono); font-size:0.84rem; }
+  .step-card.shown{ opacity:1; border-color:var(--part-accent); }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">√2 Is Irrational — A Proof by Contradiction</div>
+  <div class="mb-sub">Click through this classic proof. Watch a/b visualized as a fraction bar, shrinking as the "no common factors" assumption gets contradicted.</div>
+
+  <div class="mb-stage">
+    <svg id="fracSvg" viewBox="0 0 260 70" style="width:100%; height:81px; max-width:280px; display:block; margin:0 auto;"></svg>
+    <div id="stepsContainer"></div>
+  </div>
+  <button class="mb-btn primary" onclick="advance()" style="display:block; margin:0 auto;">Reveal next step</button>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">This proof doesn't fail to find a fraction for √2 due to lack of effort — it PROVES no fraction, however large its numerator and denominator, could ever equal √2 exactly.</div>
+</div>
+
+<script>
+const steps = [
+  "Assume, for contradiction, that √2 IS rational: √2 = a/b, fully reduced (no common factors).",
+  "Square both sides: 2 = a²/b², so a² = 2b².",
+  "a² is even → a itself must be even (only even numbers square to even numbers).",
+  "Write a = 2k. Substitute: 4k² = 2b², so b² = 2k².",
+  "b² is even too → b must be even as well.",
+  "But we assumed a,b had NO common factors — yet both are now shown even. Contradiction!",
+  "√2 cannot be written as a/b. √2 is irrational. ∎"
+];
+let revealed = 0;
+function drawFraction(stage){
+  const svg = document.getElementById('fracSvg');
+  svg.innerHTML='';
+  // a fraction bar visual: numerator/denominator both shrinking to represent "both keep halving" absurdity
+  const barY = 40;
+  const width = 200 / Math.pow(1.15, stage); // shrinks each stage to show the "infinite descent" flavor
+  const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+  rect.setAttribute('x',130-width/2);rect.setAttribute('y',barY-15);rect.setAttribute('width',width);rect.setAttribute('height',12);
+  rect.setAttribute('fill','var(--part-accent-light)'); rect.setAttribute('stroke','var(--part-accent)');
+  svg.appendChild(rect);
+  const numLbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+  numLbl.setAttribute('x',130);numLbl.setAttribute('y',barY-19);numLbl.setAttribute('text-anchor','middle');numLbl.setAttribute('font-size','10');
+  numLbl.textContent = 'a';
+  svg.appendChild(numLbl);
+  const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1',130-width/2);line.setAttribute('y1',barY);line.setAttribute('x2',130+width/2);line.setAttribute('y2',barY);
+  line.setAttribute('stroke','var(--part-accent)'); line.setAttribute('stroke-width','2');
+  svg.appendChild(line);
+  const denLbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+  denLbl.setAttribute('x',130);denLbl.setAttribute('y',barY+22);denLbl.setAttribute('text-anchor','middle');denLbl.setAttribute('font-size','10');
+  denLbl.textContent = 'b';
+  svg.appendChild(denLbl);
+  if(stage>=5){
+    const warn = document.createElementNS('http://www.w3.org/2000/svg','text');
+    warn.setAttribute('x',130);warn.setAttribute('y',15);warn.setAttribute('text-anchor','middle');warn.setAttribute('font-size','10');warn.setAttribute('fill','var(--bad)');
+    warn.textContent = 'both a AND b just shown even — shares a factor of 2!';
+    svg.appendChild(warn);
+  }
+}
+function render(){
+  const container = document.getElementById('stepsContainer');
+  container.innerHTML = '';
+  steps.forEach((s,i)=>{
+    const div = document.createElement('div');
+    div.className = 'step-card' + (i<revealed?' shown':'');
+    div.textContent = `${i+1}. ${s}`;
+    container.appendChild(div);
+  });
+}
+function advance(){
+  if(revealed < steps.length){
+    revealed++;
+    render();
+    drawFraction(revealed);
+    const fb = document.getElementById('fb');
+    if(revealed === steps.length){
+      fb.className = 'mb-feedback show good';
+      fb.innerHTML = `Complete. Assume the opposite, follow the logic, and if it leads to an impossible contradiction, the original assumption was false. This is exactly Chapter 3's "no largest natural number" strategy, applied to a much richer target.`;
+    } else {
+      fb.className = 'mb-feedback show info';
+    }
+  }
+}
+drawFraction(0);
+render();
+</script>
+</body>
+</html>

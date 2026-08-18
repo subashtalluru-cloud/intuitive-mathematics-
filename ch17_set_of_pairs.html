@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #7C3AED;
+  --part-accent-light: #EDE9FE;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part04-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FAF5FF; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">A Function Is Secretly Just a Set of Pairs</div>
+  <div class="mb-sub">Forget "machine" for a moment. At its deepest foundation, a function IS a set of ordered pairs — points on a plane. Click to add pairs, and test the ONE rule that makes the set legitimate.</div>
+
+  <div class="mb-stage">
+    <svg id="pairsSvg" viewBox="0 0 260 220" style="width:100%; height:254px; max-width:280px; display:block; margin:0 auto;"></svg>
+    <button class="mb-btn" onclick="addPair()">Add a valid pair</button>
+    <button class="mb-btn" onclick="addBadPair()">Add a pair that breaks it</button>
+    <button class="mb-btn" onclick="reset()">Reset</button>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">The formal definition is just: a subset of ordered pairs where every first-coordinate (x-value) appears exactly once. This is exactly the vertical-line test from Chapter 18, seen from its most fundamental angle — two points sharing an x-coordinate is a visibly vertical pair, disqualifying the set.</div>
+</div>
+
+<script>
+let pairs = [];
+const cx=30, cy=190, scale=25;
+function toSvg(x,y){ return [cx+x*scale, cy-y*scale]; }
+function draw(){
+  const svg = document.getElementById('pairsSvg');
+  svg.innerHTML = '';
+  const xAxis = document.createElementNS('http://www.w3.org/2000/svg','line');
+  xAxis.setAttribute('x1',cx);xAxis.setAttribute('y1',cy);xAxis.setAttribute('x2',250);xAxis.setAttribute('y2',cy);
+  xAxis.setAttribute('stroke','var(--ink-soft)');
+  svg.appendChild(xAxis);
+  const yAxis = document.createElementNS('http://www.w3.org/2000/svg','line');
+  yAxis.setAttribute('x1',cx);yAxis.setAttribute('y1',cy);yAxis.setAttribute('x2',cx);yAxis.setAttribute('y2',10);
+  yAxis.setAttribute('stroke','var(--ink-soft)');
+  svg.appendChild(yAxis);
+
+  const firsts = pairs.map(p=>p[0]);
+  pairs.forEach(([a,b])=>{
+    const conflict = firsts.filter(x=>x===a).length>1;
+    const [px,py] = toSvg(a,b);
+    const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',px);dot.setAttribute('cy',py);dot.setAttribute('r',5);
+    dot.setAttribute('fill', conflict?'var(--bad)':'var(--part-accent)');
+    svg.appendChild(dot);
+    const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',px+7);lbl.setAttribute('y',py-5);lbl.setAttribute('font-size','9');lbl.setAttribute('fill', conflict?'var(--bad)':'var(--ink)');
+    lbl.textContent = `(${a},${b})`;
+    svg.appendChild(lbl);
+    if(conflict){
+      // draw vertical dashed line showing the shared x-coordinate
+      const vline = document.createElementNS('http://www.w3.org/2000/svg','line');
+      vline.setAttribute('x1',px);vline.setAttribute('y1',10);vline.setAttribute('x2',px);vline.setAttribute('y2',cy);
+      vline.setAttribute('stroke','var(--bad)'); vline.setAttribute('stroke-dasharray','3,2');
+      svg.appendChild(vline);
+    }
+  });
+}
+function addPair(){
+  const a = pairs.length+1;
+  const b = a*a;
+  pairs.push([a,b]);
+  draw();
+  report();
+}
+function addBadPair(){
+  if(pairs.length===0) addPair();
+  const existingFirst = pairs[0][0];
+  pairs.push([existingFirst, 8]);
+  draw();
+  report();
+}
+function report(){
+  const fb = document.getElementById('fb');
+  const firsts = pairs.map(p=>p[0]);
+  const valid = !firsts.some((x,i)=>firsts.indexOf(x)!==i);
+  fb.className = `mb-feedback show ${valid?'good':'bad'}`;
+  fb.innerHTML = valid
+    ? `Still a legitimate function: every first-coordinate (x-value) appears in exactly one pair — one dot per vertical position.`
+    : `<strong>BROKEN.</strong> Two red dots now share the same x-coordinate (dashed vertical line) — the same input claims two different outputs. This single membership condition, violated, is precisely what disqualifies a set of pairs from being a function.`;
+}
+function reset(){ pairs=[]; draw(); document.getElementById('fb').className='mb-feedback'; }
+draw();
+</script>
+</body>
+</html>

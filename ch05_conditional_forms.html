@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4338CA;
+  --part-accent-light: #E0E7FF;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part02-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#EEF0FB; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Converse, Inverse, Contrapositive — A Diamond of Transformations</div>
+  <div class="mb-sub">Original: "If a shape is a square (P), it has four sides (Q)." Click each corner of the diamond to see how it's built from the original — and whether it's true.</div>
+
+  <div class="mb-stage">
+    <svg id="diamondSvg" viewBox="0 0 320 260" style="width:100%; height:244px; max-width:340px; display:block; margin:0 auto;"></svg>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Notice the diagonal pairs: Original↔Contrapositive (both TRUE) and Converse↔Inverse (both FALSE). This diagonal pairing is not a coincidence of squares — it's a guaranteed logical equivalence, and it's the exact machinery underneath every proof by contradiction.</div>
+</div>
+
+<script>
+const nodes = {
+  original: {x:160, y:40, text:"P→Q", full:"If square, then 4 sides", truth:true,
+    explain:"TRUE. Being a square requires four sides by definition."},
+  converse: {x:280, y:130, text:"Q→P", full:"If 4 sides, then square", truth:false,
+    explain:"FALSE. A rectangle has four sides but isn't a square — swapping hypothesis/conclusion is NOT guaranteed to preserve truth."},
+  inverse: {x:40, y:130, text:"¬P→¬Q", full:"If not square, not 4 sides", truth:false,
+    explain:"FALSE. Same rectangle counterexample — not a square, yet still 4 sides."},
+  contrapositive: {x:160, y:220, text:"¬Q→¬P", full:"If not 4 sides, not square", truth:true,
+    explain:"TRUE — and always matches the original. Negating AND swapping is exactly the combination that preserves logical equivalence."}
+};
+let revealedTruth = {};
+
+function draw(){
+  const svg = document.getElementById('diamondSvg');
+  svg.innerHTML = '';
+  // connecting lines
+  const lines = [['original','converse'],['original','inverse'],['converse','contrapositive'],['inverse','contrapositive'],['original','contrapositive'],['converse','inverse']];
+  lines.forEach(([a,b])=>{
+    const na=nodes[a], nb=nodes[b];
+    const isDiagonal = (a==='original'&&b==='contrapositive')||(a==='converse'&&b==='inverse');
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',na.x);line.setAttribute('y1',na.y);line.setAttribute('x2',nb.x);line.setAttribute('y2',nb.y);
+    line.setAttribute('stroke', isDiagonal ? 'var(--part-highlight)' : 'var(--line)');
+    line.setAttribute('stroke-width', isDiagonal ? '2' : '1');
+    line.setAttribute('stroke-dasharray', isDiagonal ? '5,3' : '0');
+    svg.appendChild(line);
+  });
+  // nodes
+  Object.entries(nodes).forEach(([key,n])=>{
+    const revealed = revealedTruth[key];
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.style.cursor='pointer';
+    g.onclick = ()=> reveal(key);
+    const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('x',n.x-55);rect.setAttribute('y',n.y-22);rect.setAttribute('width',110);rect.setAttribute('height',44);rect.setAttribute('rx',8);
+    rect.setAttribute('fill', revealed===undefined ? '#fff' : (n.truth?'#F0FDF4':'#FEF2F2'));
+    rect.setAttribute('stroke', revealed===undefined ? 'var(--part-accent)' : (n.truth?'var(--good)':'var(--bad)'));
+    rect.setAttribute('stroke-width','2');
+    g.appendChild(rect);
+    const t1 = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t1.setAttribute('x',n.x);t1.setAttribute('y',n.y-4);t1.setAttribute('text-anchor','middle');t1.setAttribute('font-size','13');t1.setAttribute('font-weight','700');
+    t1.setAttribute('fill','var(--part-accent)');
+    t1.textContent = n.text;
+    g.appendChild(t1);
+    const t2 = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t2.setAttribute('x',n.x);t2.setAttribute('y',n.y+12);t2.setAttribute('text-anchor','middle');t2.setAttribute('font-size','9');
+    t2.textContent = revealed!==undefined ? (n.truth?'TRUE':'FALSE') : 'click to test';
+    t2.setAttribute('fill', revealed===undefined?'var(--ink-soft)':(n.truth?'var(--good)':'var(--bad)'));
+    g.appendChild(t2);
+    svg.appendChild(g);
+  });
+}
+function reveal(key){
+  revealedTruth[key] = true;
+  draw();
+  const n = nodes[key];
+  const fb = document.getElementById('fb');
+  fb.className = `mb-feedback show ${n.truth?'good':'bad'}`;
+  fb.innerHTML = `<strong>${key} (${n.text}):</strong> "${n.full}." ${n.explain}`;
+  if(Object.keys(revealedTruth).length===4){
+    fb.innerHTML += `<br><br><strong>All four revealed:</strong> notice the dashed diagonal lines connect Original↔Contrapositive (both true) and Converse↔Inverse (both false) — that pairing is guaranteed, not a coincidence of squares.`;
+  }
+}
+draw();
+</script>
+</body>
+</html>

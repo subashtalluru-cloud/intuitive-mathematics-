@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #7C3AED;
+  --part-accent-light: #EDE9FE;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part04-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#FAF5FF; }
+  .diagram-select{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-bottom:10px; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Is This a Function? — Arrow Diagram Test</div>
+  <div class="mb-sub">Click each diagram. A function requires: every input has exactly ONE outgoing arrow. Multiple inputs CAN share an output — that's fine.</div>
+
+  <div class="mb-stage">
+    <svg id="arrowSvg" viewBox="0 0 320 180" style="width:100%; height:169px; max-width:340px; display:block; margin:0 auto;"></svg>
+  </div>
+  <div class="diagram-select">
+    <button class="mb-btn" onclick="showDiagram('valid')">Diagram A</button>
+    <button class="mb-btn" onclick="showDiagram('invalid')">Diagram B</button>
+    <button class="mb-btn" onclick="showDiagram('sharing')">Diagram C</button>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Like students and lockers: every student's arrow points to exactly one locker (no student has two lockers), but multiple students CAN share a locker. That asymmetry is the entire content of what makes a relationship a function.</div>
+</div>
+
+<script>
+function drawNode(svg,x,y,label,color){
+  const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  c.setAttribute('cx',x);c.setAttribute('cy',y);c.setAttribute('r',16);c.setAttribute('fill',color);
+  svg.appendChild(c);
+  const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+  t.setAttribute('x',x);t.setAttribute('y',y+4);t.setAttribute('text-anchor','middle');t.setAttribute('font-size','11');t.setAttribute('fill','#fff');t.setAttribute('font-weight','700');
+  t.textContent = label;
+  svg.appendChild(t);
+}
+function drawArrow(svg,x1,y1,x2,y2,color){
+  const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1',x1+16);line.setAttribute('y1',y1);line.setAttribute('x2',x2-16);line.setAttribute('y2',y2);
+  line.setAttribute('stroke',color||'var(--ink-soft)');line.setAttribute('stroke-width','2');
+  line.setAttribute('marker-end','url(#arrowhead)');
+  svg.appendChild(line);
+}
+function setupDefs(svg){
+  const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+  defs.innerHTML = `<marker id="arrowhead" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#888"/></marker>`;
+  svg.appendChild(defs);
+}
+
+function showDiagram(kind){
+  const svg = document.getElementById('arrowSvg');
+  svg.innerHTML = '';
+  setupDefs(svg);
+  const inputs = [[50,40],[50,90],[50,140]];
+  const outputs = [[270,40],[270,90],[270,140]];
+  inputs.forEach(([x,y],i)=> drawNode(svg,x,y,'i'+(i+1),'var(--part-accent)'));
+  outputs.forEach(([x,y],i)=> drawNode(svg,x,y,'o'+(i+1),'var(--part-highlight)'));
+
+  const fb = document.getElementById('fb');
+  if(kind==='valid'){
+    drawArrow(svg,50,40,270,40);
+    drawArrow(svg,50,90,270,90);
+    drawArrow(svg,50,140,270,140);
+    fb.className = 'mb-feedback show good';
+    fb.innerHTML = `<strong>IS a function.</strong> Every input has exactly one outgoing arrow. No ambiguity anywhere.`;
+  } else if(kind==='invalid'){
+    drawArrow(svg,50,40,270,40);
+    drawArrow(svg,50,40,270,90,'var(--bad)');
+    drawArrow(svg,50,90,270,90);
+    drawArrow(svg,50,140,270,140);
+    fb.className = 'mb-feedback show bad';
+    fb.innerHTML = `<strong>NOT a function.</strong> Input i1 has TWO outgoing arrows — to o1 AND o2. Same input, two different outputs. This is exactly the "unpredictable vending machine" problem the chapter opens with.`;
+  } else {
+    drawArrow(svg,50,40,270,40);
+    drawArrow(svg,50,90,270,40);
+    drawArrow(svg,50,140,270,90);
+    fb.className = 'mb-feedback show good';
+    fb.innerHTML = `<strong>IS a function.</strong> Every input has exactly one outgoing arrow — even though o1 receives arrows from BOTH i1 and i2. Multiple inputs sharing one output is completely fine; it's only multiple outputs FROM one input that breaks the function property.`;
+  }
+}
+showDiagram('valid');
+</script>
+</body>
+</html>

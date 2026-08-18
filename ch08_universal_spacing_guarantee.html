@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4338CA;
+  --part-accent-light: #E0E7FF;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part02-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#EEF0FB; }
+  .domino-row{ display:flex; gap:4px; overflow-x:auto; padding:10px 0; }
+  .mini-domino{ width:20px; height:50px; background:var(--line); border-radius:3px; flex-shrink:0; transition:transform 0.3s, background 0.3s; }
+  .mini-domino.fallen{ transform:rotate(75deg) translateX(4px); background:var(--part-accent); }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">One Spacing Check Covers Infinitely Many Dominoes</div>
+  <div class="mb-sub">You verify ONE thing: "any falling domino knocks over the next." Click to release domino 1 and watch how far a single guarantee reaches.</div>
+
+  <div class="mb-stage">
+    <div class="domino-row" id="dominoRow"></div>
+    <div style="text-align:center; font-family:var(--font-mono); font-size:0.85rem; margin-top:8px;" id="countReadout"></div>
+  </div>
+  <button class="mb-btn primary" onclick="release()" style="display:block; margin:10px auto;">Release domino 1</button>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">You never individually checked domino 47, or domino 10,000. You checked ONE universal spacing rule, once, and it silently covers every single domino in the line — however long that line is, even infinitely long.</div>
+</div>
+
+<script>
+const N = 40;
+function render(){
+  const row = document.getElementById('dominoRow');
+  row.innerHTML = '';
+  for(let i=0;i<N;i++){
+    const d = document.createElement('div');
+    d.className = 'mini-domino';
+    d.id = 'd'+i;
+    row.appendChild(d);
+  }
+}
+function release(){
+  let i = 0;
+  const interval = setInterval(()=>{
+    if(i>=N){ clearInterval(interval); 
+      const fb = document.getElementById('fb');
+      fb.className = 'mb-feedback show good';
+      fb.innerHTML = `All ${N} dominoes fell — and this row could have been extended to a million, or forever, without needing a single additional check. One base case (domino 1 falls) plus one universal mechanism (spacing guarantees the next always falls) is logically sufficient for infinitely many dominoes, not just these ${N}.`;
+      return;
+    }
+    document.getElementById('d'+i).classList.add('fallen');
+    document.getElementById('countReadout').textContent = `${i+1} of ${N} dominoes fallen...`;
+    i++;
+  }, 60);
+}
+render();
+</script>
+</body>
+</html>

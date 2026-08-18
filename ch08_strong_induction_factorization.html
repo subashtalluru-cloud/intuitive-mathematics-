@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4338CA;
+  --part-accent-light: #E0E7FF;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part02-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#EEF0FB; }
+  .factor-tree{ display:flex; flex-direction:column; align-items:center; gap:6px; margin:14px 0; min-height:80px; }
+  .factor-row{ display:flex; gap:6px; align-items:center; flex-wrap:wrap; justify-content:center; }
+  .factor-node{
+    font-family: var(--font-mono); font-size:0.82rem; padding:6px 10px; border-radius:6px;
+    background: var(--part-accent-light); color: var(--part-accent); font-weight:700;
+  }
+  .factor-node.prime{ background: var(--part-highlight); color:#fff; }
+  .num-input-row{ text-align:center; margin-bottom:10px; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Strong Induction in Action — Prime Factorization</div>
+  <div class="mb-sub">Ordinary induction assumes only "true at k" to prove "true at k+1." Strong induction assumes ALL of 1...k at once. Watch why factorization needs the strong version.</div>
+
+  <div class="mb-stage">
+    <div class="num-input-row">
+      <input type="number" id="factorInput" value="60" min="2" max="500" style="font-family:var(--font-mono); width:80px; padding:6px; text-align:center;">
+      <button class="mb-btn primary" onclick="factorize()">Factor this number</button>
+    </div>
+    <div class="factor-tree" id="factorTree"></div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Proving "every integer &gt; 1 has a prime factorization" by ordinary induction would need to relate n+1 back to n specifically — but n+1's factors are usually NOT close to n's. Strong induction, assuming the claim for ALL smaller numbers at once, is the natural tool here.</div>
+</div>
+
+<script>
+function factorize(){
+  let n = parseInt(document.getElementById('factorInput').value);
+  const original = n;
+  const tree = document.getElementById('factorTree');
+  tree.innerHTML = '';
+  if(n<2){ 
+    document.getElementById('fb').className='mb-feedback show bad';
+    document.getElementById('fb').innerHTML='Pick a number ≥ 2.';
+    return;
+  }
+  const steps = [];
+  let d = 2;
+  while(n>1){
+    if(n%d===0){ steps.push(d); n/=d; }
+    else d++;
+  }
+  const row = document.createElement('div');
+  row.className = 'factor-row';
+  row.innerHTML = `<span class="factor-node">${original}</span> <span>=</span> ` +
+    steps.map(s=>`<span class="factor-node prime">${s}</span>`).join('<span>×</span>');
+  tree.appendChild(row);
+
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show good';
+  fb.innerHTML = `<strong>${original} = ${steps.join(' × ')}</strong>. Notice how factoring ${original} required breaking it into pieces of very different sizes (not just "${original}-1" or similar) — that's exactly why the inductive step for this claim needs to assume the result for ALL smaller numbers, not just the immediately preceding one. That's strong induction.`;
+}
+factorize();
+</script>
+</body>
+</html>

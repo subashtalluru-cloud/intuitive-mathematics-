@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4338CA;
+  --part-accent-light: #E0E7FF;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part02-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#EEF0FB; }
+  .ladder{ display:flex; flex-direction:column-reverse; align-items:center; gap:4px; margin:14px 0; max-height:280px; overflow-y:auto; padding:8px; }
+  .rung{
+    width:260px; padding:6px 10px; border-radius:6px; font-family:var(--font-mono); font-size:0.78rem;
+    text-align:center; background: var(--part-accent-light); border:1px solid var(--line);
+    opacity:0.3; transition: opacity 0.3s, background 0.3s;
+  }
+  .rung.lit{ opacity:1; background: var(--part-accent); color:#fff; }
+  .rung.base{ border-color: var(--part-highlight); }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Climbing the Infinite Ladder</div>
+  <div class="mb-sub">Claim: n² + n is divisible by 2, for every natural number n. Establish the base case, then trigger the inductive step to watch the ladder light up — one universal mechanism reaching every rung.</div>
+
+  <div class="mb-stage">
+    <div class="ladder" id="ladder"></div>
+    <div style="text-align:center; margin-top:10px;">
+      <button class="mb-btn primary" id="baseBtn" onclick="lightBase()">1. Prove Base Case (n=1)</button>
+      <button class="mb-btn" id="stepBtn" onclick="climbStep()" disabled>2. Apply Inductive Step →</button>
+    </div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Notice: you never individually proved rungs 2 through 12. You proved ONE base case and ONE reusable mechanism ("if it holds at k, it holds at k+1") — and that pair of finite facts is logically sufficient to reach every rung, forever.</div>
+</div>
+
+<script>
+const maxRung = 12;
+let litUpTo = 0;
+
+function render(){
+  const ladder = document.getElementById('ladder');
+  ladder.innerHTML = '';
+  for(let n=1;n<=maxRung;n++){
+    const rung = document.createElement('div');
+    rung.className = 'rung' + (n===1?' base':'') + (n<=litUpTo?' lit':'');
+    const val = n*n+n;
+    rung.textContent = `n=${n}:  ${n}²+${n} = ${val}, divisible by 2? ${val%2===0?'✓':'✗'}`;
+    ladder.appendChild(rung);
+  }
+}
+
+function lightBase(){
+  litUpTo = 1;
+  render();
+  document.getElementById('baseBtn').disabled = true;
+  document.getElementById('stepBtn').disabled = false;
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show good';
+  fb.innerHTML = `<strong>Base case (n=1):</strong> 1² + 1 = 2, divisible by 2. ✓ Rung 1 is reachable. Now prove the mechanism that gets you to every rung above it.`;
+}
+
+function climbStep(){
+  if(litUpTo === 0) return;
+  if(litUpTo < maxRung){
+    litUpTo++;
+    render();
+    const fb = document.getElementById('fb');
+    const k = litUpTo - 1;
+    fb.className = 'mb-feedback show info';
+    fb.innerHTML = `<strong>Inductive step, k=${k}→${litUpTo}:</strong> Assume k²+k is divisible by 2. Then (k+1)² + (k+1) = k²+2k+1+k+1 = (k²+k) + (2k+2) = (k²+k) + 2(k+1). The first part is divisible by 2 by assumption; the second part 2(k+1) is divisible by 2 automatically. Sum of two even numbers is even — so rung ${litUpTo} lights up too.`;
+  }
+  if(litUpTo === maxRung){
+    document.getElementById('stepBtn').disabled = true;
+    const fb = document.getElementById('fb');
+    fb.className = 'mb-feedback show good';
+    fb.innerHTML += `<br><br><strong>The mechanism you just proved works identically for k=12→13, k=13→14, forever.</strong> That's why you don't need to click 1000 more times — the SAME algebraic argument, unchanged, reaches every rung without limit.`;
+  }
+}
+render();
+</script>
+</body>
+</html>

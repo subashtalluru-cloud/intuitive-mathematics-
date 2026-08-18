@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #0F766E;
+  --part-accent-light: #CCFBF1;
+  --part-highlight: #EA580C;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part03-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F0FBF9; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Why 32-bit vs 64-bit Computing Is a Chasm, Not a Doubling</div>
+  <div class="mb-sub">n bits can represent exactly 2ⁿ distinct values. Click to compare — the bar for 64-bit won't even fit visually next to 32-bit at true scale, which is the whole point.</div>
+
+  <div class="mb-stage">
+    <svg id="bitsSvg" viewBox="0 0 260 180" style="width:100%; height:208px; max-width:280px; display:block; margin:0 auto;"></svg>
+    <button class="mb-btn primary" onclick="compare()" style="display:block; margin:10px auto;">Compare 32-bit vs 64-bit</button>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">64 is only twice 32 — but 2⁶⁴ is not twice 2³², it's 2³² times bigger. Linear increases in the EXPONENT (bit count) produce exponential increases in the RESULT (addressable memory).</div>
+</div>
+
+<script>
+function compare(){
+  const bits32 = Math.pow(2,32);
+  const bits64 = Math.pow(2,64);
+  const svg = document.getElementById('bitsSvg');
+  svg.innerHTML = '';
+  // logarithmic-scale bars since linear would make 32-bit invisible
+  const log32 = Math.log2(bits32), log64 = Math.log2(bits64);
+  const maxLog = 70;
+  const h32 = (log32/maxLog)*150, h64 = (log64/maxLog)*150;
+  [[60,h32,'32-bit','var(--part-accent)',bits32],[160,h64,'64-bit','var(--part-highlight)',bits64]].forEach(([x,h,lbl,color,val])=>{
+    const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('x',x);rect.setAttribute('y',160-h);rect.setAttribute('width',40);rect.setAttribute('height',h);
+    rect.setAttribute('fill',color);
+    svg.appendChild(rect);
+    const nameLbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    nameLbl.setAttribute('x',x+20);nameLbl.setAttribute('y',175);nameLbl.setAttribute('text-anchor','middle');nameLbl.setAttribute('font-size','10');
+    nameLbl.textContent = lbl;
+    svg.appendChild(nameLbl);
+    const valLbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    valLbl.setAttribute('x',x+20);valLbl.setAttribute('y',155-h);valLbl.setAttribute('text-anchor','middle');valLbl.setAttribute('font-size','8');valLbl.setAttribute('fill',color);
+    valLbl.textContent = val.toExponential(1);
+    svg.appendChild(valLbl);
+  });
+  const note = document.createElementNS('http://www.w3.org/2000/svg','text');
+  note.setAttribute('x',130);note.setAttribute('y',12);note.setAttribute('text-anchor','middle');note.setAttribute('font-size','8');note.setAttribute('fill','var(--ink-soft)');
+  note.textContent = '(bar heights use log scale — true scale would make 32-bit invisible)';
+  svg.appendChild(note);
+
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show good';
+  fb.innerHTML = `32-bit: 2³² = ${bits32.toLocaleString()} addressable values (~4.3 billion). 64-bit: 2⁶⁴ = ${bits64.toLocaleString()} addressable values (~18.4 quintillion) — ${(bits64/bits32).toLocaleString()}× more, not 2×. This is exactly why 32-bit systems hit the infamous "4GB memory wall" while 64-bit systems effectively don't.`;
+}
+compare();
+</script>
+</body>
+</html>

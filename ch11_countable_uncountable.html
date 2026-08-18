@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #0F766E;
+  --part-accent-light: #CCFBF1;
+  --part-highlight: #EA580C;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part03-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F0FBF9; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Countable ℚ vs. Uncountable ℝ — Not Just "A Bit Bigger"</div>
+  <div class="mb-sub">The rationals CAN be listed in a genuine, complete order. Click to attempt the same for the reals between 0 and 1 — and watch the diagonal expose a missing number, visibly, in the grid.</div>
+
+  <div class="mb-stage">
+    <svg id="diagGridSvg" viewBox="0 0 260 170" style="width:100%; height:196px; max-width:280px; display:block; margin:0 auto;"></svg>
+    <button class="mb-btn primary" onclick="attemptList()" style="display:block; margin:10px auto;">Attempt to list the reals between 0 and 1</button>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Cantor's diagonal argument proves the reals form a strictly LARGER infinity than the naturals — flipping each diagonal digit (highlighted) builds a number guaranteed to differ from every row. A "countable" infinity (ℚ) is a fundamentally different size than an "uncountable" one (ℝ).</div>
+</div>
+
+<script>
+const rows = ["0.500000...", "0.333333...", "0.142857...", "0.707106...", "0.141592..."];
+let revealed = false;
+
+function drawGrid(){
+  const svg = document.getElementById('diagGridSvg');
+  svg.innerHTML = '';
+  const cellW=30, cellH=24, startX=10, startY=10;
+  rows.forEach((r,i)=>{
+    const digits = r.replace('0.','').replace('...','').split('');
+    for(let j=0;j<5;j++){
+      const x = startX+j*cellW, y = startY+i*cellH;
+      const isDiag = (i===j);
+      const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+      rect.setAttribute('x',x);rect.setAttribute('y',y);rect.setAttribute('width',cellW-2);rect.setAttribute('height',cellH-2);
+      rect.setAttribute('fill', isDiag && revealed ? 'var(--part-highlight)' : '#fff');
+      rect.setAttribute('stroke','var(--line)');
+      svg.appendChild(rect);
+      const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('x',x+cellW/2-1);t.setAttribute('y',y+cellH/2+4);t.setAttribute('text-anchor','middle');t.setAttribute('font-size','11');
+      t.setAttribute('fill', isDiag && revealed ? '#fff':'var(--ink)');
+      t.textContent = digits[j];
+      svg.appendChild(t);
+    }
+  });
+  if(revealed){
+    const newNumLabel = document.createElementNS('http://www.w3.org/2000/svg','text');
+    newNumLabel.setAttribute('x',10);newNumLabel.setAttribute('y',160);newNumLabel.setAttribute('font-size','10');newNumLabel.setAttribute('fill','var(--part-highlight)');
+    let diag = '0.';
+    rows.forEach((r,i)=>{
+      const digit = r.replace('0.','')[i];
+      diag += (digit==='5' ? '6':'5');
+    });
+    newNumLabel.textContent = `New number (each diagonal digit flipped): ${diag}...`;
+    svg.appendChild(newNumLabel);
+  }
+}
+function attemptList(){
+  revealed = true;
+  drawGrid();
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show bad';
+  fb.innerHTML = `The highlighted diagonal digits, each flipped, build a number that differs from EVERY row in the list at the exact diagonal position — it cannot equal any of these 5 rows. This same construction defeats ANY proposed complete list of reals, no matter how it's built — the reals are uncountably infinite, a strictly larger infinity than ℚ's countable infinity.`;
+}
+drawGrid();
+</script>
+</body>
+</html>

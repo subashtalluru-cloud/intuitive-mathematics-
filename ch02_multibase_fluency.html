@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4A5568;
+  --part-accent-light: #E2E8F0;
+  --part-highlight: #D97706;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F3F1EA; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">One Quantity, Four Costumes</div>
+  <div class="mb-sub">Drag the slider. The underlying quantity never changes — only its "costume" (which base is used to write it down) does. Watch the bucket-widths shrink as base grows.</div>
+
+  <div class="mb-stage">
+    <svg id="bucketCompareSvg" viewBox="0 0 280 150" style="width:100%; height:161px; max-width:300px; display:block; margin:0 auto;"></svg>
+    <input type="range" min="0" max="255" value="47" id="valSlider" class="mb-slider" style="width:80%; display:block; margin:8px auto;">
+    <div class="mb-readout" id="decReadout" style="text-align:center;">47</div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">The quantity is identical in every row — same pebbles, same amount. Only the bucket sizes differ: binary buckets are worth 1,2,4,8…; hex buckets 1,16,256…; the ancient Babylonian system used buckets worth 1, 60, 3600… which is why we still have 60 minutes in an hour today.</div>
+</div>
+
+<script>
+function toBaseString(n, base){ return n.toString(base).toUpperCase(); }
+function toBase60Parts(n){
+  const major = Math.floor(n/60), minor = n % 60;
+  return `${major}:${minor.toString().padStart(2,'0')}`;
+}
+function draw(n){
+  const svg = document.getElementById('bucketCompareSvg');
+  svg.innerHTML='';
+  const bases = [
+    {name:'binary', str:toBaseString(n,2), color:'var(--part-accent)'},
+    {name:'octal', str:toBaseString(n,8), color:'var(--part-highlight)'},
+    {name:'decimal', str:n.toString(), color:'#7C3AED'},
+    {name:'hex', str:'0x'+toBaseString(n,16), color:'#0891B2'},
+    {name:'base-60', str:toBase60Parts(n), color:'#EA580C'}
+  ];
+  bases.forEach((b,i)=>{
+    const y = 15+i*27;
+    const barWidth = Math.min(200, b.str.length*14);
+    const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('x',80);rect.setAttribute('y',y);rect.setAttribute('width',barWidth);rect.setAttribute('height',18);rect.setAttribute('rx',4);
+    rect.setAttribute('fill',b.color); rect.setAttribute('fill-opacity','0.25'); rect.setAttribute('stroke',b.color);
+    svg.appendChild(rect);
+    const nameLbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    nameLbl.setAttribute('x',10);nameLbl.setAttribute('y',y+13);nameLbl.setAttribute('font-size','9');nameLbl.setAttribute('fill',b.color);
+    nameLbl.textContent = b.name;
+    svg.appendChild(nameLbl);
+    const valLbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    valLbl.setAttribute('x',85);valLbl.setAttribute('y',y+13);valLbl.setAttribute('font-size','9');valLbl.setAttribute('font-family','monospace');
+    valLbl.textContent = b.str;
+    svg.appendChild(valLbl);
+  });
+}
+function update(){
+  const n = parseInt(document.getElementById('valSlider').value);
+  document.getElementById('decReadout').textContent = n;
+  draw(n);
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show info';
+  fb.innerHTML = `The quantity "${n}" is identical in every row — same pebbles. Notice the bar LENGTHS differ: fewer digits needed in higher bases (compare binary's length vs hex's) because each digit-position is worth more.`;
+}
+document.getElementById('valSlider').addEventListener('input', update);
+update();
+</script>
+</body>
+</html>

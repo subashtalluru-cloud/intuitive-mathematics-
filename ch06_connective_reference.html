@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4338CA;
+  --part-accent-light: #E0E7FF;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part02-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#EEF0FB; }
+  .conn-tabs{ display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin-bottom:10px; }
+  .conn-tab{
+    font-family: var(--font-mono); font-size:0.85rem; padding:6px 12px; border-radius:16px;
+    border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:700;
+  }
+  .conn-tab.active{ background: var(--part-accent); color:#fff; }
+  table{ width:100%; border-collapse:collapse; font-family:var(--font-mono); font-size:0.85rem; }
+  th,td{ border:1px solid var(--line); padding:8px; text-align:center; }
+  th{ background: var(--part-accent-light); color: var(--part-accent); }
+  td.T{ color: var(--good); font-weight:700; }
+  td.F{ color: var(--bad); font-weight:700; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">The Five Connectives, Side by Side</div>
+  <div class="mb-sub">Click through each connective. Notice the conditional's third row — the "false hypothesis is automatically true" convention that trips people up.</div>
+
+  <div class="mb-stage">
+    <div class="conn-tabs" id="tabs"></div>
+    <table id="table"></table>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">The conditional P→Q is only FALSE in exactly one row: P true, Q false. Every other row — including both false-hypothesis rows — is true by convention, because a promise with a hypothesis that never triggers can't be broken.</div>
+</div>
+
+<script>
+const connectives = {
+  "¬P (NOT)": {unary:true, fn:(p,q)=>!p, note:"Simply flips the value. The only unary connective here."},
+  "P∧Q (AND)": {fn:(p,q)=>p&&q, note:"True only when BOTH are true — like a series circuit, both switches must be on."},
+  "P∨Q (OR)": {fn:(p,q)=>p||q, note:"True when AT LEAST ONE is true (inclusive) — like a parallel circuit, either switch lights the bulb."},
+  "P⊕Q (XOR)": {fn:(p,q)=>p!==q, note:"True when EXACTLY ONE is true — unlike casual 'or,' both-true makes this false."},
+  "P→Q (IF...THEN)": {fn:(p,q)=>(!p)||q, note:"False ONLY when P is true and Q is false. A false hypothesis makes the whole thing vacuously true."}
+};
+let current = "¬P (NOT)";
+
+function renderTabs(){
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = '';
+  Object.keys(connectives).forEach(name=>{
+    const tab = document.createElement('div');
+    tab.className = 'conn-tab' + (name===current?' active':'');
+    tab.textContent = name;
+    tab.onclick = ()=> { current = name; renderTabs(); renderTable(); };
+    tabs.appendChild(tab);
+  });
+}
+function renderTable(){
+  const c = connectives[current];
+  const table = document.getElementById('table');
+  if(c.unary){
+    table.innerHTML = `<tr><th>P</th><th>${current}</th></tr>` +
+      [true,false].map(p=>`<tr><td>${p}</td><td class="${c.fn(p)?'T':'F'}">${c.fn(p)}</td></tr>`).join('');
+  } else {
+    table.innerHTML = `<tr><th>P</th><th>Q</th><th>${current}</th></tr>` +
+      [[true,true],[true,false],[false,true],[false,false]].map(([p,q])=>
+        `<tr><td>${p}</td><td>${q}</td><td class="${c.fn(p,q)?'T':'F'}">${c.fn(p,q)}</td></tr>`).join('');
+  }
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show info';
+  fb.innerHTML = `<strong>${current}:</strong> ${c.note}`;
+}
+renderTabs(); renderTable();
+</script>
+</body>
+</html>

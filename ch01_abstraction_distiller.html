@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4A5568;
+  --part-accent-light: #E2E8F0;
+  --part-highlight: #D97706;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F3F1EA; }
+  .distiller-svg{ width:100%; height:auto; }
+  .obj-btn{
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    background:#fff; border:1px solid var(--line); border-radius:8px;
+    padding:8px 10px; cursor:pointer; font-size:1.4rem;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .obj-btn:hover{ transform: translateY(-2px); box-shadow: var(--shadow); }
+  .obj-btn.used{ opacity:0.35; pointer-events:none; }
+  .obj-label{ font-size:0.65rem; color:var(--ink-soft); font-family:var(--font-sans); }
+  .rule-out{
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+    text-align:center;
+    color: var(--part-accent);
+    font-weight:700;
+    min-height: 24px;
+  }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">The Abstraction Distiller</div>
+  <div class="mb-sub">Every specific object below is a messy, real situation. Pour it into the apparatus and watch what mathematics keeps — and what it throws away.</div>
+
+  <div class="mb-stage">
+    <svg class="distiller-svg" viewBox="0 0 640 260" id="distillerSvg">
+      <!-- funnel -->
+      <polygon points="260,20 380,20 340,90 300,90" fill="none" stroke="#8B8378" stroke-width="2.5"/>
+      <text x="320" y="14" text-anchor="middle" font-size="11" fill="#8B8378">REALITY (specific, messy)</text>
+      <!-- pipe -->
+      <rect x="310" y="90" width="20" height="30" fill="none" stroke="#8B8378" stroke-width="2.5"/>
+      <!-- flask -->
+      <path d="M290,120 L290,160 L250,220 Q320,245 390,220 L350,160 L350,120 Z" fill="#FDF6E8" stroke="var(--part-accent)" stroke-width="2.5" id="flaskShape"/>
+      <text x="320" y="112" text-anchor="middle" font-size="11" fill="var(--part-accent)" font-weight="700">ABSTRACTION</text>
+      <!-- output -->
+      <text id="ruleTextSvg" x="320" y="185" text-anchor="middle" font-size="13" font-weight="700" fill="var(--part-accent)"></text>
+      <text x="320" y="255" text-anchor="middle" font-size="11" fill="#8B8378">REUSABLE RULE (clean, general)</text>
+      <!-- droplet particles group -->
+      <g id="particleLayer"></g>
+    </svg>
+    <div class="rule-out" id="ruleOut">Drop an object into the funnel to begin →</div>
+  </div>
+
+  <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-bottom:6px;">
+    <div class="obj-btn" data-rule="counting" data-icon="🍎" onclick="drop(this)"><span>🍎🍎🍎</span><span class="obj-label">3 apples</span></div>
+    <div class="obj-btn" data-rule="counting" data-icon="🐑" onclick="drop(this)"><span>🐑🐑🐑</span><span class="obj-label">3 sheep</span></div>
+    <div class="obj-btn" data-rule="counting" data-icon="🌉" onclick="drop(this)"><span>🌉</span><span class="obj-label">3 bridges</span></div>
+    <div class="obj-btn" data-rule="counting" data-icon="⭐" onclick="drop(this)"><span>🪐🪐🪐</span><span class="obj-label">3 planets</span></div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Every one of these is physically different — fruit, animals, steel, rock. The distiller keeps only "how many," and throws away everything else. That surviving number, 3, is a mathematical object: it no longer needs apples to exist.</div>
+</div>
+
+<script>
+let dropped = 0;
+function drop(elm){
+  elm.classList.add('used');
+  dropped++;
+  const svg = document.getElementById('distillerSvg');
+  const layer = document.getElementById('particleLayer');
+  // animate a droplet falling from funnel to flask
+  const icon = elm.querySelector('span').textContent.trim().split(' ')[0].charAt(0);
+  const p = document.createElementNS('http://www.w3.org/2000/svg','text');
+  p.setAttribute('x', 320); p.setAttribute('y', 30);
+  p.setAttribute('font-size', 20); p.setAttribute('text-anchor','middle');
+  p.textContent = elm.getAttribute('data-icon');
+  layer.appendChild(p);
+
+  let y = 30;
+  const fall = setInterval(()=>{
+    y += 6;
+    p.setAttribute('y', y);
+    if(y > 140){
+      clearInterval(fall);
+      layer.removeChild(p);
+      updateRule();
+    }
+  }, 16);
+}
+
+function updateRule(){
+  const out = document.getElementById('ruleOut');
+  const svgText = document.getElementById('ruleTextSvg');
+  const messages = [
+    "",
+    "Detected: a quantity. Still forming the rule…",
+    "Detected: 3 apples AND 3 sheep. Pattern emerging — the objects don't matter, only the count.",
+    "Detected: 3 apples, 3 sheep, 3 bridges. The rule is stabilizing: '3' works regardless of what's being counted.",
+    "RULE EXTRACTED: the symbol 3 represents any collection of three things — apples, sheep, bridges, or planets. It carries no memory of which."
+  ];
+  const out_msg = messages[Math.min(dropped, messages.length-1)];
+  out.textContent = out_msg;
+  svgText.textContent = dropped >= 1 ? "→  " + "●".repeat(Math.min(dropped,4)) + "  →  \"3\"" : "";
+
+  if(dropped >= 4){
+    MBKit ? null : null;
+    const fb = document.getElementById('fb');
+    fb.className = 'mb-feedback show good';
+    fb.innerHTML = "<strong>This is the core idea of Chapter 1.</strong> Mathematics is the practice of extracting a general, reusable rule from specific, real-world relationships — a rule that stays true even after apples, sheep, and bridges are long gone. The Sumerian merchants needed exactly this: a number that didn't care whether it was counting grain or goats.";
+  }
+}
+</script>
+</body>
+</html>

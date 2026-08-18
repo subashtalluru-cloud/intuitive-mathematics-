@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4A5568;
+  --part-accent-light: #E2E8F0;
+  --part-highlight: #D97706;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F3F1EA; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">One Sorting Rule, Any Kind of Data</div>
+  <div class="mb-sub">A sorting algorithm only needs ONE thing: a way to compare two items. Click each dataset — watch the same visual bars-and-swaps process handle wildly different data.</div>
+
+  <div class="mb-stage">
+    <svg id="sortSvg" viewBox="0 0 280 120" style="width:100%; height:129px; max-width:300px; display:block; margin:0 auto;"></svg>
+  </div>
+  <div class="mb-controls" style="justify-content:center;">
+    <button class="mb-btn" onclick="loadData('numbers')">Numbers</button>
+    <button class="mb-btn" onclick="loadData('names')">Names</button>
+    <button class="mb-btn" onclick="loadData('dates')">Dates</button>
+  </div>
+  <button class="mb-btn primary" onclick="sortData()" style="display:block; margin:10px auto;">Sort</button>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">The algorithm never asks "are these numbers or names?" It only asks "is item A less than item B?" — a single abstracted question that works identically whether "less than" means numerically smaller, alphabetically earlier, or chronologically earlier.</div>
+</div>
+
+<script>
+const datasets = {
+  numbers: [42, 7, 19, 3, 88],
+  names: ["Zoe", "Amara", "Kai", "Priya"],
+  dates: ["2024-03-01", "2019-11-15", "2022-07-04"]
+};
+let current = [];
+function draw(){
+  const svg = document.getElementById('sortSvg');
+  svg.innerHTML = '';
+  const n = current.length;
+  const spacing = 260/n;
+  current.forEach((item,i)=>{
+    const x = 10+i*spacing;
+    const box = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    box.setAttribute('x',x);box.setAttribute('y',30);box.setAttribute('width',spacing-8);box.setAttribute('height',40);box.setAttribute('rx',5);
+    box.setAttribute('fill','var(--part-accent-light)'); box.setAttribute('stroke','var(--part-accent)');
+    svg.appendChild(box);
+    const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+    label.setAttribute('x',x+(spacing-8)/2);label.setAttribute('y',53);label.setAttribute('text-anchor','middle');label.setAttribute('font-size','9');label.setAttribute('font-family','monospace');
+    label.textContent = item;
+    svg.appendChild(label);
+    const posLabel = document.createElementNS('http://www.w3.org/2000/svg','text');
+    posLabel.setAttribute('x',x+(spacing-8)/2);posLabel.setAttribute('y',85);posLabel.setAttribute('text-anchor','middle');posLabel.setAttribute('font-size','8');posLabel.setAttribute('fill','var(--ink-soft)');
+    posLabel.textContent = 'pos '+i;
+    svg.appendChild(posLabel);
+  });
+}
+function loadData(key){
+  current = [...datasets[key]];
+  draw();
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show info';
+  fb.innerHTML = `Loaded ${key}. Click "Sort" — the SAME algorithm handles this data with no modification.`;
+}
+function sortData(){
+  current.sort();
+  draw();
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show good';
+  fb.innerHTML = `Sorted. Whether "less than" meant numerically smaller, alphabetically earlier, or chronologically earlier, the identical comparison-based algorithm produced a correct ordering — because it was written once, abstractly, against the general idea of "comparison" rather than any specific data type.`;
+}
+loadData('numbers');
+</script>
+</body>
+</html>

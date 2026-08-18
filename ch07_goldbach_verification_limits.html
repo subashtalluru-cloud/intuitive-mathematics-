@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4338CA;
+  --part-accent-light: #E0E7FF;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part02-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#EEF0FB; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Verified for a Billion Cases — Still Not a Proof</div>
+  <div class="mb-sub">Goldbach's Conjecture: every even number greater than 2 is the sum of two primes. Click to check more — watch the confirmation bar grow toward infinity while never becoming a proof.</div>
+
+  <div class="mb-stage">
+    <svg id="goldbachSvg" viewBox="0 0 280 90" style="width:100%; height:96px; max-width:300px; display:block; margin:0 auto;"></svg>
+    <div id="goldbachList" style="font-family:var(--font-mono); font-size:0.75rem; max-height:100px; overflow-y:auto; margin-top:8px;"></div>
+  </div>
+  <button class="mb-btn primary" onclick="checkMore()" style="display:block; margin:10px auto;">Check the next 5 even numbers</button>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Goldbach's Conjecture has been verified by computer for every even number up to over 4×10¹⁸ — and it is STILL not proven. No finite amount of checking can ever establish a claim about infinitely many numbers.</div>
+</div>
+
+<script>
+function isPrime(n){
+  if(n<2) return false;
+  for(let i=2;i*i<=n;i++) if(n%i===0) return false;
+  return true;
+}
+function findGoldbachPair(n){
+  for(let p=2;p<=n/2;p++){
+    if(isPrime(p) && isPrime(n-p)) return [p, n-p];
+  }
+  return null;
+}
+let current = 4;
+let checked = 0;
+function draw(){
+  const svg = document.getElementById('goldbachSvg');
+  svg.innerHTML='';
+  // bar that grows but never "fills" — representing infinite remaining territory
+  const barWidth = Math.min(250, checked*4);
+  const bar = document.createElementNS('http://www.w3.org/2000/svg','rect');
+  bar.setAttribute('x',15);bar.setAttribute('y',30);bar.setAttribute('width',barWidth);bar.setAttribute('height',20);
+  bar.setAttribute('fill','var(--good)');
+  svg.appendChild(bar);
+  const remainder = document.createElementNS('http://www.w3.org/2000/svg','rect');
+  remainder.setAttribute('x',15+barWidth);remainder.setAttribute('y',30);remainder.setAttribute('width',250-barWidth);remainder.setAttribute('height',20);
+  remainder.setAttribute('fill','#E5E7EB');
+  svg.appendChild(remainder);
+  const dots = document.createElementNS('http://www.w3.org/2000/svg','text');
+  dots.setAttribute('x',270);dots.setAttribute('y',45);dots.setAttribute('font-size','16');dots.setAttribute('fill','var(--ink-soft)');
+  dots.textContent = '∞';
+  svg.appendChild(dots);
+  const label = document.createElementNS('http://www.w3.org/2000/svg','text');
+  label.setAttribute('x',140);label.setAttribute('y',65);label.setAttribute('text-anchor','middle');label.setAttribute('font-size','9');
+  label.textContent = `${checked} even numbers verified, out of infinitely many`;
+  svg.appendChild(label);
+}
+function checkMore(){
+  const list = document.getElementById('goldbachList');
+  for(let i=0;i<5;i++){
+    const pair = findGoldbachPair(current);
+    const row = document.createElement('div');
+    row.textContent = pair ? `${current} = ${pair[0]} + ${pair[1]} ✓` : `${current} = NO PAIR FOUND`;
+    list.appendChild(row);
+    current += 2;
+    checked++;
+  }
+  draw();
+  list.scrollTop = list.scrollHeight;
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show info';
+  fb.innerHTML = checked < 30
+    ? `${checked} confirmations and counting. Feels pretty convincing — is it a proof yet?`
+    : `${checked} confirmations — mathematicians have actually verified into the quintillions using computers. Still: this is the marble-bag pattern from Chapter 3, at planetary scale. The green bar grows, but the ∞ never gets closer — no number of confirming cases logically rules out a counterexample beyond what's been checked.`;
+}
+draw();
+checkMore();
+</script>
+</body>
+</html>

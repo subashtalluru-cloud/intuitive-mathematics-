@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4338CA;
+  --part-accent-light: #E0E7FF;
+  --part-highlight: #DB2777;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<link rel="stylesheet" href="part02-theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#EEF0FB; }
+  .code-block{
+    font-family: var(--font-mono); font-size:0.8rem; background:#1E1E2E; color:#E5E7EB;
+    border-radius:8px; padding:14px; line-height:1.7; white-space:pre; margin-bottom:12px;
+  }
+  .code-block .kw{ color:#C084FC; } .code-block .cm{ color:#6B7280; } .code-block .fn{ color:#60A5FA; }
+  .call-stack{ display:flex; flex-direction:column-reverse; gap:4px; margin-top:10px; }
+  .stack-frame{
+    font-family: var(--font-mono); font-size:0.78rem; background: var(--part-accent-light);
+    border:1px solid var(--part-accent); border-radius:6px; padding:6px 10px;
+  }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Recursion Is Induction, Running Backward</div>
+  <div class="mb-sub">Click "Call factorial(5)" and watch the call stack build — the base case and inductive step of induction are exactly the base case and recursive case of this function.</div>
+
+  <div class="mb-stage">
+    <div class="code-block" id="codeDisplay"></div>
+    <div style="text-align:center;">
+      <button class="mb-btn primary" onclick="callFactorial()">Call factorial(5)</button>
+      <button class="mb-btn" onclick="reset()">Reset</button>
+    </div>
+    <div class="call-stack" id="callStack"></div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Proving this function terminates correctly, for every possible input, is literally a proof by induction: base case (n=0 returns 1, correctly) + inductive step (if factorial(n-1) is correct, factorial(n) is correct because it just multiplies by n). Structural mirror images — this is why induction is the standard tool for proving recursive algorithms correct.</div>
+</div>
+
+<script>
+document.getElementById('codeDisplay').innerHTML =
+`<span class="kw">function</span> <span class="fn">factorial</span>(n):
+    <span class="cm"># base case — mirrors induction's base case</span>
+    <span class="kw">if</span> n == 0:
+        <span class="kw">return</span> 1
+    <span class="cm"># recursive case — mirrors the inductive step</span>
+    <span class="kw">return</span> n * <span class="fn">factorial</span>(n - 1)`;
+
+function callFactorial(){
+  const stack = document.getElementById('callStack');
+  stack.innerHTML = '';
+  const frames = [5,4,3,2,1,0];
+  let i = 0;
+  const interval = setInterval(()=>{
+    if(i >= frames.length){
+      clearInterval(interval);
+      // unwind
+      let j = frames.length - 1;
+      const unwind = setInterval(()=>{
+        if(j < 0){ clearInterval(unwind); return; }
+        const val = factRecursive(frames[j]);
+        const frame = stack.children[stack.children.length - 1 - j];
+        if(frame) frame.textContent = `factorial(${frames[j]}) returns ${val}`;
+        j--;
+      }, 400);
+      return;
+    }
+    const frame = document.createElement('div');
+    frame.className = 'stack-frame';
+    frame.textContent = frames[i]===0 ? `factorial(0) — BASE CASE, returns 1` : `factorial(${frames[i]}) calls factorial(${frames[i]-1})...`;
+    stack.appendChild(frame);
+    i++;
+  }, 400);
+}
+function factRecursive(n){ return n<=0 ? 1 : n*factRecursive(n-1); }
+function reset(){ document.getElementById('callStack').innerHTML=''; }
+</script>
+</body>
+</html>

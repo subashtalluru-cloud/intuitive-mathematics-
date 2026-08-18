@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4A5568;
+  --part-accent-light: #E2E8F0;
+  --part-highlight: #D97706;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F3F1EA; }
+  .row-label{ font-family:var(--font-mono); font-size:0.75rem; color:var(--ink-soft); }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Pairing Infinities — Naturals vs. Evens</div>
+  <div class="mb-sub">Click "Extend" to pair more numbers. Every natural number n pairs with the even number 2n. Watch: does anyone ever get left without a partner?</div>
+
+  <div class="mb-stage">
+    <div class="row-label">Natural numbers ℕ</div>
+    <svg id="pairSvg" viewBox="0 0 640 140" style="width:100%; height:66px; "></svg>
+    <div class="row-label">Even numbers (proper subset of ℕ)</div>
+  </div>
+  <div class="mb-controls" style="justify-content:center;">
+    <button class="mb-btn primary" onclick="extend()">Extend the pairing →</button>
+    <button class="mb-btn" onclick="resetPairs()">Reset</button>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Intuition screams that "evens" should be half of "naturals" — evens are a proper subset, after all. But the bijection rule n ↔ 2n pairs every single natural with exactly one even, forever, with none left over on either side. By the pairing definition of size, the two sets are exactly the same size: both infinite, both "countably infinite."</div>
+</div>
+
+<script>
+let n = 3;
+const maxShown = 7;
+const svg = document.getElementById('pairSvg');
+
+function draw(){
+  svg.innerHTML = '';
+  const spacing = 640/(maxShown+1);
+  for(let i=1;i<=Math.min(n, maxShown);i++){
+    const x = i*spacing;
+    // top dot (natural)
+    const topY = 20, botY = 120;
+    const tCirc = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    tCirc.setAttribute('cx',x); tCirc.setAttribute('cy',topY); tCirc.setAttribute('r',12);
+    tCirc.setAttribute('fill','var(--part-accent)');
+    svg.appendChild(tCirc);
+    const tText = document.createElementNS('http://www.w3.org/2000/svg','text');
+    tText.setAttribute('x',x); tText.setAttribute('y',topY+4); tText.setAttribute('text-anchor','middle');
+    tText.setAttribute('font-size','10'); tText.setAttribute('fill','#fff'); tText.textContent = i;
+    svg.appendChild(tText);
+
+    const bCirc = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    bCirc.setAttribute('cx',x); bCirc.setAttribute('cy',botY); bCirc.setAttribute('r',12);
+    bCirc.setAttribute('fill','var(--part-highlight)');
+    svg.appendChild(bCirc);
+    const bText = document.createElementNS('http://www.w3.org/2000/svg','text');
+    bText.setAttribute('x',x); bText.setAttribute('y',botY+4); bText.setAttribute('text-anchor','middle');
+    bText.setAttribute('font-size','10'); bText.setAttribute('fill','#fff'); bText.textContent = 2*i;
+    svg.appendChild(bText);
+
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',x); line.setAttribute('y1',topY+12);
+    line.setAttribute('x2',x); line.setAttribute('y2',botY-12);
+    line.setAttribute('stroke','var(--line)'); line.setAttribute('stroke-width','2'); line.setAttribute('stroke-dasharray','3,3');
+    svg.insertBefore(line, tCirc);
+  }
+  if(n > maxShown){
+    const dots = document.createElementNS('http://www.w3.org/2000/svg','text');
+    dots.setAttribute('x', (maxShown+1)*spacing); dots.setAttribute('y', 70);
+    dots.setAttribute('font-size','20'); dots.setAttribute('fill','var(--ink-soft)');
+    dots.textContent = '⋯ (n ↔ 2n, forever)';
+    svg.appendChild(dots);
+  }
+}
+
+function extend(){
+  n += 3;
+  draw();
+  const fb = document.getElementById('fb');
+  if(n >= 15){
+    fb.className = 'mb-feedback show good';
+    fb.innerHTML = `Paired ${n} naturals with ${n} evens — none left over on either side, and this pattern provably continues forever via the rule n ↔ 2n. That's a complete bijection: this is what mathematicians mean when they say two infinite sets have "the same cardinality," even though one looks like it should be half the other.`;
+  } else {
+    fb.className = 'mb-feedback show info';
+    fb.innerHTML = `${n} pairs so far, every one matched with none left over. Keep extending — does this ever break down?`;
+  }
+}
+function resetPairs(){ n=0; draw(); document.getElementById('fb').className='mb-feedback'; }
+draw();
+</script>
+</body>
+</html>

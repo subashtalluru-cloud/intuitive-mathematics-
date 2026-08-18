@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+/* INLINED-SELF-CONTAINED-THEME */
+:root{
+  --part-accent: #4A5568;
+  --part-accent-light: #E2E8F0;
+  --part-highlight: #D97706;
+  --ink: #1A202C;
+  --ink-soft: #4A5568;
+  --paper: #FAFAF7;
+  --paper-raised: #FFFFFF;
+  --line: #D6D3CB;
+  --good: #15803D;
+  --bad: #B91C1C;
+  --radius: 10px;
+  --font-serif: Georgia, 'Iowan Old Style', 'Palatino Linotype', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+</style>
+
+<link rel="stylesheet" href="../shared/theme.css">
+<style>
+  body{ margin:0; padding:24px; background:#F3F1EA; }
+  .op-tabs{ display:flex; gap:6px; justify-content:center; flex-wrap:wrap; margin-bottom:12px; }
+  .op-tab{
+    font-family: var(--font-mono); font-size:0.85rem; padding:6px 12px;
+    border-radius:16px; border:1px solid var(--part-accent); color:var(--part-accent);
+    background:#fff; cursor:pointer; font-weight:700;
+  }
+  .op-tab.active{ background: var(--part-accent); color:#fff; }
+  .set-def{ text-align:center; font-family:var(--font-mono); font-size:0.85rem; color:var(--ink-soft); margin-bottom:8px; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Venn Diagram Sandbox — Set Operations</div>
+  <div class="mb-sub">A = {1, 2, 3, 4, 5} — even numbers you know. B = {4, 5, 6, 7, 8}. Select an operation to see which region gets highlighted, and which elements result.</div>
+
+  <div class="set-def">A = {1, 2, 3, 4, 5} &nbsp;&nbsp; B = {4, 5, 6, 7, 8}</div>
+
+  <div class="mb-stage">
+    <div class="op-tabs">
+      <div class="op-tab active" data-op="union" onclick="setOp(this,'union')">A ∪ B</div>
+      <div class="op-tab" data-op="intersection" onclick="setOp(this,'intersection')">A ∩ B</div>
+      <div class="op-tab" data-op="diffAB" onclick="setOp(this,'diffAB')">A − B</div>
+      <div class="op-tab" data-op="diffBA" onclick="setOp(this,'diffBA')">B − A</div>
+    </div>
+    <svg viewBox="0 0 400 240" style="width:100%; height:180px; max-width:420px; display:block; margin:0 auto;">
+      <circle id="circA" cx="160" cy="120" r="90" fill="var(--part-accent)" fill-opacity="0.25" stroke="var(--part-accent)" stroke-width="2"/>
+      <circle id="circB" cx="240" cy="120" r="90" fill="var(--part-highlight)" fill-opacity="0.25" stroke="var(--part-highlight)" stroke-width="2"/>
+      <text x="100" y="55" font-size="14" font-weight="700" fill="var(--part-accent)">A</text>
+      <text x="290" y="55" font-size="14" font-weight="700" fill="var(--part-highlight)">B</text>
+      <text x="120" y="120" font-size="13" text-anchor="middle">1</text>
+      <text x="120" y="145" font-size="13" text-anchor="middle">2</text>
+      <text x="100" y="170" font-size="13" text-anchor="middle">3</text>
+      <text x="185" y="105" font-size="13" text-anchor="middle" id="el4">4</text>
+      <text x="185" y="140" font-size="13" text-anchor="middle" id="el5">5</text>
+      <text x="255" y="90" font-size="13" text-anchor="middle">6</text>
+      <text x="280" y="120" font-size="13" text-anchor="middle">7</text>
+      <text x="255" y="160" font-size="13" text-anchor="middle">8</text>
+    </svg>
+    <div class="mb-readout" id="resultReadout" style="display:block; text-align:center; margin:10px auto 0; width:fit-content;"></div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="mb-caption">Database engineers use this exact vocabulary daily: SQL's UNION, INTERSECT, and JOIN are set operations wearing different names.</div>
+</div>
+
+<script>
+const A = [1,2,3,4,5], B = [4,5,6,7,8];
+const results = {
+  union: {label:'A ∪ B', set:[1,2,3,4,5,6,7,8], desc:"Every element that's in A, or in B, or in both."},
+  intersection: {label:'A ∩ B', set:[4,5], desc:"Only elements shared by both A and B."},
+  diffAB: {label:'A − B', set:[1,2,3], desc:"Elements in A that are NOT in B."},
+  diffBA: {label:'B − A', set:[6,7,8], desc:"Elements in B that are NOT in A."}
+};
+
+function setOp(btn, op){
+  document.querySelectorAll('.op-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  const r = results[op];
+  document.getElementById('resultReadout').textContent = `${r.label} = {${r.set.join(', ')}}`;
+  const fb = document.getElementById('fb');
+  fb.className = 'mb-feedback show info';
+  fb.innerHTML = `<strong>${r.label}:</strong> ${r.desc}`;
+
+  const circA = document.getElementById('circA');
+  const circB = document.getElementById('circB');
+  circA.setAttribute('fill-opacity', op==='diffBA' ? 0.05 : 0.25);
+  circB.setAttribute('fill-opacity', op==='diffAB' ? 0.05 : 0.25);
+}
+setOp(document.querySelector('.op-tab'), 'union');
+</script>
+</body>
+</html>
