@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C3AED; --part-accent-light:#EDE9FE; --part-highlight:#DB2777;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F5F3FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.layout-row{ display:grid; grid-template-columns:1.2fr 1fr; gap:28px; align-items:start; }
+@media (max-width:800px){ .layout-row{ grid-template-columns:1fr; } }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#jumpSvg{ width:100%; height:auto; aspect-ratio:1.2/1; display:block; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; display:block; width:100%; margin-bottom:8px; }
+.mb-btn:hover, .mb-btn.active{ background:var(--part-accent); color:#fff; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Approach From the Left, Approach From the Right — Do They Meet?</div>
+<div class="mb-sub">A two-sided limit exists only if BOTH one-sided limits agree. Toggle between a piecewise function that connects smoothly and one deliberately mismatched — watch the visible jump appear exactly where the one-sided limits disagree.</div>
+<div class="layout-row">
+<div class="mb-stage"><svg id="jumpSvg" viewBox="0 0 280 220"></svg></div>
+<div>
+<button class="mb-btn active" onclick="show('match',this)">Matching piecewise (connects)</button>
+<button class="mb-btn" onclick="show('jump',this)">Mismatched piecewise (jumps)</button>
+<div class="readout" id="readout"></div>
+</div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">A genuine, visible jump in a function's graph corresponds exactly to disagreeing one-sided limits — this is the precise diagnostic tool for spotting discontinuities that later numerical methods must handle with special care.</div>
+</div>
+<script>
+function fMatch(x){ return x<1 ? x*x : 2*x-1; }
+function fJump(x){ return x<1 ? x*x : 2*x+1; }
+const scale=45, origin={x:20,y:190};
+function toSvg(x,y){ return {x:origin.x+x*scale, y:origin.y-y*scale}; }
+function drawPiece(svg, fn, xMin, xMax, color){
+  let d='M';
+  for(let x=xMin;x<=xMax;x+=0.03){
+    const p=toSvg(x,fn(x));
+    d+=`${p.x},${p.y} L`;
+  }
+  const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+  path.setAttribute('d',d.slice(0,-1)); path.setAttribute('fill','none'); path.setAttribute('stroke',color); path.setAttribute('stroke-width','2.5');
+  svg.appendChild(path);
+}
+function draw(mode){
+  const fn = mode==='match'?fMatch:fJump;
+  const svg=document.getElementById('jumpSvg');
+  svg.innerHTML='';
+  drawPiece(svg, fn, 0, 0.999, 'var(--part-accent)');
+  drawPiece(svg, fn, 1.001, 3, 'var(--part-highlight)');
+  const leftLimit = fn(0.999), rightLimit = fn(1.001);
+  const leftPoint=toSvg(1,leftLimit), rightPoint=toSvg(1,rightLimit);
+  [[leftPoint,'var(--part-accent)'],[rightPoint,'var(--part-highlight)']].forEach(([p,c])=>{
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',p.x); dot.setAttribute('cy',p.y); dot.setAttribute('r',5);
+    dot.setAttribute('fill','#fff'); dot.setAttribute('stroke',c); dot.setAttribute('stroke-width',2.5);
+    svg.appendChild(dot);
+  });
+  const agree = Math.abs(leftLimit-rightLimit)<0.05;
+  document.getElementById('readout').innerHTML =
+    `Left limit (x to 1 minus): ${leftLimit.toFixed(3)}<br>Right limit (x to 1 plus): ${rightLimit.toFixed(3)}<br>${agree ? 'AGREE - two-sided limit EXISTS' : 'DISAGREE - two-sided limit does NOT exist'}`;
+  const fb=document.getElementById('fb');
+  fb.style.background = agree?'var(--part-accent-light)':'#FEF2F2';
+  fb.style.color = agree?'var(--part-accent)':'var(--bad)';
+  fb.innerHTML = agree
+    ? `Both one-sided limits equal exactly 1 — the two curve pieces meet at the identical point, confirming this function connects smoothly at x=1, precisely as visual inspection alone would suggest.`
+    : `The left piece approaches 1, but the right piece approaches 3 — a genuine, visible jump of size ${Math.abs(rightLimit-leftLimit).toFixed(1)}. The two-sided limit simply does not exist at x=1, no matter how the function might be defined exactly at that single point.`;
+}
+function show(mode, btn){
+  document.querySelectorAll('.mb-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  draw(mode);
+}
+document.getElementById('aha').innerHTML=`<strong>Aha:</strong> switch back and forth between the two modes — notice the LEFT piece of the curve never changes at all. Only the right piece's own formula shifted, yet that single change alone is enough to break the limit's existence entirely, because a limit's existence depends on BOTH sides agreeing, not just one.`;
+draw('match');
+</script>
+</body></html>

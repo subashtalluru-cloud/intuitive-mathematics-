@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C3AED; --part-accent-light:#EDE9FE; --part-highlight:#DB2777;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F5F3FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#epiSvg{ width:100%; height:auto; aspect-ratio:2/1; display:block; cursor:crosshair; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">"Cases Are Rising" Isn't Enough — Click to Find Where Growth Peaked</div>
+<div class="mb-sub">Total case count over time — always increasing, an S-shaped curve. Click anywhere on the curve to check its concavity. Find the ONE point where the curve switches from concave-up (accelerating) to concave-down (decelerating) — the inflection point, the moment interventions started winning.</div>
+<div class="mb-stage">
+<svg id="epiSvg" viewBox="0 0 320 180"></svg>
+<div class="readout" id="readout">Click anywhere on the curve.</div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">Identifying the inflection point in a case-count curve is closely watched during real outbreaks — it is the single most practically important moment in the trajectory, distinct from and more useful than merely noting cases are still rising.</div>
+</div>
+<script>
+function cases(t){ return 1000/(1+Math.exp(-0.5*(t-10))); }
+function concavity(t){
+  const h=0.5;
+  const f1=cases(t-h), f2=cases(t), f3=cases(t+h);
+  return (f1-2*f2+f3)/(h*h);
+}
+const scale=15, origin={x:20,y:160};
+function toSvg(t,y){ return {x:origin.x+t*scale, y:origin.y-y*scale*0.13}; }
+function draw(){
+  const svg=document.getElementById('epiSvg');
+  svg.innerHTML='';
+  let d='M';
+  for(let t=0;t<=20;t+=0.2){
+    const p=toSvg(t,cases(t));
+    d+=p.x+','+p.y+' L';
+  }
+  const curve=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve.setAttribute('d',d.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke','var(--part-accent)'); curve.setAttribute('stroke-width','2.5');
+  svg.appendChild(curve);
+
+  const infPoint=toSvg(10,cases(10));
+  const infMarker=document.createElementNS('http://www.w3.org/2000/svg','line');
+  infMarker.setAttribute('x1',infPoint.x); infMarker.setAttribute('y1',10); infMarker.setAttribute('x2',infPoint.x); infMarker.setAttribute('y2',170);
+  infMarker.setAttribute('stroke','#CBD5E1'); infMarker.setAttribute('stroke-dasharray','3,3');
+  svg.appendChild(infMarker);
+}
+function onClick(evt){
+  const rect=document.getElementById('epiSvg').getBoundingClientRect();
+  const scaleX=320/rect.width, scaleY=180/rect.height;
+  const sx=(evt.clientX-rect.left)*scaleX;
+  const t=(sx-origin.x)/scale;
+  if(t<0||t>20) return;
+
+  draw();
+  const svg=document.getElementById('epiSvg');
+  const p=toSvg(t,cases(t));
+  const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  const conc=concavity(t);
+  dot.setAttribute('cx',p.x); dot.setAttribute('cy',p.y); dot.setAttribute('r',6);
+  dot.setAttribute('fill', conc>0.5 ? 'var(--bad)' : (conc<-0.5 ? 'var(--good)' : '#F59E0B'));
+  svg.appendChild(dot);
+
+  const readout=document.getElementById('readout');
+  readout.innerHTML = 't='+t.toFixed(1)+', cases='+cases(t).toFixed(0)+'<br>Second derivative (concavity) = '+conc.toFixed(3);
+  const fb=document.getElementById('fb');
+  if(conc>0.5){
+    fb.innerHTML = 'CONCAVE UP at t='+t.toFixed(1)+' — growth is still ACCELERATING. The outbreak is worsening, not just growing.';
+  } else if(conc<-0.5){
+    fb.innerHTML = 'CONCAVE DOWN at t='+t.toFixed(1)+' — growth is DECELERATING. Cases are still rising, but the rate of new cases is now shrinking — interventions may be working.';
+  } else {
+    fb.innerHTML = 'Very near the INFLECTION POINT (around t=10) — this is precisely the moment concavity switches from accelerating to decelerating, the single most consequential moment in the entire trajectory.';
+  }
+}
+draw();
+document.getElementById('epiSvg').addEventListener('click', onClick);
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> click points on both the left half and right half of the curve - notice the curve is INCREASING everywhere (cases never actually go down), yet the second derivative flips sign at the midpoint. The first derivative alone (rising vs falling) cannot distinguish these two genuinely different situations; only the second derivative can.";
+</script>
+</body></html>

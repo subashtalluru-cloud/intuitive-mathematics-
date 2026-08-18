@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#059669; --part-accent-light:#D1FAE5; --part-highlight:#C2410C;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#ECFDF5; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+input[type=text]{ font-family:var(--font-mono); font-size:1.1rem; padding:10px 14px; border-radius:8px; border:1px solid var(--line); width:200px; text-transform:uppercase; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.9rem,1.1vw,1.05rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:16px 18px; line-height:1.8; margin-top:14px; font-weight:600; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Type Two Letters — Watch a Matrix Encrypt Them</div>
+<div class="mb-sub">Each letter becomes a number (A=0...Z=25). Matrix-vector multiplication, mod 26, scrambles the pair into ciphertext. Type any two letters and see the exact computation.</div>
+<div class="mb-stage">
+<input type="text" id="letterInput" maxlength="2" value="HI">
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">Decrypting a Hill cipher requires exactly the encryption matrix's own inverse — Chapter 34's own core technique, applied directly to cryptography.</div>
+</div>
+<script>
+const M=[[3,3],[2,5]];
+function encrypt(){
+  const raw = document.getElementById('letterInput').value.toUpperCase().replace(/[^A-Z]/g,'');
+  if(raw.length<2){ document.getElementById('readout').innerHTML='Type two letters.'; return; }
+  const pair = raw.slice(0,2);
+  const v = [pair.charCodeAt(0)-65, pair.charCodeAt(1)-65];
+  const result = [((M[0][0]*v[0]+M[0][1]*v[1])%26+26)%26, ((M[1][0]*v[0]+M[1][1]*v[1])%26+26)%26];
+  const cipher = String.fromCharCode(result[0]+65)+String.fromCharCode(result[1]+65);
+  document.getElementById('readout').innerHTML =
+    `"${pair}" -> vector (${v[0]},${v[1]})<br>M * v = (${M[0][0]}*${v[0]}+${M[0][1]}*${v[1]}, ${M[1][0]}*${v[0]}+${M[1][1]}*${v[1]}) mod 26<br>= (${result[0]},${result[1]}) -> "<strong>${cipher}</strong>"`;
+  document.getElementById('fb').innerHTML = `Plaintext "${pair}" encrypts to "${cipher}" via ordinary matrix-vector multiplication, exactly Chapter 32's own core operation, just performed with numbers wrapped modulo 26 instead of left unbounded.`;
+}
+document.getElementById('letterInput').addEventListener('input', encrypt);
+document.getElementById('aha').innerHTML=`<strong>Aha:</strong> type the same two letters twice in a row into different positions — the SAME matrix always produces the SAME ciphertext for the SAME input pair, exactly the reliability property Chapter 32 opened with: a matrix reliably performs the identical transformation on any input fed into it, whether that input is a 3D vertex or a two-letter chunk of a secret message.`;
+encrypt();
+</script>
+</body></html>

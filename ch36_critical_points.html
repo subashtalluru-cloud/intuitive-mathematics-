@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C3AED; --part-accent-light:#EDE9FE; --part-highlight:#DB2777;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F5F3FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+@media (max-width:760px){ .two-col{ grid-template-columns:1fr; } }
+.panel{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px; }
+.panel-header{ font-weight:700; text-align:center; margin-bottom:8px; font-size:clamp(0.9rem,1.05vw,1.02rem); }
+.panelSvg{ width:100%; height:auto; aspect-ratio:1.1/1; display:block; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin-top:14px; }
+.mb-btn:hover{ background:var(--part-accent); color:#fff; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Where the Derivative Crosses Zero — the Cubic Has No Vertex Formula, But This Still Works</div>
+<div class="mb-sub">f(x)=x^3-3x^2+2 has no Chapter-20-style vertex formula — cubics don't have one. Click to reveal the derivative curve alongside it, and watch every place f'(x)=0 line up exactly with a peak or valley on the original.</div>
+<div class="two-col">
+<div class="panel"><div class="panel-header" style="color:var(--part-accent);">f(x) = x^3-3x^2+2</div><svg class="panelSvg" id="fSvg" viewBox="0 0 220 220"></svg></div>
+<div class="panel"><div class="panel-header" style="color:var(--part-highlight);">f'(x) = 3x^2-6x</div><svg class="panelSvg" id="fpSvg" viewBox="0 0 220 220"></svg></div>
+</div>
+<button class="mb-btn" onclick="revealCritical()">Find where f'(x)=0</button>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">"Set the derivative equal to zero" makes no reference to a function's specific algebraic structure — unlike completing the square, which depends essentially on a quadratic's own particular form.</div>
+</div>
+<script>
+function f(x){ return x*x*x-3*x*x+2; }
+function fprime(x){ return 3*x*x-6*x; }
+const scale=35, origin={x:110,y:150};
+function toSvgF(x,y){ return {x:origin.x+x*scale, y:origin.y-y*scale}; }
+function toSvgFp(x,y){ return {x:origin.x+x*scale, y:origin.y-y*scale*0.9}; }
+function drawCurve(svgId, fn, toSvg, color){
+  const svg=document.getElementById(svgId);
+  svg.innerHTML='';
+  const axisX=document.createElementNS('http://www.w3.org/2000/svg','line');
+  axisX.setAttribute('x1',10); axisX.setAttribute('y1',origin.y); axisX.setAttribute('x2',210); axisX.setAttribute('y2',origin.y);
+  axisX.setAttribute('stroke','#E2E8F0');
+  svg.appendChild(axisX);
+  let d='M';
+  for(let x=-1.5;x<=3.5;x+=0.05){
+    const p=toSvg(x,fn(x));
+    d+=`${p.x},${p.y} L`;
+  }
+  const curve=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve.setAttribute('d',d.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke',color); curve.setAttribute('stroke-width','2.5');
+  svg.appendChild(curve);
+}
+function revealCritical(){
+  drawCurve('fSvg', f, toSvgF, 'var(--part-accent)');
+  drawCurve('fpSvg', fprime, toSvgFp, 'var(--part-highlight)');
+  [0,2].forEach(x=>{
+    const pF=toSvgF(x,f(x));
+    const dotF=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dotF.setAttribute('cx',pF.x); dotF.setAttribute('cy',pF.y); dotF.setAttribute('r',6); dotF.setAttribute('fill','var(--good)');
+    document.getElementById('fSvg').appendChild(dotF);
+    const pFp=toSvgFp(x,0);
+    const dotFp=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dotFp.setAttribute('cx',pFp.x); dotFp.setAttribute('cy',pFp.y); dotFp.setAttribute('r',6); dotFp.setAttribute('fill','var(--good)');
+    document.getElementById('fpSvg').appendChild(dotFp);
+  });
+  document.getElementById('fb').innerHTML = `f'(x)=3x^2-6x=0 factors as 3x(x-2)=0, giving x=0 and x=2 - the green dots. At x=0: f(0)=2, a local MAXIMUM. At x=2: f(2)=-2, a local MINIMUM. Both located purely from the derivative's own zeros - no vertex formula involved anywhere.`;
+}
+drawCurve('fSvg', f, toSvgF, 'var(--part-accent)');
+drawCurve('fpSvg', fprime, toSvgFp, 'var(--part-highlight)');
+document.getElementById('aha').innerHTML=`<strong>Aha:</strong> the derivative is a genuinely separate function with its own graph, its own shape, its own zeros - not just a slope-calculator you evaluate once. Its POSITIVE regions correspond exactly to where the original curve rises; its NEGATIVE regions to where it falls; its ZEROS to the turning points between them.`;
+</script>
+</body></html>

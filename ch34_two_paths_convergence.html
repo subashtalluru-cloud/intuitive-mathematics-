@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#059669; --part-accent-light:#D1FAE5; --part-highlight:#C2410C;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#ECFDF5; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+@media (max-width:760px){ .two-col{ grid-template-columns:1fr; } }
+.panel{ background:#fff; border:2px solid var(--line); border-radius:12px; padding:16px; }
+.panel.left{ border-color:var(--part-accent); } .panel.right{ border-color:var(--part-highlight); }
+.panel-header{ font-weight:700; text-align:center; margin-bottom:10px; font-size:clamp(0.9rem,1.05vw,1.05rem); }
+.step{ font-family:var(--font-mono); font-size:clamp(0.8rem,0.95vw,0.92rem); padding:6px 0; border-bottom:1px dashed var(--line); }
+.result-banner{ text-align:center; font-size:clamp(1.1rem,1.4vw,1.3rem); font-weight:700; color:var(--good); background:#F0FDF4; border:2px solid var(--good); border-radius:10px; padding:14px; margin-top:20px; }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Chapter 15's Farmer, Solved Two Completely Different Ways</div>
+<div class="mb-sub">x+y=10 chickens and cows' heads, 2x−y=5 from the legs equation. Chapter 15 solved this by hand elimination. This Part's entire machinery — vectors, matrices, determinants, inverses — solves the identical system a totally different way. Compare both paths.</div>
+<div class="two-col">
+<div class="panel left">
+<div class="panel-header" style="color:var(--part-accent);">Chapter 15: Elimination</div>
+<div class="step">1. x + y = 10</div>
+<div class="step">2. 2x − y = 5</div>
+<div class="step">3. Add equations: 3x = 15</div>
+<div class="step">4. x = 5</div>
+<div class="step">5. Substitute: 5 + y = 10, so y = 5</div>
+</div>
+<div class="panel right">
+<div class="panel-header" style="color:var(--part-highlight);">This Part: Matrix Inversion</div>
+<div class="step">1. A = [[1,1],[2,−1]], b = (10,5)</div>
+<div class="step">2. det(A) = (1)(−1) − (1)(2) = −3</div>
+<div class="step">3. A⁻¹ = (1/−3)[[−1,−1],[−2,1]]</div>
+<div class="step">4. x = A⁻¹b</div>
+<div class="step">5. x = (5, 5)</div>
+</div>
+</div>
+<div class="result-banner">Both paths: x=5, y=5. Same answer, zero shared steps.</div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">This is the exact closing move of Part VII: elimination's original three-outcome classification (unique solution, no solution, infinite solutions) was, this whole time, precisely governed by whether this Part's own determinant is nonzero.</div>
+</div>
+<script>
+document.getElementById('aha').innerHTML=`<strong>Aha:</strong> the matrix method doesn't merely happen to agree with elimination on this one example — det(A)=−3≠0 IS the precise algebraic guarantee that a unique solution exists at all, exactly the same three-way classification (unique / none / infinite) Chapter 15 discovered by hand, now given a single, fast, computable test that works identically for a two-equation farmer system or a million-equation engineering model.`;
+</script>
+</body></html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#059669; --part-accent-light:#D1FAE5; --part-highlight:#C2410C;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#ECFDF5; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#mapSvg{ width:100%; height:auto; aspect-ratio:2/1; display:block; cursor:crosshair; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">A Cartographer's Real Problem — Distortion That Changes by Location</div>
+<div class="mb-sub">This map projection distorts area differently at every point — unlike Chapter 32's uniform matrices, a single global determinant can't capture it. Click anywhere on the LEFT map to see the local area-scaling factor AT THAT SPECIFIC POINT on the RIGHT.</div>
+<div class="mb-stage"><svg id="mapSvg" viewBox="0 0 500 250"></svg></div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">This local, position-dependent determinant is called the Jacobian — Chapter 91 develops it fully, but the core idea is already fully visible here: the SAME determinant concept, just computed freshly at every different point instead of once for the whole transformation.</div>
+</div>
+<script>
+function localDet(x,y){ return Math.abs(4*x*x + 4*y*y); }
+function draw(){
+  const svg=document.getElementById('mapSvg');
+  svg.innerHTML='';
+  const label1=document.createElementNS('http://www.w3.org/2000/svg','text');
+  label1.setAttribute('x',120); label1.setAttribute('y',20); label1.setAttribute('text-anchor','middle'); label1.setAttribute('font-size','11'); label1.setAttribute('fill','var(--ink-soft)');
+  label1.textContent='Click anywhere on this grid';
+  svg.appendChild(label1);
+  for(let x=20;x<=220;x+=20){
+    const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+    l.setAttribute('x1',x); l.setAttribute('y1',30); l.setAttribute('x2',x); l.setAttribute('y2',230);
+    l.setAttribute('stroke','#E2E8F0'); svg.appendChild(l);
+  }
+  for(let y=30;y<=230;y+=20){
+    const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+    l.setAttribute('x1',20); l.setAttribute('y1',y); l.setAttribute('x2',220); l.setAttribute('y2',y);
+    l.setAttribute('stroke','#E2E8F0'); svg.appendChild(l);
+  }
+  const clickArea=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  clickArea.setAttribute('x',20); clickArea.setAttribute('y',30); clickArea.setAttribute('width',200); clickArea.setAttribute('height',200);
+  clickArea.setAttribute('fill','transparent'); clickArea.id='clickZone';
+  svg.appendChild(clickArea);
+
+  const label2=document.createElementNS('http://www.w3.org/2000/svg','text');
+  label2.setAttribute('x',380); label2.setAttribute('y',20); label2.setAttribute('text-anchor','middle'); label2.setAttribute('font-size','11'); label2.setAttribute('fill','var(--ink-soft)');
+  label2.textContent='Local distortion at clicked point';
+  svg.appendChild(label2);
+}
+function onClick(evt){
+  const rect=document.getElementById('mapSvg').getBoundingClientRect();
+  const scaleX=500/rect.width, scaleY=250/rect.height;
+  const sx=(evt.clientX-rect.left)*scaleX, sy=(evt.clientY-rect.top)*scaleY;
+  const mathX=(sx-120)/20, mathY=(130-sy)/20;
+  const d = localDet(mathX,mathY);
+
+  draw();
+  const svg=document.getElementById('mapSvg');
+  const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  dot.setAttribute('cx',sx); dot.setAttribute('cy',sy); dot.setAttribute('r',5); dot.setAttribute('fill','var(--part-highlight)');
+  svg.appendChild(dot);
+
+  const boxSize=Math.min(90, Math.sqrt(d)*12);
+  const distRect=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  distRect.setAttribute('x',380-boxSize/2); distRect.setAttribute('y',130-boxSize/2); distRect.setAttribute('width',boxSize); distRect.setAttribute('height',boxSize);
+  distRect.setAttribute('fill','var(--part-accent-light)'); distRect.setAttribute('stroke','var(--part-accent)'); distRect.setAttribute('stroke-width','2');
+  svg.appendChild(distRect);
+  const dText=document.createElementNS('http://www.w3.org/2000/svg','text');
+  dText.setAttribute('x',380); dText.setAttribute('y',135); dText.setAttribute('text-anchor','middle'); dText.setAttribute('font-size','13'); dText.setAttribute('font-weight','700'); dText.setAttribute('fill','var(--part-accent)');
+  dText.textContent = `x${d.toFixed(1)}`;
+  svg.appendChild(dText);
+
+  document.getElementById('fb').innerHTML = `At map position (${mathX.toFixed(1)}, ${mathY.toFixed(1)}), the local area-distortion factor is ${d.toFixed(2)} — click a DIFFERENT point and this number will change, since this particular projection distorts area differently depending on location, unlike Chapter 32's single uniform matrix.`;
+}
+document.getElementById('aha').innerHTML=`<strong>Aha:</strong> click near the grid's center, then click far toward a corner — the distortion factor grows substantially. Real map projections (like the Mercator projection responsible for Greenland's famously exaggerated size) show exactly this pattern: mild distortion near the reference point, severe distortion far away.`;
+document.addEventListener('DOMContentLoaded',draw);
+draw();
+document.getElementById('mapSvg').addEventListener('click', onClick);
+</script>
+</body></html>

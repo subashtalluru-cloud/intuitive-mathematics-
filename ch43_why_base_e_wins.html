@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C3AED; --part-accent-light:#EDE9FE; --part-highlight:#DB2777;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F5F3FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+.base-row{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-bottom:16px; }
+.mb-btn{ font-size:0.85rem; padding:9px 16px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; }
+.mb-btn:hover, .mb-btn.active{ background:var(--part-accent); color:#fff; }
+.formula-display{ font-family:var(--font-mono); font-size:clamp(1rem,1.3vw,1.2rem); text-align:center; background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:20px; line-height:2; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Every Other Base Carries Extra Baggage — e Alone Travels Light</div>
+<div class="mb-sub">Click each base and watch its own derivative formula. Every base except e picks up an extra multiplying constant, ln(base) — a leftover of exactly how far that base's own growth rate strays from matching its own height.</div>
+<div class="mb-stage">
+<div class="base-row">
+<button class="mb-btn" onclick="show(2,this)">Base 2</button>
+<button class="mb-btn" onclick="show(3,this)">Base 3</button>
+<button class="mb-btn active" onclick="show(2.71828,this)">Base e</button>
+<button class="mb-btn" onclick="show(10,this)">Base 10</button>
+</div>
+<div class="formula-display" id="display"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">Applying the power rule to 2^x — treating it as if the exponent were fixed and the base variable — is exactly the common mistake this chapter warns against, confusing two structurally different kinds of functions.</div>
+</div>
+<script>
+function show(base, btn){
+  document.querySelectorAll('.mb-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const lnBase = Math.log(base);
+  const isE = Math.abs(base-Math.E)<0.001;
+  document.getElementById('display').innerHTML =
+    'f(x) = '+base.toFixed(isE?5:0)+'^x<br>'+
+    "f'(x) = "+base.toFixed(isE?5:0)+'^x x ln('+base.toFixed(isE?5:0)+')<br>'+
+    '= '+base.toFixed(isE?5:0)+'^x x '+lnBase.toFixed(4)+
+    (isE ? '<br><strong>ln(e) = 1 exactly - the multiplier vanishes!</strong>' : '');
+  document.getElementById('fb').innerHTML = isE
+    ? "Base e is the UNIQUE choice where ln(base)=1 exactly, so the extra multiplying factor disappears entirely, leaving the beautifully simple f'(x)=e^x — no other base achieves this."
+    : 'Base '+base+' carries an extra multiplying factor of ln('+base+')='+lnBase.toFixed(4)+' in its own derivative — genuine extra complexity that never goes away for any base except e.';
+}
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> click through all four bases and watch the ln(base) multiplier shrink toward exactly 1 as the base approaches e, then grow again past it (ln(10) is bigger than ln(e)=1). Base e isn't just A convenient choice among many similarly good ones - it's the ONE unique base where this leftover multiplier vanishes to exactly 1, which is precisely why calculus adopts it as the default.";
+show(2.71828, document.querySelector('.mb-btn.active'));
+</script>
+</body></html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+:root{
+  --part-accent: #0891B2; --part-accent-light: #CFFAFE; --part-highlight: #C2410C;
+  --ink: #1A202C; --ink-soft: #4A5568; --paper: #FAFAF7; --line: #D6D3CB;
+  --good: #15803D; --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+*{ box-sizing: border-box; }
+html, body{ height:100%; }
+body{ margin:0; padding: clamp(16px, 3vw, 40px); background:#ECFEFF; font-family: var(--font-sans); color: var(--ink);
+  display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: clamp(20px, 2.5vw, 36px);
+  width: 100%; max-width: 1100px; }
+.mb-title{ font-size: clamp(1.3rem, 2vw, 1.7rem); font-weight: 700; color: var(--part-accent); margin: 0 0 6px 0; }
+.mb-sub{ font-size: clamp(0.9rem, 1.1vw, 1.05rem); color: var(--ink-soft); margin-bottom: 20px; line-height:1.5; max-width: 900px; }
+.layout-row{ display: grid; grid-template-columns: 1.2fr 1fr; gap: 28px; align-items: start; }
+@media (max-width: 760px){ .layout-row{ grid-template-columns: 1fr; } }
+.mb-stage{ background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: clamp(16px, 2vw, 28px); }
+#distSvg{ width:100%; height:auto; aspect-ratio: 1/1; display:block; touch-action:none; }
+.controls-panel{ display:flex; flex-direction:column; gap:14px; }
+.live-eq{ font-family: var(--font-mono); font-size: clamp(0.9rem, 1.1vw, 1.1rem); background: var(--part-accent-light);
+  color: var(--part-accent); border-radius: 10px; padding: 16px 18px; line-height: 1.8; font-weight:600; }
+.point-readout{ font-family: var(--font-mono); font-size:0.85rem; color: var(--ink-soft); }
+.mb-feedback{ font-size: clamp(1.05rem, 1.3vw, 1.25rem); padding: 16px 20px; border-radius: 10px; margin-top: 16px;
+  line-height: 1.65; background: var(--part-accent-light); color: var(--part-accent); border: 1px solid var(--line); }
+.aha{ font-size: clamp(1.05rem, 1.3vw, 1.25rem); padding: 16px 20px; border-radius: 10px; margin-top: 14px;
+  line-height: 1.65; background: #FFF7ED; color: #9A3412; border: 1px solid #FED7AA; }
+.aha strong{ color: #C2410C; }
+.mb-caption{ font-size: clamp(0.95rem, 1.05vw, 1.05rem); color: var(--ink-soft); margin-top: 12px; font-style:italic; line-height:1.6; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Drag Either Point — Watch the Distance Formula Build Itself</div>
+  <div class="mb-sub">Both A and B are draggable. A right triangle assembles itself live from the coordinate differences — the distance formula is just you reading off its hypotenuse, updating in real time as you move either endpoint.</div>
+
+  <div class="layout-row">
+    <div class="mb-stage">
+      <svg id="distSvg" viewBox="0 0 300 300"></svg>
+    </div>
+    <div class="controls-panel">
+      <div class="point-readout" id="pointReadout"></div>
+      <div class="live-eq" id="calcOut"></div>
+    </div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="aha" id="aha"></div>
+  <div class="mb-caption">Nobody invented a new fact here — the horizontal leg is Δx, the vertical leg is Δy, and the Pythagorean theorem (Chapter 3's rope-stretchers, wearing coordinate algebra as a costume) does 100% of the actual work.</div>
+</div>
+
+<script>
+const svg = document.getElementById('distSvg');
+let A = {x:1, y:1};
+let B = {x:5, y:4};
+let dragTarget = null;
+const origin = {x:30, y:270};
+const scale = 42;
+
+function toSvg(pt){ return { x: origin.x + pt.x*scale, y: origin.y - pt.y*scale }; }
+function toMath(sx, sy){ return { x: (sx-origin.x)/scale, y: (origin.y-sy)/scale }; }
+
+function draw(){
+  svg.innerHTML = '';
+  for(let i=0;i<=6;i++){
+    const gx = origin.x + i*scale;
+    const gl = document.createElementNS('http://www.w3.org/2000/svg','line');
+    gl.setAttribute('x1',gx); gl.setAttribute('y1',10); gl.setAttribute('x2',gx); gl.setAttribute('y2',280);
+    gl.setAttribute('stroke','#F1F5F9'); gl.setAttribute('stroke-width','1');
+    svg.appendChild(gl);
+    const gy = origin.y - i*scale;
+    const gl2 = document.createElementNS('http://www.w3.org/2000/svg','line');
+    gl2.setAttribute('x1',10); gl2.setAttribute('y1',gy); gl2.setAttribute('x2',290); gl2.setAttribute('y2',gy);
+    gl2.setAttribute('stroke','#F1F5F9'); gl2.setAttribute('stroke-width','1');
+    svg.appendChild(gl2);
+  }
+
+  const pA = toSvg(A), pB = toSvg(B);
+  const corner = {x: pB.x, y: pA.y};
+
+  const legH = document.createElementNS('http://www.w3.org/2000/svg','line');
+  legH.setAttribute('x1',pA.x); legH.setAttribute('y1',pA.y); legH.setAttribute('x2',corner.x); legH.setAttribute('y2',corner.y);
+  legH.setAttribute('stroke','var(--part-accent)'); legH.setAttribute('stroke-width','2.5');
+  svg.appendChild(legH);
+
+  const legV = document.createElementNS('http://www.w3.org/2000/svg','line');
+  legV.setAttribute('x1',corner.x); legV.setAttribute('y1',corner.y); legV.setAttribute('x2',pB.x); legV.setAttribute('y2',pB.y);
+  legV.setAttribute('stroke','var(--part-accent)'); legV.setAttribute('stroke-width','2.5');
+  svg.appendChild(legV);
+
+  const hyp = document.createElementNS('http://www.w3.org/2000/svg','line');
+  hyp.setAttribute('x1',pA.x); hyp.setAttribute('y1',pA.y); hyp.setAttribute('x2',pB.x); hyp.setAttribute('y2',pB.y);
+  hyp.setAttribute('stroke','var(--part-highlight)'); hyp.setAttribute('stroke-width','3');
+  svg.appendChild(hyp);
+
+  const dx = B.x - A.x, dy = B.y - A.y;
+  const dist = Math.sqrt(dx*dx + dy*dy);
+
+  const legHLabel = document.createElementNS('http://www.w3.org/2000/svg','text');
+  legHLabel.setAttribute('x',(pA.x+corner.x)/2); legHLabel.setAttribute('y',pA.y+18);
+  legHLabel.setAttribute('text-anchor','middle'); legHLabel.setAttribute('font-size','12'); legHLabel.setAttribute('fill','var(--part-accent)'); legHLabel.setAttribute('font-weight','700');
+  legHLabel.textContent = `Δx=${dx.toFixed(1)}`;
+  svg.appendChild(legHLabel);
+
+  const legVLabel = document.createElementNS('http://www.w3.org/2000/svg','text');
+  legVLabel.setAttribute('x',corner.x+10); legVLabel.setAttribute('y',(corner.y+pB.y)/2);
+  legVLabel.setAttribute('font-size','12'); legVLabel.setAttribute('fill','var(--part-accent)'); legVLabel.setAttribute('font-weight','700');
+  legVLabel.textContent = `Δy=${dy.toFixed(1)}`;
+  svg.appendChild(legVLabel);
+
+  [[pA,'A','a'],[pB,'B','b']].forEach(([p,lbl,id])=>{
+    const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',p.x); dot.setAttribute('cy',p.y); dot.setAttribute('r',10);
+    dot.setAttribute('fill', lbl==='B' ? 'var(--part-highlight)' : 'var(--ink)');
+    dot.style.cursor = 'grab';
+    dot.id = 'drag_'+id;
+    svg.appendChild(dot);
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',p.x-16); t.setAttribute('y',p.y-14); t.setAttribute('font-size','13'); t.setAttribute('font-weight','700');
+    t.textContent = lbl;
+    svg.appendChild(t);
+  });
+
+  document.getElementById('pointReadout').innerHTML = `A = (${A.x.toFixed(1)}, ${A.y.toFixed(1)}) &nbsp;&nbsp; B = (${B.x.toFixed(1)}, ${B.y.toFixed(1)})`;
+  document.getElementById('calcOut').innerHTML =
+    `distance = √((${dx.toFixed(1)})² + (${dy.toFixed(1)})²)<br>= √(${(dx*dx).toFixed(2)} + ${(dy*dy).toFixed(2)})<br>= √${(dx*dx+dy*dy).toFixed(2)} = <strong>${dist.toFixed(3)}</strong>`;
+
+  const aha = document.getElementById('aha');
+  aha.innerHTML = `<strong>Aha:</strong> drag point A itself, not just B — notice the SAME formula still works, because the distance formula doesn't privilege one point as "the origin." It only ever cares about the DIFFERENCE between coordinates — swap which point you call A and which you call B, and Δx, Δy just flip sign, but squaring erases the sign difference entirely, giving the identical distance either way.`;
+}
+
+function getPoint(evt){
+  const rect = svg.getBoundingClientRect();
+  const t = evt.touches ? evt.touches[0] : evt;
+  const scaleX = 300 / rect.width, scaleY = 300 / rect.height;
+  const sx = (t.clientX - rect.left) * scaleX;
+  const sy = (t.clientY - rect.top) * scaleY;
+  return toMath(sx, sy);
+}
+function startDrag(e){
+  if(e.target.id==='drag_a') dragTarget='a';
+  else if(e.target.id==='drag_b') dragTarget='b';
+}
+svg.addEventListener('mousedown', startDrag);
+svg.addEventListener('touchstart', startDrag);
+window.addEventListener('mouseup', ()=> dragTarget=null);
+window.addEventListener('touchend', ()=> dragTarget=null);
+function handleMove(e){
+  if(!dragTarget) return;
+  const p = getPoint(e);
+  const clamped = { x: Math.max(-1, Math.min(6, Math.round(p.x*2)/2)), y: Math.max(-1, Math.min(6, Math.round(p.y*2)/2)) };
+  if(dragTarget==='a') A = clamped; else B = clamped;
+  draw();
+}
+window.addEventListener('mousemove', handleMove);
+window.addEventListener('touchmove', (e)=>{ if(dragTarget) e.preventDefault(); handleMove(e); }, {passive:false});
+
+draw();
+</script>
+</body>
+</html>

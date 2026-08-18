@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#059669; --part-accent-light:#D1FAE5; --part-highlight:#C2410C;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#ECFDF5; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#beamSvg{ width:100%; height:auto; aspect-ratio:2.5/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin:14px 0; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.9rem,1.1vw,1.05rem); border-radius:10px; padding:16px 18px; line-height:1.8; font-weight:600; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">A Structure's Stiffness Matrix — Reading the Warning Sign Before It Fails</div>
+<div class="mb-sub">This beam's support stiffness matrix encodes how it responds to load. Drag the support-weakening slider — watch the beam visibly sag as the determinant collapses toward the exact structural danger zone.</div>
+<div class="mb-stage">
+<svg id="beamSvg" viewBox="0 0 400 160"></svg>
+<div class="slider-row"><label>Support weakening: <span id="weakVal">0</span>%</label><input type="range" id="weakSlider" min="0" max="95" value="0"></div>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">A structure's stiffness matrix having a near-zero determinant is a direct mathematical warning sign of an unstable or under-constrained design, one degree of freedom away from genuine mechanical collapse.</div>
+</div>
+<script>
+function drawBeam(sag){
+  const svg=document.getElementById('beamSvg');
+  svg.innerHTML='';
+  const support1=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+  support1.setAttribute('points','20,140 40,140 30,120');
+  support1.setAttribute('fill','#94A3B8');
+  svg.appendChild(support1);
+  const support2=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+  support2.setAttribute('points','360,140 380,140 370,120');
+  support2.setAttribute('fill','#94A3B8');
+  svg.appendChild(support2);
+  let d=`M30,120 `;
+  for(let x=30;x<=370;x+=10){
+    const t=(x-30)/340;
+    const y=120-sag*Math.sin(t*Math.PI)*4;
+    d+=`L${x},${y} `;
+  }
+  const beam=document.createElementNS('http://www.w3.org/2000/svg','path');
+  beam.setAttribute('d',d);
+  beam.setAttribute('fill','none'); beam.setAttribute('stroke', sag>15?'var(--bad)':'var(--part-accent)'); beam.setAttribute('stroke-width','8'); beam.setAttribute('stroke-linecap','round');
+  svg.appendChild(beam);
+}
+function update(){
+  const weak=parseInt(document.getElementById('weakSlider').value);
+  document.getElementById('weakVal').textContent=weak;
+  const factor = 1-weak/100;
+  const K=[[10*factor,2],[5,1+9*factor]];
+  const det = K[0][0]*K[1][1]-K[0][1]*K[1][0];
+  drawBeam(weak/6);
+  const readout=document.getElementById('readout');
+  const fb=document.getElementById('fb');
+  if(Math.abs(det)<5){
+    readout.style.background='#FEF2F2'; readout.style.color='var(--bad)';
+    readout.innerHTML = `Stiffness matrix det = ${det.toFixed(2)} - DANGER ZONE`;
+    fb.innerHTML = `det(K) has collapsed near zero — this is a direct mathematical warning: the structure is one degree of freedom away from genuine mechanical collapse, precisely mirroring Chapter 33's own singular-matrix area-collapse.`;
+  } else {
+    readout.style.background='var(--part-accent-light)'; readout.style.color='var(--part-accent)';
+    readout.innerHTML = `Stiffness matrix det = ${det.toFixed(2)} - stable`;
+    fb.innerHTML = `det(K) = ${det.toFixed(2)}, comfortably away from zero — the structure has a genuine, well-defined response to any applied load.`;
+  }
+}
+document.getElementById('weakSlider').addEventListener('input', update);
+document.getElementById('aha').innerHTML=`<strong>Aha:</strong> the beam's visible sag and the determinant's approach to zero are tracking the SAME underlying phenomenon, just in two different vocabularies — an engineer watching this number drop toward zero is watching exactly the same collapse Chapter 33's own singular-matrix element showed as a parallelogram flattening to a line.`;
+update();
+</script>
+</body></html>

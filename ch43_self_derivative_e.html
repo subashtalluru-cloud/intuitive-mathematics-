@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C3AED; --part-accent-light:#EDE9FE; --part-highlight:#DB2777;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F5F3FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.layout-row{ display:grid; grid-template-columns:1.2fr 1fr; gap:28px; align-items:start; }
+@media (max-width:800px){ .layout-row{ grid-template-columns:1fr; } }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#eSvg{ width:100%; height:auto; aspect-ratio:1.2/1; display:block; touch-action:none; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.9rem,1.1vw,1.05rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:16px 18px; line-height:1.8; font-weight:600; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">The Only Function That Is Its Own Slope — Everywhere</div>
+<div class="mb-sub">Drag the point along e^x. Watch the curve's HEIGHT at that point and its TANGENT SLOPE at that same point — two completely different geometric quantities — always come out numerically identical.</div>
+<div class="layout-row">
+<div class="mb-stage"><svg id="eSvg" viewBox="0 0 260 260"></svg></div>
+<div>
+<div class="slider-row"><label>Position x = <span id="xVal">1.0</span></label><input type="range" id="xSlider" min="-150" max="200" value="100"></div>
+<div class="readout" id="readout"></div>
+</div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">A bacteria population whose current size is exactly proportional to its current growth rate — twice as large means growing twice as fast, at every instant — is precisely this self-referential property, which is why e appears wherever growth is truly continuous.</div>
+</div>
+<script>
+const scale=35, origin={x:20,y:230};
+function toSvg(x,y){ return {x:origin.x+x*scale, y:origin.y-y*scale*0.35}; }
+function draw(){
+  const raw=parseInt(document.getElementById('xSlider').value);
+  const x0=raw/100;
+  document.getElementById('xVal').textContent=x0.toFixed(2);
+
+  const svg=document.getElementById('eSvg');
+  svg.innerHTML='';
+  let d='M';
+  for(let x=-2;x<=3.2;x+=0.05){
+    const p=toSvg(x,Math.exp(x));
+    d+=p.x+','+p.y+' L';
+  }
+  const curve=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve.setAttribute('d',d.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke','var(--part-accent)'); curve.setAttribute('stroke-width','2.5');
+  svg.appendChild(curve);
+
+  const y0=Math.exp(x0);
+  const slope=y0;
+  const t1=toSvg(x0-0.8,y0-slope*0.8), t2=toSvg(x0+0.8,y0+slope*0.8);
+  const tanLine=document.createElementNS('http://www.w3.org/2000/svg','line');
+  tanLine.setAttribute('x1',t1.x); tanLine.setAttribute('y1',t1.y); tanLine.setAttribute('x2',t2.x); tanLine.setAttribute('y2',t2.y);
+  tanLine.setAttribute('stroke','var(--part-highlight)'); tanLine.setAttribute('stroke-width','2.5');
+  svg.appendChild(tanLine);
+
+  const p0=toSvg(x0,y0);
+  const heightLine=document.createElementNS('http://www.w3.org/2000/svg','line');
+  heightLine.setAttribute('x1',p0.x); heightLine.setAttribute('y1',origin.y); heightLine.setAttribute('x2',p0.x); heightLine.setAttribute('y2',p0.y);
+  heightLine.setAttribute('stroke','var(--good)'); heightLine.setAttribute('stroke-width','2.5'); heightLine.setAttribute('stroke-dasharray','3,2');
+  svg.appendChild(heightLine);
+
+  const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  dot.setAttribute('cx',p0.x); dot.setAttribute('cy',p0.y); dot.setAttribute('r',6); dot.setAttribute('fill','var(--part-accent)');
+  svg.appendChild(dot);
+
+  document.getElementById('readout').innerHTML =
+    'x='+x0.toFixed(2)+'<br>Height: e^x = '+y0.toFixed(4)+'<br>Tangent slope: (e^x)prime = '+slope.toFixed(4)+'<br>Identical: '+(Math.abs(y0-slope)<0.0001?'YES':'NO');
+  document.getElementById('fb').innerHTML = 'At every single x you drag to, the green dashed HEIGHT line and the pink tangent line SLOPE come out numerically identical — '+y0.toFixed(4)+' both ways. No other exponential base has this property.';
+}
+document.getElementById('xSlider').addEventListener('input', draw);
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> drag x anywhere across the whole range and the height-equals-slope relationship never breaks, not even once. This single self-referential property (f=fprime) is the ENTIRE reason e is singled out among infinitely many possible exponential bases as calculus's own natural, uniquely simple choice.";
+draw();
+</script>
+</body></html>

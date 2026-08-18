@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+:root{
+  --part-accent: #0891B2; --part-accent-light: #CFFAFE; --part-highlight: #C2410C;
+  --ink: #1A202C; --ink-soft: #4A5568; --paper: #FAFAF7; --line: #D6D3CB;
+  --good: #15803D; --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+*{ box-sizing: border-box; }
+html, body{ height:100%; }
+body{ margin:0; padding: clamp(16px, 3vw, 40px); background:#ECFEFF; font-family: var(--font-sans); color: var(--ink);
+  display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: clamp(20px, 2.5vw, 36px);
+  width: 100%; max-width: 1150px; }
+.mb-title{ font-size: clamp(1.3rem, 2vw, 1.7rem); font-weight: 700; color: var(--part-accent); margin: 0 0 6px 0; }
+.mb-sub{ font-size: clamp(0.9rem, 1.1vw, 1.05rem); color: var(--ink-soft); margin-bottom: 20px; line-height:1.5; max-width: 950px; }
+.layout-row{ display: grid; grid-template-columns: 1.3fr 1fr; gap: 28px; align-items: start; }
+@media (max-width: 800px){ .layout-row{ grid-template-columns: 1fr; } }
+.mb-stage{ background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: clamp(16px, 2vw, 28px); }
+#conicSvg{ width:100%; height:auto; aspect-ratio: 1.3/1; display:block; }
+.dial-wrap{ margin-top: 16px; }
+.dial-wrap input[type=range]{ width:100%; height:8px; }
+.zone-labels{ display:flex; justify-content:space-between; font-size:0.75rem; color:var(--ink-soft); margin-top:4px; font-family: var(--font-mono); }
+.name-badge{ text-align:center; font-size: clamp(1.2rem, 1.6vw, 1.5rem); font-weight:700; padding: 12px; border-radius: 10px; margin-top:14px; }
+.controls-panel{ display:flex; flex-direction:column; gap:14px; }
+.mb-feedback{ font-size: clamp(1.05rem, 1.3vw, 1.25rem); padding: 16px 20px; border-radius: 10px; margin-top: 16px;
+  line-height: 1.65; background: var(--part-accent-light); color: var(--part-accent); border: 1px solid var(--line); }
+.aha{ font-size: clamp(1.05rem, 1.3vw, 1.25rem); padding: 16px 20px; border-radius: 10px; margin-top: 14px;
+  line-height: 1.65; background: #FFF7ED; color: #9A3412; border: 1px solid #FED7AA; }
+.aha strong{ color: #C2410C; }
+.mb-caption{ font-size: clamp(0.95rem, 1.05vw, 1.05rem); color: var(--ink-soft); margin-top: 12px; font-style:italic; line-height:1.6; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">One Dial, Four Curves</div>
+  <div class="mb-sub">Eccentricity e is a single number measuring how far a conic deviates from a perfect circle. Slide it from 0 to beyond 1 and watch the SAME underlying shape smoothly become a circle, an ellipse, a parabola, and finally a hyperbola — not four unrelated curves, one continuous family.</div>
+
+  <div class="layout-row">
+    <div class="mb-stage">
+      <svg id="conicSvg" viewBox="0 0 320 240"></svg>
+    </div>
+    <div class="controls-panel">
+      <div class="dial-wrap">
+        <input type="range" id="eDial" min="0" max="150" value="0">
+        <div class="zone-labels"><span>e=0</span><span>e=0.5</span><span>e=1.0</span><span>e=1.5</span></div>
+      </div>
+      <div class="name-badge" id="nameBadge"></div>
+      <div id="eVal" style="font-family: var(--font-mono); text-align:center; font-size:0.95rem;"></div>
+    </div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="aha" id="aha"></div>
+  <div class="mb-caption">At exactly e=1, something qualitatively different happens: the curve transitions from closed (ellipse) to open (parabola) — one focus has, in a precise sense, been pushed infinitely far away.</div>
+</div>
+
+<script>
+const scale = 30, origin = {x:100, y:120};
+function toSvg(pt){ return {x: origin.x+pt.x*scale, y: origin.y-pt.y*scale}; }
+
+function shapePoints(e, a){
+  const pts = [];
+  if(e < 0.98){
+    const b = a*Math.sqrt(1-e*e);
+    for(let i=0;i<=72;i++){
+      const t = i*5*Math.PI/180;
+      pts.push({x:a*Math.cos(t), y:b*Math.sin(t)});
+    }
+  } else if(e < 1.02){
+    const p = a/2;
+    for(let i=0;i<=40;i++){
+      const y = -4+i*0.2;
+      const x = y*y/(4*p);
+      pts.push({x:x-2, y:y});
+    }
+  } else {
+    const b = a*Math.sqrt(e*e-1);
+    for(let i=0;i<=40;i++){
+      const t = -1.5+i*0.075;
+      pts.push({x:a*Math.cosh(t), y:b*Math.sinh(t)});
+    }
+  }
+  return pts;
+}
+
+function draw(e){
+  const svg = document.getElementById('conicSvg');
+  svg.innerHTML='';
+  const axisX = document.createElementNS('http://www.w3.org/2000/svg','line');
+  axisX.setAttribute('x1',10); axisX.setAttribute('y1',origin.y); axisX.setAttribute('x2',310); axisX.setAttribute('y2',origin.y);
+  axisX.setAttribute('stroke','#E2E8F0');
+  svg.appendChild(axisX);
+  const axisY = document.createElementNS('http://www.w3.org/2000/svg','line');
+  axisY.setAttribute('x1',origin.x); axisY.setAttribute('y1',10); axisY.setAttribute('x2',origin.x); axisY.setAttribute('y2',230);
+  axisY.setAttribute('stroke','#E2E8F0');
+  svg.appendChild(axisY);
+
+  const pts = shapePoints(e, 3);
+  const isClosed = e < 0.98;
+  let d = 'M';
+  pts.forEach(p=>{
+    const s = toSvg(p);
+    d += `${s.x},${s.y} L`;
+  });
+  d = d.slice(0,-1);
+  if(isClosed) d += ' Z';
+
+  const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+  path.setAttribute('d',d);
+  path.setAttribute('fill', isClosed ? 'var(--part-accent-light)' : 'none');
+  path.setAttribute('fill-opacity','0.5');
+  path.setAttribute('stroke', e<1 ? 'var(--part-accent)' : (Math.abs(e-1)<0.02 ? 'var(--part-highlight)' : '#7C3AED'));
+  path.setAttribute('stroke-width','2.5');
+  svg.appendChild(path);
+
+  // if e>1 (hyperbola), draw the mirror branch too
+  if(e >= 1.02){
+    let d2 = 'M';
+    pts.forEach(p=>{
+      const s = toSvg({x:-p.x, y:p.y});
+      d2 += `${s.x},${s.y} L`;
+    });
+    d2 = d2.slice(0,-1);
+    const path2 = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path2.setAttribute('d',d2); path2.setAttribute('fill','none'); path2.setAttribute('stroke','#7C3AED'); path2.setAttribute('stroke-width','2.5');
+    svg.appendChild(path2);
+  }
+}
+
+function update(){
+  const raw = parseInt(document.getElementById('eDial').value);
+  const e = raw/100;
+  draw(e);
+  document.getElementById('eVal').textContent = `e = ${e.toFixed(2)}`;
+
+  const badge = document.getElementById('nameBadge');
+  let name, color, bg;
+  if(e < 0.02){ name='CIRCLE'; color='var(--part-accent)'; bg='var(--part-accent-light)'; }
+  else if(e < 0.98){ name='ELLIPSE'; color='var(--part-accent)'; bg='var(--part-accent-light)'; }
+  else if(e < 1.02){ name='PARABOLA'; color='var(--part-highlight)'; bg='#FFF1E8'; }
+  else { name='HYPERBOLA'; color='#7C3AED'; bg='#F3E8FF'; }
+  badge.textContent = name;
+  badge.style.color = color;
+  badge.style.background = bg;
+
+  const fb = document.getElementById('fb');
+  if(e < 0.02) fb.innerHTML = `At e=0, the two foci have fully merged into one point — every point on the curve sits at the SAME fixed distance from that single point. That's a circle's own defining property from Chapter 28, recovered as the limiting case of an ellipse.`;
+  else if(e < 0.98) fb.innerHTML = `At e=${e.toFixed(2)}, the two foci have separated. The curve is still closed and bounded, but now genuinely oval — the sum-of-distances-to-both-foci condition is satisfied by an elongated shape, not a circular one.`;
+  else if(e < 1.02) fb.innerHTML = `At e=1, something QUALITATIVELY different happens — not just "a very stretched ellipse." The curve has become open and unbounded: one focus has effectively been pushed to infinity, leaving only a single focus and a directrix line.`;
+  else fb.innerHTML = `At e=${e.toFixed(2)}, the curve has split into two separate mirror-image branches — a hyperbola. This single continuous dial has now swept through all four conic types with no discontinuity in the underlying construction, only in how the resulting shape looks.`;
+}
+
+document.getElementById('eDial').addEventListener('input', update);
+document.getElementById('aha').innerHTML = `<strong>Aha:</strong> nobody needed four separate theories for four "different" curves. One parameter, swept smoothly from 0 upward, produces every one of them in turn — the circle, ellipse, parabola, and hyperbola were never four unrelated objects, only four snapshots of a single continuously varying family.`;
+update();
+</script>
+</body>
+</html>

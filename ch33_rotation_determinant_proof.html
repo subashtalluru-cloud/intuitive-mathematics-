@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#059669; --part-accent-light:#D1FAE5; --part-highlight:#C2410C;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#ECFDF5; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.layout-row{ display:grid; grid-template-columns:1.2fr 1fr; gap:28px; align-items:start; }
+@media (max-width:800px){ .layout-row{ grid-template-columns:1fr; } }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#rotDetSvg{ width:100%; height:auto; aspect-ratio:1/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.9rem,1.1vw,1.05rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:16px 18px; line-height:1.8; font-weight:600; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Rotate However You Like — the Determinant Refuses to Budge</div>
+<div class="mb-sub">Drag the angle all the way around a full circle. The parallelogram's shape and orientation change completely — but watch the determinant readout: it never leaves exactly 1.000, at every single angle.</div>
+<div class="layout-row">
+<div class="mb-stage"><svg id="rotDetSvg" viewBox="0 0 260 260"></svg></div>
+<div>
+<div class="slider-row"><label>Rotation angle: <span id="angVal">0</span> deg</label><input type="range" id="angSlider" min="0" max="360" value="0"></div>
+<div class="readout" id="readout"></div>
+</div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">A rotation, by its own physical nature, changes a shape's orientation and position but never its actual area — so its own scaling factor must, by this physical reasoning alone, equal exactly 1.</div>
+</div>
+<script>
+const scale=45, origin={x:130,y:130};
+function toSvg(p){ return {x:origin.x+p.x*scale, y:origin.y-p.y*scale}; }
+function update(){
+  const deg=parseInt(document.getElementById('angSlider').value);
+  document.getElementById('angVal').textContent=deg;
+  const t=deg*Math.PI/180;
+  const iVec={x:Math.cos(t),y:Math.sin(t)};
+  const jVec={x:-Math.sin(t),y:Math.cos(t)};
+  const det = iVec.x*jVec.y - iVec.y*jVec.x;
+
+  const svg=document.getElementById('rotDetSvg');
+  svg.innerHTML='';
+  const o=toSvg({x:0,y:0}), pi=toSvg(iVec), pj=toSvg(jVec), pij=toSvg({x:iVec.x+jVec.x,y:iVec.y+jVec.y});
+  const para=document.createElementNS('http://www.w3.org/2000/svg','path');
+  para.setAttribute('d',`M${o.x},${o.y} L${pi.x},${pi.y} L${pij.x},${pij.y} L${pj.x},${pj.y} Z`);
+  para.setAttribute('fill','var(--part-accent-light)'); para.setAttribute('fill-opacity','0.6'); para.setAttribute('stroke','var(--part-accent)'); para.setAttribute('stroke-width','2');
+  svg.appendChild(para);
+  [[iVec,'var(--part-accent)'],[jVec,'var(--part-highlight)']].forEach(([v,color])=>{
+    const p=toSvg(v);
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',o.x); line.setAttribute('y1',o.y); line.setAttribute('x2',p.x); line.setAttribute('y2',p.y);
+    line.setAttribute('stroke',color); line.setAttribute('stroke-width','3');
+    svg.appendChild(line);
+  });
+  document.getElementById('readout').innerHTML =
+    `cos(${deg}deg)=${Math.cos(t).toFixed(3)}, sin(${deg}deg)=${Math.sin(t).toFixed(3)}<br>det = cos^2+sin^2 = ${det.toFixed(6)}`;
+  document.getElementById('fb').innerHTML = `det = cos^2(theta)+sin^2(theta) = ${det.toFixed(6)} — this is EXACTLY the Pythagorean identity from Chapter 24, now confirming algebraically what physical intuition already told us: a rotation never stretches or shrinks area.`;
+}
+document.getElementById('angSlider').addEventListener('input', update);
+document.getElementById('aha').innerHTML=`<strong>Aha:</strong> the square area never changes shape into anything but ANOTHER unit square rotated in place, at any angle you drag to. The determinant staying locked at exactly 1.000 isn't a coincidence to verify once — it's the Pythagorean identity itself, restated in matrix language.`;
+update();
+</script>
+</body></html>

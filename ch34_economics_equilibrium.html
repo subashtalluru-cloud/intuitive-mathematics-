@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#059669; --part-accent-light:#D1FAE5; --part-highlight:#C2410C;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#ECFDF5; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.9rem,1.1vw,1.05rem); border-radius:10px; padding:16px 18px; line-height:1.8; font-weight:600; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Two Interacting Markets, Solved Simultaneously</div>
+<div class="mb-sub">Coffee and tea prices affect each other — raise coffee's price and some buyers switch to tea, changing tea's own equilibrium. Drag either market's demand pressure and watch BOTH equilibrium prices resolve together, instantly, via matrix inversion.</div>
+<div class="mb-stage">
+<div class="slider-row"><label>Coffee market demand pressure: <span id="coffeeVal">10</span></label><input type="range" id="coffeeSlider" min="0" max="20" value="10"></div>
+<div class="slider-row"><label>Tea market demand pressure: <span id="teaVal">8</span></label><input type="range" id="teaSlider" min="0" max="20" value="8"></div>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">A nonzero determinant here signals a unique equilibrium exists at all — exactly this Part's own determinant test, applied not to an abstract system but to genuine interacting-market economics.</div>
+</div>
+<script>
+const A=[[3,-1],[-2,4]];
+function update(){
+  const coffee=parseInt(document.getElementById('coffeeSlider').value);
+  const tea=parseInt(document.getElementById('teaSlider').value);
+  document.getElementById('coffeeVal').textContent=coffee;
+  document.getElementById('teaVal').textContent=tea;
+
+  const det=A[0][0]*A[1][1]-A[0][1]*A[1][0];
+  const readout=document.getElementById('readout');
+  if(Math.abs(det)<0.01){
+    readout.style.background='#FEF2F2'; readout.style.color='var(--bad)';
+    readout.innerHTML = `det = 0 — no unique equilibrium exists for this market structure.`;
+    document.getElementById('fb').innerHTML = `A zero determinant here would mean these two markets are structurally degenerate — no single stable price pair could ever balance both simultaneously.`;
+    return;
+  }
+  readout.style.background='var(--part-accent-light)'; readout.style.color='var(--part-accent)';
+  const Ainv=[[A[1][1]/det,-A[0][1]/det],[-A[1][0]/det,A[0][0]/det]];
+  const prices=[Ainv[0][0]*coffee+Ainv[0][1]*tea, Ainv[1][0]*coffee+Ainv[1][1]*tea];
+  readout.innerHTML = `det(A) = ${det.toFixed(2)} (nonzero - unique equilibrium exists)<br>Coffee equilibrium price: $${prices[0].toFixed(2)}<br>Tea equilibrium price: $${prices[1].toFixed(2)}`;
+  document.getElementById('fb').innerHTML = `Both prices were solved TOGETHER, in one matrix operation — never independently, because each market's own price genuinely depends on the other's, exactly the coupled-system situation Chapter 15's elimination method was originally built to handle.`;
+}
+document.getElementById('coffeeSlider').addEventListener('input', update);
+document.getElementById('teaSlider').addEventListener('input', update);
+document.getElementById('aha').innerHTML=`<strong>Aha:</strong> raise coffee's demand pressure and watch TEA's equilibrium price shift too, even though you never touched tea's own slider — that's the off-diagonal entries in matrix A doing real economic work, encoding exactly how much these two markets actually influence each other.`;
+update();
+</script>
+</body></html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C3AED; --part-accent-light:#EDE9FE; --part-highlight:#DB2777;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F5F3FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.layout-row{ display:grid; grid-template-columns:1.2fr 1fr; gap:28px; align-items:start; }
+@media (max-width:800px){ .layout-row{ grid-template-columns:1fr; } }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#speedSvg{ width:100%; height:auto; aspect-ratio:1.2/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">A Speedometer Never Actually Divides by Zero</div>
+<div class="mb-sub">Car position: s(t)=t^2. Drag the interval width down toward (but never touching) zero — watch the average-speed secant line rotate toward a single settling value, never once requiring an illegal division.</div>
+<div class="layout-row">
+<div class="mb-stage"><svg id="speedSvg" viewBox="0 0 280 220"></svg></div>
+<div>
+<div class="slider-row"><label>Interval width h = <span id="hVal">1.000</span></label><input type="range" id="hSlider" min="1" max="300" value="300"></div>
+<div class="readout" id="readout"></div>
+</div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">Instantaneous speed is not the ratio evaluated AT zero elapsed time — it's the number the ratio approaches as elapsed time shrinks toward, but never reaches, zero. That distinction is the entire resolution to the 0/0 paradox.</div>
+</div>
+<script>
+function s(t){ return t*t; }
+const t0=3;
+const scale=25, origin={x:20,y:200};
+function toSvg(t,y){ return {x:origin.x+t*scale, y:origin.y-y*scale/3}; }
+function draw(){
+  const hRaw=parseInt(document.getElementById('hSlider').value);
+  const h=hRaw/100;
+  document.getElementById('hVal').textContent=h.toFixed(3);
+
+  const svg=document.getElementById('speedSvg');
+  svg.innerHTML='';
+  let d='M';
+  for(let t=0;t<=6;t+=0.05){
+    const p=toSvg(t,s(t));
+    d+=`${p.x},${p.y} L`;
+  }
+  const curve=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve.setAttribute('d',d.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke','var(--part-accent)'); curve.setAttribute('stroke-width','2.5');
+  svg.appendChild(curve);
+
+  const p0=toSvg(t0,s(t0)), p1=toSvg(t0+h,s(t0+h));
+  const secant=document.createElementNS('http://www.w3.org/2000/svg','line');
+  secant.setAttribute('x1',p0.x); secant.setAttribute('y1',p0.y); secant.setAttribute('x2',p1.x); secant.setAttribute('y2',p1.y);
+  secant.setAttribute('stroke','var(--part-highlight)'); secant.setAttribute('stroke-width','3');
+  svg.appendChild(secant);
+  [p0,p1].forEach(p=>{
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',p.x); dot.setAttribute('cy',p.y); dot.setAttribute('r',5); dot.setAttribute('fill','var(--part-highlight)');
+    svg.appendChild(dot);
+  });
+
+  const avgSpeed=(s(t0+h)-s(t0))/h;
+  document.getElementById('readout').innerHTML =
+    `Interval: [${t0}, ${(t0+h).toFixed(3)}]<br>Distance covered: ${(s(t0+h)-s(t0)).toFixed(4)}<br>Time elapsed: ${h.toFixed(3)} (never zero)<br>Average speed: ${avgSpeed.toFixed(4)}`;
+  document.getElementById('fb').innerHTML = `Every single calculation on this slider used a genuinely nonzero elapsed time — no illegal division ever occurred. Yet as h keeps shrinking, the average speed keeps settling closer to exactly 6 — that settling value IS the rigorously defined instantaneous speed at t=3.`;
+}
+document.getElementById('hSlider').addEventListener('input', draw);
+document.getElementById('aha').innerHTML=`<strong>Aha:</strong> drag h to its absolute smallest slider setting — the secant line (pink) has visually become indistinguishable from the curve's own tangent direction at that point. This IS the next chapter's derivative, already visible here as the limiting slope this shrinking process approaches.`;
+draw();
+</script>
+</body></html>

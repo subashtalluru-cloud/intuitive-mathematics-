@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+:root{
+  --part-accent: #0891B2; --part-accent-light: #CFFAFE; --part-highlight: #C2410C;
+  --ink: #1A202C; --ink-soft: #4A5568; --paper: #FAFAF7; --line: #D6D3CB;
+  --good: #15803D; --bad:#B91C1C; --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+*{ box-sizing: border-box; }
+html, body{ height:100%; }
+body{ margin:0; padding: clamp(16px, 3vw, 40px); background:#ECFEFF; font-family: var(--font-sans); color: var(--ink);
+  display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: clamp(20px, 2.5vw, 36px);
+  width: 100%; max-width: 1100px; }
+.mb-title{ font-size: clamp(1.3rem, 2vw, 1.7rem); font-weight: 700; color: var(--part-accent); margin: 0 0 6px 0; }
+.mb-sub{ font-size: clamp(0.9rem, 1.1vw, 1.05rem); color: var(--ink-soft); margin-bottom: 20px; line-height:1.5; max-width: 900px; }
+.layout-row{ display: grid; grid-template-columns: 1.15fr 1fr; gap: 28px; align-items: start; }
+@media (max-width: 760px){ .layout-row{ grid-template-columns: 1fr; } }
+.mb-stage{ background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: clamp(16px, 2vw, 28px); }
+#dbSvg{ width:100%; height:auto; aspect-ratio: 4/3; display:block; touch-action:none; }
+.controls-panel{ display:flex; flex-direction:column; gap:10px; }
+.driver-row{ font-family: var(--font-mono); font-size:0.83rem; padding:10px 12px; border-radius:8px; border:1px solid var(--line); background:#fff; }
+.driver-row.winner{ border-color: var(--good); background:#F0FDF4; }
+.mb-feedback{ font-size: clamp(1.05rem, 1.3vw, 1.25rem); padding: 16px 20px; border-radius: 10px; margin-top: 16px;
+  line-height: 1.65; background: var(--part-accent-light); color: var(--part-accent); border: 1px solid var(--line); }
+.aha{ font-size: clamp(1.05rem, 1.3vw, 1.25rem); padding: 16px 20px; border-radius: 10px; margin-top: 14px;
+  line-height: 1.65; background: #FFF7ED; color: #9A3412; border: 1px solid #FED7AA; }
+.aha strong{ color: #C2410C; }
+.mb-caption{ font-size: clamp(0.95rem, 1.05vw, 1.05rem); color: var(--ink-soft); margin-top: 12px; font-style:italic; line-height:1.6; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Why Engineers Skip the Square Root — Drag the Order and Watch</div>
+  <div class="mb-sub">Order (which driver is closest) never changes whether you compare actual distances or squared distances — because squaring is increasing for non-negative numbers. Drag the order location and watch both rankings update together, live, and never disagree.</div>
+
+  <div class="layout-row">
+    <div class="mb-stage">
+      <svg id="dbSvg" viewBox="0 0 320 240"></svg>
+    </div>
+    <div class="controls-panel" id="driverList"></div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="aha" id="aha"></div>
+  <div class="mb-caption">This shortcut fails only when you need the ACTUAL distance value (like estimating travel time) — not just which one is smallest. Recognizing exactly when a computational shortcut stops being valid is a genuinely transferable engineering habit.</div>
+</div>
+
+<script>
+let order = {x:5, y:4};
+let dragging = false;
+const drivers = [
+  {name:'Driver A', x:1, y:1},
+  {name:'Driver B', x:7, y:2},
+  {name:'Driver C', x:3, y:6}
+];
+const scale = 26, origin = {x:25, y:220};
+function toSvg(pt){ return {x: origin.x+pt.x*scale, y: origin.y-pt.y*scale}; }
+function toMath(sx,sy){ return {x:(sx-origin.x)/scale, y:(origin.y-sy)/scale}; }
+
+function computeAll(){
+  return drivers.map(d=>{
+    const dx=d.x-order.x, dy=d.y-order.y;
+    const sq = dx*dx+dy*dy;
+    return {...d, sq, dist: Math.sqrt(sq)};
+  });
+}
+
+function draw(){
+  const results = computeAll();
+  const bestSqIdx = results.reduce((best,r,i)=> r.sq<results[best].sq ? i : best, 0);
+
+  const svg = document.getElementById('dbSvg');
+  svg.innerHTML='';
+  const o = toSvg(order);
+  results.forEach((d,i)=>{
+    const p = toSvg(d);
+    const isBest = i===bestSqIdx;
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',o.x); line.setAttribute('y1',o.y); line.setAttribute('x2',p.x); line.setAttribute('y2',p.y);
+    line.setAttribute('stroke', isBest ? 'var(--good)':'#D1D5DB'); line.setAttribute('stroke-width', isBest?'3':'1.5'); line.setAttribute('stroke-dasharray', isBest?'0':'3,2');
+    svg.appendChild(line);
+    const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',p.x); dot.setAttribute('cy',p.y); dot.setAttribute('r',7); dot.setAttribute('fill', isBest ? 'var(--good)':'var(--part-accent)');
+    svg.appendChild(dot);
+    const lbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',p.x+10); lbl.setAttribute('y',p.y+4); lbl.setAttribute('font-size','11');
+    lbl.textContent = d.name;
+    svg.appendChild(lbl);
+  });
+  const orderDot = document.createElementNS('http://www.w3.org/2000/svg','rect');
+  orderDot.setAttribute('x',o.x-8); orderDot.setAttribute('y',o.y-8); orderDot.setAttribute('width',16); orderDot.setAttribute('height',16);
+  orderDot.setAttribute('fill','var(--part-highlight)'); orderDot.id='dragOrder'; orderDot.style.cursor='grab';
+  svg.appendChild(orderDot);
+  const orderLbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+  orderLbl.setAttribute('x',o.x+12); orderLbl.setAttribute('y',o.y-12); orderLbl.setAttribute('font-size','11'); orderLbl.setAttribute('fill','var(--part-highlight)'); orderLbl.setAttribute('font-weight','700');
+  orderLbl.textContent = 'Order (drag me)';
+  svg.appendChild(orderLbl);
+
+  const listDiv = document.getElementById('driverList');
+  listDiv.innerHTML = '';
+  results.forEach((d,i)=>{
+    const row = document.createElement('div');
+    row.className = 'driver-row' + (i===bestSqIdx ? ' winner':'');
+    row.textContent = `${d.name}: squared=${d.sq.toFixed(1)}, actual=${d.dist.toFixed(2)}${i===bestSqIdx?' ← closest both ways':''}`;
+    listDiv.appendChild(row);
+  });
+
+  const bestDistIdx = results.reduce((best,r,i)=> r.dist<results[best].dist ? i : best, 0);
+  const fb = document.getElementById('fb');
+  fb.innerHTML = bestSqIdx===bestDistIdx
+    ? `Closest by squared distance AND by actual distance: both agree on <strong>${results[bestSqIdx].name}</strong>. Drag the order marker anywhere — they will never disagree.`
+    : `MISMATCH detected — this should be mathematically impossible; if you see this, it indicates a bug.`;
+}
+
+function getPoint(evt){
+  const rect = document.getElementById('dbSvg').getBoundingClientRect();
+  const t = evt.touches ? evt.touches[0] : evt;
+  const scaleX = 320/rect.width, scaleY = 240/rect.height;
+  return toMath((t.clientX-rect.left)*scaleX, (t.clientY-rect.top)*scaleY);
+}
+document.getElementById('dbSvg').addEventListener('mousedown', (e)=>{ if(e.target.id==='dragOrder') dragging=true; });
+document.getElementById('dbSvg').addEventListener('touchstart', (e)=>{ if(e.target.id==='dragOrder') dragging=true; });
+window.addEventListener('mouseup', ()=> dragging=false);
+window.addEventListener('touchend', ()=> dragging=false);
+window.addEventListener('mousemove', (e)=>{ if(!dragging) return; const p=getPoint(e); order={x:Math.max(0,Math.min(9,p.x)), y:Math.max(0,Math.min(8,p.y))}; draw(); });
+window.addEventListener('touchmove', (e)=>{ if(!dragging) return; e.preventDefault(); const p=getPoint(e); order={x:Math.max(0,Math.min(9,p.x)), y:Math.max(0,Math.min(8,p.y))}; draw(); }, {passive:false});
+
+document.getElementById('aha').innerHTML = `<strong>Aha:</strong> drag the order to a spot exactly between two drivers — watch both rankings flip AT THE SAME EXACT MOMENT, never one before the other. That simultaneity isn't a coincidence: squaring never reorders non-negative numbers, so the "closest" answer under squared-distance and true-distance can never diverge, for any configuration whatsoever.`;
+draw();
+</script>
+</body>
+</html>

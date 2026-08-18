@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#059669; --part-accent-light:#D1FAE5; --part-highlight:#C2410C;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#ECFDF5; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+@media (max-width:760px){ .two-col{ grid-template-columns:1fr; } }
+.panel{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px; }
+.panel-header{ font-weight:700; text-align:center; margin-bottom:8px; font-size:clamp(0.9rem,1.05vw,1.02rem); }
+.panelSvg{ width:100%; height:auto; aspect-ratio:1/1; display:block; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin-top:14px; }
+.mb-btn:hover{ background:var(--part-accent); color:#fff; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Two Steps or One Combined Matrix — Watch Them Agree</div>
+<div class="mb-sub">Left panel: rotate the vector 90°, THEN scale it — two separate operations, animated in sequence. Right panel: apply one single pre-multiplied combined matrix directly. Same starting vector, same final landing spot.</div>
+<div class="two-col">
+<div class="panel"><div class="panel-header" style="color:var(--part-accent);">Two steps in sequence</div><svg class="panelSvg" id="stepSvg" viewBox="0 0 200 200"></svg></div>
+<div class="panel"><div class="panel-header" style="color:var(--part-highlight);">One combined matrix</div><svg class="panelSvg" id="combSvg" viewBox="0 0 200 200"></svg></div>
+</div>
+<button class="mb-btn" onclick="runBoth()">Run both</button>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">Matrix multiplication's "row times column" pattern isn't an arbitrary rule to memorize — it's the forced consequence of tracking where each basis vector travels through a genuine two-step composed process.</div>
+</div>
+<script>
+const v0={x:1,y:1};
+const scale=18, origin={x:100,y:100};
+function toSvg(p){ return {x:origin.x+p.x*scale, y:origin.y-p.y*scale}; }
+function rotate90(v){ return {x:-v.y, y:v.x}; }
+function scaleX2(v){ return {x:v.x*2, y:v.y}; }
+// combined matrix F*G where G=rotate90, F=scaleX2
+function combined(v){ const r=rotate90(v); return scaleX2(r); }
+
+function drawStep(svgId, v, color){
+  const svg=document.getElementById(svgId);
+  svg.innerHTML='';
+  const axisX=document.createElementNS('http://www.w3.org/2000/svg','line');
+  axisX.setAttribute('x1',10); axisX.setAttribute('y1',100); axisX.setAttribute('x2',190); axisX.setAttribute('y2',100);
+  axisX.setAttribute('stroke','#E2E8F0'); svg.appendChild(axisX);
+  const axisY=document.createElementNS('http://www.w3.org/2000/svg','line');
+  axisY.setAttribute('x1',100); axisY.setAttribute('y1',10); axisY.setAttribute('x2',100); axisY.setAttribute('y2',190);
+  axisY.setAttribute('stroke','#E2E8F0'); svg.appendChild(axisY);
+  const o=toSvg({x:0,y:0}), p=toSvg(v);
+  const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1',o.x); line.setAttribute('y1',o.y); line.setAttribute('x2',p.x); line.setAttribute('y2',p.y);
+  line.setAttribute('stroke',color); line.setAttribute('stroke-width','3');
+  svg.appendChild(line);
+  const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  dot.setAttribute('cx',p.x); dot.setAttribute('cy',p.y); dot.setAttribute('r',6); dot.setAttribute('fill',color);
+  svg.appendChild(dot);
+}
+function runBoth(){
+  drawStep('stepSvg', v0, '#94A3B8');
+  drawStep('combSvg', v0, '#94A3B8');
+  setTimeout(()=>{
+    const mid = rotate90(v0);
+    drawStep('stepSvg', mid, 'var(--part-accent)');
+    setTimeout(()=>{
+      const final1 = scaleX2(mid);
+      drawStep('stepSvg', final1, 'var(--part-highlight)');
+      const final2 = combined(v0);
+      drawStep('combSvg', final2, 'var(--part-highlight)');
+      document.getElementById('fb').innerHTML = `Step-by-step final position: (${final1.x.toFixed(2)}, ${final1.y.toFixed(2)}). Combined-matrix final position: (${final2.x.toFixed(2)}, ${final2.y.toFixed(2)}). Identical — computed two totally different ways.`;
+    }, 700);
+  }, 700);
+}
+drawStep('stepSvg', v0, '#94A3B8');
+drawStep('combSvg', v0, '#94A3B8');
+document.getElementById('aha').innerHTML=`<strong>Aha:</strong> this is why graphics engines pre-multiply an entire chain of transformations into ONE matrix before ever touching a single vertex — associativity guarantees the combined matrix, computed once, produces identical results to running every step separately on every one of a million vertices.`;
+</script>
+</body></html>

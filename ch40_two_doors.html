@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C3AED; --part-accent-light:#EDE9FE; --part-highlight:#DB2777;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F5F3FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); text-align:center; }
+.door-row{ display:flex; align-items:center; justify-content:center; gap:20px; flex-wrap:wrap; margin:20px 0; }
+.func-box{ background:#fff; border:2px solid var(--line); border-radius:10px; padding:16px 20px; font-family:var(--font-mono); font-size:1rem; min-width:140px; }
+.func-box.highlight{ border-color:var(--part-accent); background:var(--part-accent-light); }
+.door-btn{ font-size:0.9rem; padding:12px 20px; border-radius:8px; border:2px solid var(--part-highlight); background:#fff; color:var(--part-highlight); cursor:pointer; font-weight:700; }
+.door-btn:hover{ background:var(--part-highlight); color:#fff; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Two Doors, Perfectly Reversible — Differentiation and Integration</div>
+<div class="mb-sub">Start with f(x)=x^2. Walk it through the INTEGRATE door, then immediately back through the DIFFERENTIATE door. Watch it return to exactly where it started — Chapter 22's own "two doors" picture, applied to calculus's two central operations.</div>
+<div class="mb-stage">
+<div class="door-row">
+<div class="func-box highlight" id="startBox">f(x) = x^2</div>
+</div>
+<button class="door-btn" onclick="goThroughDoors()">Send through INTEGRATE, then DIFFERENTIATE</button>
+<div class="door-row" id="resultRow" style="display:none;">
+<div class="func-box" id="afterIntegrate"></div>
+<div class="func-box" id="afterDifferentiate"></div>
+</div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">FTC Part 1 states precisely this: if you accumulate area under f via integration, then differentiate the resulting accumulation function, you recover the original f exactly.</div>
+</div>
+<script>
+function goThroughDoors(){
+  document.getElementById('resultRow').style.display='flex';
+  document.getElementById('afterIntegrate').innerHTML = 'After INTEGRATE:<br>F(x) = x^3/3 + C';
+  document.getElementById('afterDifferentiate').innerHTML = 'After DIFFERENTIATE:<br>F prime(x) = x^2';
+  document.getElementById('afterDifferentiate').classList.add('highlight');
+  document.getElementById('fb').innerHTML = 'Started with f(x)=x^2. Integrating gives x^3/3+C. Differentiating THAT immediately gives back x^2 exactly — the constant C vanished (its derivative is always 0), and every trace of the intermediate accumulation step disappeared, leaving exactly the original function.';
+}
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> the mystery constant C, which seems like a genuine loose end after integrating, is EXACTLY why this round trip works so cleanly - differentiating a constant always gives zero, so no matter what specific C the integration step produced, differentiating strips it away automatically, always returning precisely the original function.";
+</script>
+</body></html>

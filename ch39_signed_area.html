@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C3AED; --part-accent-light:#EDE9FE; --part-highlight:#DB2777;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F5F3FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#signedSvg{ width:100%; height:auto; aspect-ratio:2/1; display:block; touch-action:none; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:12px; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin-top:10px; }
+.mb-btn:hover{ background:var(--part-accent); color:#fff; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">When the Curve Dips Below the Axis — Area Turns Negative</div>
+<div class="mb-sub">f(x)=x-1 from 0 to 3. Part of this region sits BELOW the x-axis. Click to reveal how the integral handles this: negative area subtracts, rather than simply adding like ordinary geometric area.</div>
+<div class="mb-stage">
+<svg id="signedSvg" viewBox="0 0 300 160"></svg>
+<button class="mb-btn" onclick="reveal()">Reveal the signed regions</button>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">A definite integral is not the same thing as "area between curve and axis" in the everyday geometric sense — it is SIGNED area, where regions below the axis contribute negatively to the total.</div>
+</div>
+<script>
+function f(x){ return x-1; }
+const scale=60, origin={x:20,y:110};
+function toSvg(x,y){ return {x:origin.x+x*scale, y:origin.y-y*scale}; }
+function draw(revealed){
+  const svg=document.getElementById('signedSvg');
+  svg.innerHTML='';
+  const axis=document.createElementNS('http://www.w3.org/2000/svg','line');
+  axis.setAttribute('x1',10); axis.setAttribute('y1',origin.y); axis.setAttribute('x2',290); axis.setAttribute('y2',origin.y);
+  axis.setAttribute('stroke','#94A3B8');
+  svg.appendChild(axis);
+
+  if(revealed){
+    const negRegion=document.createElementNS('http://www.w3.org/2000/svg','path');
+    const p0=toSvg(0,0), p1=toSvg(1,f(1));
+    negRegion.setAttribute('d','M'+p0.x+','+p0.y+' L'+p1.x+','+p1.y+' L'+p1.x+','+origin.y+' Z');
+    negRegion.setAttribute('fill','var(--bad)'); negRegion.setAttribute('fill-opacity','0.3');
+    svg.appendChild(negRegion);
+  }
+  let d='M';
+  for(let x=0;x<=3;x+=0.05){
+    const p=toSvg(x,f(x));
+    d+=p.x+','+p.y+' L';
+  }
+  const curve=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve.setAttribute('d',d.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke','var(--part-accent)'); curve.setAttribute('stroke-width','2.5');
+  svg.appendChild(curve);
+
+  if(revealed){
+    const posPath=document.createElementNS('http://www.w3.org/2000/svg','path');
+    const p1=toSvg(1,0), p2=toSvg(3,f(3));
+    posPath.setAttribute('d','M'+p1.x+','+p1.y+' L'+toSvg(1,f(1)).x+','+toSvg(1,f(1)).y+' L'+toSvg(3,f(3)).x+','+toSvg(3,f(3)).y+' L'+p2.x+','+p2.y+' Z');
+    posPath.setAttribute('fill','var(--good)'); posPath.setAttribute('fill-opacity','0.3');
+    svg.appendChild(posPath);
+  }
+}
+function reveal(){
+  draw(true);
+  const negArea = 0.5*1*1;
+  const posArea = 0.5*2*2;
+  const signedTotal = posArea-negArea;
+  document.getElementById('readout').innerHTML =
+    'Region below axis (x=0 to 1): geometric area='+negArea.toFixed(2)+', contributes -'+negArea.toFixed(2)+' to the integral<br>'+
+    'Region above axis (x=1 to 3): geometric area='+posArea.toFixed(2)+', contributes +'+posArea.toFixed(2)+'<br>'+
+    'Signed integral total: '+posArea.toFixed(2)+' - '+negArea.toFixed(2)+' = '+signedTotal.toFixed(2);
+  document.getElementById('fb').innerHTML = 'The integral does NOT report the combined geometric area ('+(posArea+negArea).toFixed(2)+') a painter covering both regions would use — it reports the SIGNED total, '+signedTotal.toFixed(2)+', with the below-axis region genuinely subtracting.';
+}
+draw(false);
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> this signed-area behavior is exactly why the integral is the right tool for accumulated NET change (like total displacement, which can be forward or backward) rather than total distance traveled (always positive) - a car reversing contributes negative area to a velocity-vs-time integral, correctly reducing net displacement even though the car definitely covered real distance.";
+</script>
+</body></html>

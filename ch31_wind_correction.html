@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#059669; --part-accent-light:#D1FAE5; --part-highlight:#C2410C;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#ECFDF5; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.layout-row{ display:grid; grid-template-columns:1.2fr 1fr; gap:28px; align-items:start; }
+@media (max-width:800px){ .layout-row{ grid-template-columns:1fr; } }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#windSvg{ width:100%; height:auto; aspect-ratio:1.2/1; display:block; touch-action:none; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,1rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:16px 18px; line-height:1.8; font-weight:600; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Where Does the Plane Actually Go? — Heading Plus Wind</div>
+<div class="mb-sub">Drag the pilot's intended heading (green) and the wind's own push (orange). The actual ground track (purple dashed) is nothing but their vector sum — drag the wind vector opposite the heading and watch the plane's real speed drop.</div>
+<div class="layout-row">
+<div class="mb-stage"><svg id="windSvg" viewBox="0 0 300 260"></svg></div>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">A pilot describing this as "flying 400mph" while ignoring wind would be dangerously wrong about their actual ground speed and direction — exactly the single-number inadequacy vectors exist to fix.</div>
+</div>
+<script>
+let heading={x:4,y:0.5}, wind={x:-1,y:1};
+let dragTarget=null;
+const scale=25, origin={x:50,y:220};
+function toSvg(p){ return {x:origin.x+p.x*scale, y:origin.y-p.y*scale}; }
+function toMath(sx,sy){ return {x:(sx-origin.x)/scale, y:(origin.y-sy)/scale}; }
+function draw(){
+  const svg=document.getElementById('windSvg');
+  svg.innerHTML='';
+  const o=toSvg({x:0,y:0}), h=toSvg(heading);
+  const ground={x:heading.x+wind.x, y:heading.y+wind.y};
+  const g=toSvg(ground);
+  const windLine=document.createElementNS('http://www.w3.org/2000/svg','line');
+  windLine.setAttribute('x1',h.x); windLine.setAttribute('y1',h.y); windLine.setAttribute('x2',g.x); windLine.setAttribute('y2',g.y);
+  windLine.setAttribute('stroke','var(--part-highlight)'); windLine.setAttribute('stroke-width','3');
+  svg.appendChild(windLine);
+  const headLine=document.createElementNS('http://www.w3.org/2000/svg','line');
+  headLine.setAttribute('x1',o.x); headLine.setAttribute('y1',o.y); headLine.setAttribute('x2',h.x); headLine.setAttribute('y2',h.y);
+  headLine.setAttribute('stroke','var(--part-accent)'); headLine.setAttribute('stroke-width','3');
+  svg.appendChild(headLine);
+  const groundLine=document.createElementNS('http://www.w3.org/2000/svg','line');
+  groundLine.setAttribute('x1',o.x); groundLine.setAttribute('y1',o.y); groundLine.setAttribute('x2',g.x); groundLine.setAttribute('y2',g.y);
+  groundLine.setAttribute('stroke','#7C3AED'); groundLine.setAttribute('stroke-width','3'); groundLine.setAttribute('stroke-dasharray','6,4');
+  svg.appendChild(groundLine);
+  const hDot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  hDot.setAttribute('cx',h.x); hDot.setAttribute('cy',h.y); hDot.setAttribute('r',9); hDot.setAttribute('fill','var(--part-accent)');
+  hDot.id='dragH'; hDot.style.cursor='grab';
+  svg.appendChild(hDot);
+  const wDot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  wDot.setAttribute('cx',g.x); wDot.setAttribute('cy',g.y); wDot.setAttribute('r',9); wDot.setAttribute('fill','var(--part-highlight)');
+  wDot.id='dragW'; wDot.style.cursor='grab';
+  svg.appendChild(wDot);
+  const headSpeed = Math.hypot(heading.x,heading.y)*100;
+  const groundSpeed = Math.hypot(ground.x,ground.y)*100;
+  document.getElementById('readout').innerHTML =
+    `Intended heading: ${headSpeed.toFixed(0)} mph<br>Wind push: (${(wind.x*100).toFixed(0)}, ${(wind.y*100).toFixed(0)}) mph<br>Actual ground speed: ${groundSpeed.toFixed(0)} mph`;
+  document.getElementById('fb').innerHTML = groundSpeed < headSpeed
+    ? `Ground speed (${groundSpeed.toFixed(0)} mph) is LESS than the intended heading's own speed (${headSpeed.toFixed(0)} mph) — the wind is partly working against the plane.`
+    : `Ground speed (${groundSpeed.toFixed(0)} mph) exceeds the intended heading's own speed (${headSpeed.toFixed(0)} mph) — the wind is partly pushing the plane along.`;
+}
+function getPoint(evt){
+  const rect=document.getElementById('windSvg').getBoundingClientRect();
+  const t=evt.touches?evt.touches[0]:evt;
+  return toMath((t.clientX-rect.left)*(300/rect.width), (t.clientY-rect.top)*(260/rect.height));
+}
+document.getElementById('windSvg').addEventListener('mousedown',e=>{ if(e.target.id==='dragH') dragTarget='h'; else if(e.target.id==='dragW') dragTarget='w'; });
+document.getElementById('windSvg').addEventListener('touchstart',e=>{ if(e.target.id==='dragH') dragTarget='h'; else if(e.target.id==='dragW') dragTarget='w'; });
+window.addEventListener('mouseup',()=>dragTarget=null);
+window.addEventListener('touchend',()=>dragTarget=null);
+function handleMove(e){
+  if(!dragTarget) return;
+  const p=getPoint(e);
+  const snapped={x:Math.round(p.x*2)/2, y:Math.round(p.y*2)/2};
+  if(dragTarget==='h') heading=snapped;
+  else wind={x:snapped.x-heading.x, y:snapped.y-heading.y};
+  draw();
+}
+window.addEventListener('mousemove',handleMove);
+window.addEventListener('touchmove',e=>{ if(dragTarget) e.preventDefault(); handleMove(e); },{passive:false});
+document.getElementById('aha').innerHTML=`<strong>Aha:</strong> the purple dashed line — the plane's REAL path over the ground — was never separately drawn or computed by any special rule. It's exactly the tip-to-tail sum you've already seen: walk the heading, then walk the wind from wherever that leaves you.`;
+draw();
+</script>
+</body></html>

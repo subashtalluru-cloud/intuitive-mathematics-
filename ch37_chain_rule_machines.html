@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C3AED; --part-accent-light:#EDE9FE; --part-highlight:#DB2777;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F5F3FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+.machine-row{ display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap; margin:16px 0; }
+.machine-box{ background:#fff; border:2px solid var(--part-accent); border-radius:10px; padding:14px 18px; text-align:center; font-family:var(--font-mono); font-size:0.85rem; min-width:130px; }
+.machine-box.outer{ border-color:var(--part-highlight); }
+.rate-badge{ font-size:1.1rem; font-weight:700; margin-top:6px; }
+.arrow{ font-size:1.5rem; color:var(--ink-soft); }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin:14px 0; max-width:300px; margin-left:auto; margin-right:auto; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); text-align:center; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.9rem,1.1vw,1.05rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:16px 18px; line-height:1.8; font-weight:600; text-align:center; margin-top:14px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Two Machines, Two Local Rates — They Multiply, Not Add</div>
+<div class="mb-sub">g(x)=(3x+1)^4 at x=1. The inner machine (3x+1) and outer machine (u^4) each have their own local amplification rate. Drag x and watch the combined rate always equal the PRODUCT of the two, never their sum.</div>
+<div class="mb-stage">
+<div class="slider-row"><label>Input x = <span id="xVal">1.0</span></label><input type="range" id="xSlider" min="0" max="200" value="100"></div>
+<div class="machine-row">
+<div class="machine-box">Inner: u=3x+1<br>local rate = 3<div class="rate-badge" style="color:var(--part-accent);" id="innerRate"></div></div>
+<div class="arrow">-></div>
+<div class="machine-box outer">Outer: g=u^4<br>local rate = 4u^3<div class="rate-badge" style="color:var(--part-highlight);" id="outerRate"></div></div>
+</div>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">This is exactly why the chain rule multiplies rather than adds — a small nudge to x produces an amplified nudge to u, which the outer machine then amplifies again, compounding the two effects multiplicatively.</div>
+</div>
+<script>
+function inner(x){ return 3*x+1; }
+function innerP(x){ return 3; }
+function outerP(u){ return 4*u*u*u; }
+function draw(){
+  const xRaw=parseInt(document.getElementById('xSlider').value);
+  const x=xRaw/100;
+  document.getElementById('xVal').textContent=x.toFixed(2);
+  const u=inner(x);
+  const ip=innerP(x);
+  const op=outerP(u);
+  const combined=ip*op;
+  document.getElementById('innerRate').textContent='='+ip;
+  document.getElementById('outerRate').textContent='='+op.toFixed(1)+' (at u='+u.toFixed(2)+')';
+  document.getElementById('readout').innerHTML =
+    'Combined rate = inner rate x outer rate = '+ip+' x '+op.toFixed(1)+' = <strong>'+combined.toFixed(2)+'</strong>';
+  document.getElementById('fb').innerHTML = 'A tiny nudge to x produces a '+ip+'x-amplified nudge to u, which the outer machine amplifies by a further '+op.toFixed(1)+'x — the two amplification factors compound MULTIPLICATIVELY, giving an overall '+combined.toFixed(2)+'x amplification, never the sum '+(ip+op).toFixed(1)+'.';
+}
+document.getElementById('xSlider').addEventListener('input', draw);
+document.getElementById('aha').innerHTML = "<strong>Aha:</strong> notice the outer machine's own rate depends on u (the INNER machine's output), not on x directly - this is exactly why the chain rule requires evaluating the outer derivative at the inner function's value, not at the original input. Forgetting this is the single most common chain-rule mistake.";
+draw();
+</script>
+</body></html>

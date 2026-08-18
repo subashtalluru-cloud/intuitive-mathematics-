@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C3AED; --part-accent-light:#EDE9FE; --part-highlight:#DB2777;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F5F3FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.layout-row{ display:grid; grid-template-columns:1.2fr 1fr; gap:28px; align-items:start; }
+@media (max-width:800px){ .layout-row{ grid-template-columns:1fr; } }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#ladderSvg{ width:100%; height:auto; aspect-ratio:1.2/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">A Sliding Ladder — Two Speeds, Linked by One Fixed Length</div>
+<div class="mb-sub">A 10-foot ladder leans against a wall. Drag the base outward — the top slides DOWN, but at a genuinely different, non-constant speed, linked by the Pythagorean relationship x^2+y^2=100 at every instant.</div>
+<div class="layout-row">
+<div class="mb-stage"><svg id="ladderSvg" viewBox="0 0 260 260"></svg></div>
+<div>
+<div class="slider-row"><label>Base distance from wall x = <span id="xVal">6.0</span> ft</label><input type="range" id="xSlider" min="10" max="99" value="60"></div>
+<div class="readout" id="readout"></div>
+</div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">A common mistake is substituting the known numerical values (x=6, y=8) into the equation BEFORE differentiating — this destroys the variables' relationship the derivative needs to act on, producing a meaningless result.</div>
+</div>
+<script>
+const L=10;
+const scale=20, origin={x:20,y:220};
+function draw(){
+  const xRaw=parseInt(document.getElementById('xSlider').value);
+  const x=xRaw/10;
+  const y=Math.sqrt(L*L-x*x);
+  document.getElementById('xVal').textContent=x.toFixed(1);
+
+  const svg=document.getElementById('ladderSvg');
+  svg.innerHTML='';
+  const wallBase={x:origin.x,y:origin.y};
+  const groundEnd={x:origin.x+x*scale,y:origin.y};
+  const wallTop={x:origin.x,y:origin.y-y*scale};
+  const wall=document.createElementNS('http://www.w3.org/2000/svg','line');
+  wall.setAttribute('x1',origin.x); wall.setAttribute('y1',20); wall.setAttribute('x2',origin.x); wall.setAttribute('y2',origin.y);
+  wall.setAttribute('stroke','#94A3B8'); wall.setAttribute('stroke-width','3');
+  svg.appendChild(wall);
+  const ground=document.createElementNS('http://www.w3.org/2000/svg','line');
+  ground.setAttribute('x1',origin.x); ground.setAttribute('y1',origin.y); ground.setAttribute('x2',240); ground.setAttribute('y2',origin.y);
+  ground.setAttribute('stroke','#94A3B8'); ground.setAttribute('stroke-width','3');
+  svg.appendChild(ground);
+  const ladder=document.createElementNS('http://www.w3.org/2000/svg','line');
+  ladder.setAttribute('x1',wallTop.x); ladder.setAttribute('y1',wallTop.y); ladder.setAttribute('x2',groundEnd.x); ladder.setAttribute('y2',groundEnd.y);
+  ladder.setAttribute('stroke','var(--part-accent)'); ladder.setAttribute('stroke-width','4');
+  svg.appendChild(ladder);
+  [wallTop,groundEnd].forEach(p=>{
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',p.x); dot.setAttribute('cy',p.y); dot.setAttribute('r',6); dot.setAttribute('fill','var(--part-highlight)');
+    svg.appendChild(dot);
+  });
+
+  const dxdt=1;
+  const dydt = -x*dxdt/y;
+  document.getElementById('readout').innerHTML =
+    'x='+x.toFixed(2)+' ft, y='+y.toFixed(2)+' ft (from x^2+y^2=100)<br>'+
+    'Given dx/dt=1 ft/s (base sliding out)<br>'+
+    'Differentiate: 2x(dx/dt)+2y(dy/dt)=0<br>'+
+    'dy/dt = -x(dx/dt)/y = '+dydt.toFixed(3)+' ft/s';
+  document.getElementById('fb').innerHTML = 'At x='+x.toFixed(1)+', the top slides down at '+Math.abs(dydt).toFixed(3)+' ft/s — drag x close to 10 (ladder nearly flat) and watch this rate grow dramatically, even though the base is always sliding out at the SAME constant 1 ft/s.';
+}
+document.getElementById('xSlider').addEventListener('input', draw);
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> drag x very close to 10 (the ladder nearly flat on the ground) - the top's downward speed grows enormous, even though the base's own outward speed never changed from a constant 1 ft/s. The two rates are linked by the geometry, not by any fixed ratio - exactly what differentiating the RELATING EQUATION itself, rather than either variable alone, correctly captures.";
+draw();
+</script>
+</body></html>

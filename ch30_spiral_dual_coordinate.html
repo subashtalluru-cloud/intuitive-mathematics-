@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+:root{
+  --part-accent: #0891B2; --part-accent-light: #CFFAFE; --part-highlight: #C2410C;
+  --ink: #1A202C; --ink-soft: #4A5568; --paper: #FAFAF7; --line: #D6D3CB;
+  --good: #15803D; --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+*{ box-sizing: border-box; }
+html, body{ height:100%; }
+body{ margin:0; padding: clamp(16px, 3vw, 40px); background:#ECFEFF; font-family: var(--font-sans); color: var(--ink);
+  display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: clamp(20px, 2.5vw, 36px);
+  width: 100%; max-width: 1150px; }
+.mb-title{ font-size: clamp(1.3rem, 2vw, 1.7rem); font-weight: 700; color: var(--part-accent); margin: 0 0 6px 0; }
+.mb-sub{ font-size: clamp(0.9rem, 1.1vw, 1.05rem); color: var(--ink-soft); margin-bottom: 20px; line-height:1.5; max-width: 950px; }
+.two-col{ display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+@media (max-width: 760px){ .two-col{ grid-template-columns: 1fr; } }
+.panel{ background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: clamp(14px, 1.8vw, 22px); }
+.panel-header{ font-weight:700; text-align:center; margin-bottom:10px; font-size: clamp(0.95rem, 1.1vw, 1.1rem); }
+.panelSvg{ width:100%; height:auto; aspect-ratio: 1/1; display:block; }
+.eq-tag{ font-family: var(--font-mono); font-size: clamp(0.85rem, 1vw, 0.98rem); text-align:center; margin-top:8px; padding:8px; border-radius:6px; }
+.eq-tag.simple{ background:#F0FDF4; color:var(--good); }
+.eq-tag.messy{ background:#FEF2F2; color:#B91C1C; }
+.mb-btn{ font-size: 0.9rem; padding: 10px 18px; border-radius: 8px; border: 1px solid var(--part-accent);
+  background: #fff; color: var(--part-accent); cursor:pointer; font-weight:600; margin-top: 14px; }
+.mb-btn:hover{ background: var(--part-accent); color:#fff; }
+.mb-feedback{ font-size: clamp(1.05rem, 1.3vw, 1.25rem); padding: 16px 20px; border-radius: 10px; margin-top: 16px;
+  line-height: 1.65; background: var(--part-accent-light); color: var(--part-accent); border: 1px solid var(--line); }
+.aha{ font-size: clamp(1.05rem, 1.3vw, 1.25rem); padding: 16px 20px; border-radius: 10px; margin-top: 14px;
+  line-height: 1.65; background: #FFF7ED; color: #9A3412; border: 1px solid #FED7AA; }
+.aha strong{ color: #C2410C; }
+.mb-caption{ font-size: clamp(0.95rem, 1.05vw, 1.05rem); color: var(--ink-soft); margin-top: 12px; font-style:italic; line-height:1.6; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">One Spiral, Two Coordinate Systems — Same Curve, Wildly Different Effort</div>
+  <div class="mb-sub">Watch the identical spiral get traced simultaneously in polar coordinates (left, sweep-angle style) and rectangular coordinates (right, x-y style). Same curve. Notice which panel's equation actually explains what's happening.</div>
+
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-header" style="color:var(--part-accent);">Polar: r = θ</div>
+      <svg class="panelSvg" id="polarSvg" viewBox="0 0 240 240"></svg>
+      <div class="eq-tag simple">One simple rule: distance grows exactly as fast as angle sweeps</div>
+    </div>
+    <div class="panel">
+      <div class="panel-header" style="color:var(--part-highlight);">Rectangular: same curve</div>
+      <svg class="panelSvg" id="rectSvg" viewBox="0 0 240 240"></svg>
+      <div class="eq-tag messy">No simple y=f(x) form — x and y are joint functions of θ, awkward to write directly</div>
+    </div>
+  </div>
+  <button class="mb-btn" onclick="animateSpiral()">Trace the spiral</button>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="aha" id="aha"></div>
+  <div class="mb-caption">A coordinate system's usefulness depends on how well its own natural structure matches the symmetry of the curve being described — polar coordinates naturally suit rotational, center-outward shapes exactly like this one.</div>
+</div>
+
+<script>
+const scale = 9, cx=120, cy=120;
+function spiralPoint(theta){ return {x: theta*Math.cos(theta), y: theta*Math.sin(theta)}; }
+
+function drawGrid(svg){
+  svg.innerHTML='';
+  const axisX = document.createElementNS('http://www.w3.org/2000/svg','line');
+  axisX.setAttribute('x1',10); axisX.setAttribute('y1',cy); axisX.setAttribute('x2',230); axisX.setAttribute('y2',cy);
+  axisX.setAttribute('stroke','#E2E8F0');
+  svg.appendChild(axisX);
+  const axisY = document.createElementNS('http://www.w3.org/2000/svg','line');
+  axisY.setAttribute('x1',cx); axisY.setAttribute('y1',10); axisY.setAttribute('x2',cx); axisY.setAttribute('y2',230);
+  axisY.setAttribute('stroke','#E2E8F0');
+  svg.appendChild(axisY);
+}
+
+let animId=null;
+function animateSpiral(){
+  if(animId) cancelAnimationFrame(animId);
+  const polarSvg = document.getElementById('polarSvg');
+  const rectSvg = document.getElementById('rectSvg');
+  drawGrid(polarSvg); drawGrid(rectSvg);
+
+  const maxTheta = 4*Math.PI;
+  const duration = 3000;
+  const startTime = performance.now();
+  let pathD1='M', pathD2='M';
+
+  function frame(now){
+    const elapsed = now-startTime;
+    const frac = Math.min(1, elapsed/duration);
+    const theta = frac*maxTheta;
+
+    polarSvg.innerHTML=''; drawGrid(polarSvg);
+    rectSvg.innerHTML=''; drawGrid(rectSvg);
+
+    let d='M';
+    for(let t=0;t<=theta;t+=0.05){
+      const p = spiralPoint(t);
+      d += `${cx+p.x*scale},${cy-p.y*scale} L`;
+    }
+    [polarSvg, rectSvg].forEach((svg,i)=>{
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d',d.slice(0,-1)); path.setAttribute('fill','none');
+      path.setAttribute('stroke', i===0?'var(--part-accent)':'var(--part-highlight)'); path.setAttribute('stroke-width','2.5');
+      svg.appendChild(path);
+    });
+    const tip = spiralPoint(theta);
+    [polarSvg, rectSvg].forEach((svg,i)=>{
+      const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      dot.setAttribute('cx',cx+tip.x*scale); dot.setAttribute('cy',cy-tip.y*scale); dot.setAttribute('r',5);
+      dot.setAttribute('fill', i===0?'var(--part-accent)':'var(--part-highlight)');
+      svg.appendChild(dot);
+    });
+
+    if(frac<1){
+      animId = requestAnimationFrame(frame);
+    } else {
+      document.getElementById('fb').innerHTML = `Both panels just traced the IDENTICAL physical curve — same points, same shape. The polar equation r=θ needed one simple rule. Writing this same curve as y=f(x) directly would require an implicit, considerably messier relationship — the curve didn't get more complicated, only the DESCRIPTION did, when forced into a coordinate system that doesn't match its natural rotational symmetry.`;
+    }
+  }
+  animId = requestAnimationFrame(frame);
+}
+drawGrid(document.getElementById('polarSvg'));
+drawGrid(document.getElementById('rectSvg'));
+document.getElementById('aha').innerHTML = `<strong>Aha:</strong> rectangular coordinates naturally suit shapes with left-right, up-down structure (like Chapter 20's parabolas). Polar coordinates naturally suit shapes with rotational, center-outward structure (like this spiral). Choosing the coordinate system whose symmetry matches the problem isn't a stylistic preference — it's the difference between a one-term equation and an unwieldy one describing the exact same object.`;
+</script>
+</body>
+</html>

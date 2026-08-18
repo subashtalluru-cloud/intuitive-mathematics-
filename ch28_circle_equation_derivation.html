@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+:root{
+  --part-accent: #0891B2; --part-accent-light: #CFFAFE; --part-highlight: #C2410C;
+  --ink: #1A202C; --ink-soft: #4A5568; --paper: #FAFAF7; --line: #D6D3CB;
+  --good: #15803D; --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+*{ box-sizing: border-box; }
+html, body{ height:100%; }
+body{
+  margin:0; padding: clamp(16px, 3vw, 40px);
+  background:#ECFEFF; font-family: var(--font-sans); color: var(--ink);
+  display:flex; align-items:flex-start; justify-content:center;
+}
+.mb-widget{
+  background: var(--paper); border: 1px solid var(--line); border-radius: 14px;
+  padding: clamp(20px, 2.5vw, 36px);
+  width: 100%;
+  max-width: 1100px;
+}
+.mb-title{ font-size: clamp(1.3rem, 2vw, 1.7rem); font-weight: 700; color: var(--part-accent); margin: 0 0 6px 0; }
+.mb-sub{ font-size: clamp(0.9rem, 1.1vw, 1.05rem); color: var(--ink-soft); margin-bottom: 20px; line-height:1.5; max-width: 900px; }
+
+.layout-row{
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 28px;
+  align-items: start;
+}
+@media (max-width: 760px){
+  .layout-row{ grid-template-columns: 1fr; }
+}
+
+.mb-stage{
+  background: #fff; border: 1px solid var(--line); border-radius: 12px;
+  padding: clamp(16px, 2vw, 28px);
+}
+#circSvg{ width:100%; height:auto; aspect-ratio: 1/1; display:block; }
+
+.controls-panel{ display:flex; flex-direction:column; gap:14px; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color: var(--ink-soft); }
+.slider-row input[type=range]{ width:100%; }
+
+.live-eq{
+  font-family: var(--font-mono); font-size: clamp(0.95rem, 1.2vw, 1.15rem);
+  background: var(--part-accent-light); color: var(--part-accent);
+  border-radius: 10px; padding: 16px 18px; line-height: 1.8; font-weight:600;
+}
+
+.step-card{
+  font-family: var(--font-mono); font-size: clamp(0.82rem, 1vw, 0.95rem);
+  background:#f8fafc; border:1px solid var(--line); border-radius:8px;
+  padding:10px 14px; margin-bottom:8px; opacity:0.3; transition: opacity 0.3s, border-color 0.3s;
+}
+.step-card.shown{ opacity:1; border-color: var(--part-accent); }
+
+.mb-btn{
+  font-size: 0.9rem; padding: 10px 18px; border-radius: 8px; border: 1px solid var(--part-accent);
+  background: #fff; color: var(--part-accent); cursor:pointer; font-weight:600; align-self:flex-start;
+}
+.mb-btn:hover{ background: var(--part-accent); color:#fff; }
+
+.mb-feedback{
+  font-size: clamp(1.05rem, 1.3vw, 1.25rem); padding: 16px 20px; border-radius: 10px; margin-top: 16px;
+  line-height: 1.65; background: var(--part-accent-light); color: var(--part-accent); border: 1px solid var(--line);
+}
+.aha{
+  font-size: clamp(1.05rem, 1.3vw, 1.25rem); padding: 16px 20px; border-radius: 10px; margin-top: 14px;
+  line-height: 1.65; background: #FFF7ED; color: #9A3412; border: 1px solid #FED7AA;
+}
+.aha strong{ color: #C2410C; }
+.mb-caption{ font-size: clamp(0.95rem, 1.05vw, 1.05rem); color: var(--ink-soft); margin-top: 12px; font-style:italic; line-height:1.6; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Watch a Verbal Definition Become an Equation — Live</div>
+  <div class="mb-sub">"A circle is every point at a fixed distance r from a center." That sentence alone can't be tested algebraically. Drag the sliders below to change the actual circle — the equation updates itself, in real time, from the definition.</div>
+
+  <div class="layout-row">
+    <div class="mb-stage">
+      <svg id="circSvg" viewBox="0 0 260 260"></svg>
+    </div>
+
+    <div class="controls-panel">
+      <div class="slider-row">
+        <label>Center h = <span id="hVal">1</span></label>
+        <input type="range" id="hSlider" min="-3" max="3" value="1" step="0.5">
+      </div>
+      <div class="slider-row">
+        <label>Center k = <span id="kVal">1</span></label>
+        <input type="range" id="kSlider" min="-3" max="3" value="1" step="0.5">
+      </div>
+      <div class="slider-row">
+        <label>Radius r = <span id="rVal">3</span></label>
+        <input type="range" id="rSlider" min="0.5" max="4" value="3" step="0.5">
+      </div>
+      <div class="live-eq" id="liveEq"></div>
+      <button class="mb-btn" onclick="advance()">Reveal next derivation step</button>
+    </div>
+  </div>
+
+  <div id="stepsContainer"></div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="aha" id="aha"></div>
+  <div class="mb-caption">This exact three-step translation — verbal definition → distance formula substitution → algebraic simplification — is the template Chapter 29 reuses three more times, for the parabola, ellipse, and hyperbola.</div>
+</div>
+
+<script>
+const steps = [
+  "Verbal definition: a circle is every point (x,y) whose distance to center (h,k) equals exactly r.",
+  "Substitute the distance formula directly into that sentence: √((x−h)² + (y−k)²) = r",
+  "Square both sides to eliminate the square root — legal here since both sides are already guaranteed non-negative.",
+  "Result: (x−h)² + (y−k)² = r² — a fully algebraic test. No physical measurement required, ever."
+];
+let revealed = 4;
+let h=1, k=1, r=3;
+const scale = 30, origin = {x:130, y:230};
+
+function toSvg(pt){ return {x: origin.x+pt.x*scale, y: origin.y-pt.y*scale}; }
+
+function draw(){
+  const svg = document.getElementById('circSvg');
+  svg.innerHTML = '';
+
+  for(let i=-4;i<=4;i++){
+    const gx = origin.x + i*scale;
+    if(gx>0 && gx<260){
+      const gl = document.createElementNS('http://www.w3.org/2000/svg','line');
+      gl.setAttribute('x1',gx); gl.setAttribute('y1',10); gl.setAttribute('x2',gx); gl.setAttribute('y2',250);
+      gl.setAttribute('stroke','#F1F5F9'); gl.setAttribute('stroke-width','1');
+      svg.appendChild(gl);
+    }
+    const gy = origin.y - i*scale;
+    if(gy>0 && gy<260){
+      const gl2 = document.createElementNS('http://www.w3.org/2000/svg','line');
+      gl2.setAttribute('x1',10); gl2.setAttribute('y1',gy); gl2.setAttribute('x2',250); gl2.setAttribute('y2',gy);
+      gl2.setAttribute('stroke','#F1F5F9'); gl2.setAttribute('stroke-width','1');
+      svg.appendChild(gl2);
+    }
+  }
+  const axisX = document.createElementNS('http://www.w3.org/2000/svg','line');
+  axisX.setAttribute('x1',10); axisX.setAttribute('y1',origin.y); axisX.setAttribute('x2',250); axisX.setAttribute('y2',origin.y);
+  axisX.setAttribute('stroke','#CBD5E1');
+  svg.appendChild(axisX);
+  const axisY = document.createElementNS('http://www.w3.org/2000/svg','line');
+  axisY.setAttribute('x1',origin.x); axisY.setAttribute('y1',10); axisY.setAttribute('x2',origin.x); axisY.setAttribute('y2',250);
+  axisY.setAttribute('stroke','#CBD5E1');
+  svg.appendChild(axisY);
+
+  const c = toSvg({x:h,y:k});
+  const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  circle.setAttribute('cx',c.x); circle.setAttribute('cy',c.y); circle.setAttribute('r',r*scale);
+  circle.setAttribute('fill','var(--part-accent-light)'); circle.setAttribute('fill-opacity','0.5');
+  circle.setAttribute('stroke','var(--part-accent)'); circle.setAttribute('stroke-width','2.5');
+  svg.appendChild(circle);
+
+  const centerDot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  centerDot.setAttribute('cx',c.x); centerDot.setAttribute('cy',c.y); centerDot.setAttribute('r',5);
+  centerDot.setAttribute('fill','var(--ink)');
+  svg.appendChild(centerDot);
+  const centerLbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+  centerLbl.setAttribute('x',c.x+9); centerLbl.setAttribute('y',c.y-9); centerLbl.setAttribute('font-size','12');
+  centerLbl.textContent = `(${h},${k})`;
+  svg.appendChild(centerLbl);
+
+  const testPt = {x: h+r*Math.cos(0.7), y: k+r*Math.sin(0.7)};
+  const p = toSvg(testPt);
+  const radiusLine = document.createElementNS('http://www.w3.org/2000/svg','line');
+  radiusLine.setAttribute('x1',c.x); radiusLine.setAttribute('y1',c.y); radiusLine.setAttribute('x2',p.x); radiusLine.setAttribute('y2',p.y);
+  radiusLine.setAttribute('stroke','var(--part-highlight)'); radiusLine.setAttribute('stroke-width','2.5');
+  svg.appendChild(radiusLine);
+  const pDot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  pDot.setAttribute('cx',p.x); pDot.setAttribute('cy',p.y); pDot.setAttribute('r',5);
+  pDot.setAttribute('fill','var(--part-highlight)');
+  svg.appendChild(pDot);
+  const rLbl = document.createElementNS('http://www.w3.org/2000/svg','text');
+  rLbl.setAttribute('x',(c.x+p.x)/2+8); rLbl.setAttribute('y',(c.y+p.y)/2);
+  rLbl.setAttribute('font-size','12'); rLbl.setAttribute('fill','var(--part-highlight)'); rLbl.setAttribute('font-weight','700');
+  rLbl.textContent = `r=${r}`;
+  svg.appendChild(rLbl);
+}
+
+function updateEquation(){
+  const hDisp = h>=0 ? `x−${h}` : `x+${Math.abs(h)}`;
+  const kDisp = k>=0 ? `y−${k}` : `y+${Math.abs(k)}`;
+  document.getElementById('liveEq').innerHTML =
+    `(${hDisp})² + (${kDisp})² = ${r}²<br>→ (${hDisp})² + (${kDisp})² = ${(r*r).toFixed(2)}`;
+}
+
+function render(){
+  const container = document.getElementById('stepsContainer');
+  container.innerHTML = '';
+  steps.forEach((s,i)=>{
+    const div = document.createElement('div');
+    div.className = 'step-card' + (i<revealed?' shown':'');
+    div.textContent = `${i+1}. ${s}`;
+    container.appendChild(div);
+  });
+}
+function advance(){
+  revealed = (revealed+1) % (steps.length+1);
+  if(revealed===0) revealed=1;
+  render();
+  const fb = document.getElementById('fb');
+  fb.innerHTML = `Live check: with h=${h}, k=${k}, r=${r}, plugging the highlighted point back into (${h>=0?'x−'+h:'x+'+Math.abs(h)})²+(${k>=0?'y−'+k:'y+'+Math.abs(k)})² should equal exactly ${(r*r).toFixed(2)} — try it by hand and confirm.`;
+}
+
+function onSliderChange(){
+  h = parseFloat(document.getElementById('hSlider').value);
+  k = parseFloat(document.getElementById('kSlider').value);
+  r = parseFloat(document.getElementById('rSlider').value);
+  document.getElementById('hVal').textContent = h;
+  document.getElementById('kVal').textContent = k;
+  document.getElementById('rVal').textContent = r;
+  draw();
+  updateEquation();
+
+  const aha = document.getElementById('aha');
+  aha.innerHTML = `<strong>Aha:</strong> notice the equation's SHAPE never changes — always (x−h)² + (y−k)² = r² — only the numbers h, k, r change as you drag. That's the entire content of "a formula": one fixed structure that works for every circle that could ever be drawn, with the specific circle selected purely by which numbers you plug in.`;
+}
+
+document.getElementById('hSlider').addEventListener('input', onSliderChange);
+document.getElementById('kSlider').addEventListener('input', onSliderChange);
+document.getElementById('rSlider').addEventListener('input', onSliderChange);
+
+draw();
+updateEquation();
+render();
+onSliderChange();
+</script>
+</body>
+</html>

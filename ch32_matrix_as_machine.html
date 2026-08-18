@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#059669; --part-accent-light:#D1FAE5; --part-highlight:#C2410C;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#ECFDF5; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.layout-row{ display:grid; grid-template-columns:1.2fr 1fr; gap:28px; align-items:start; }
+@media (max-width:800px){ .layout-row{ grid-template-columns:1fr; } }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#matSvg{ width:100%; height:auto; aspect-ratio:1.2/1; display:block; touch-action:none; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,1rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:16px 18px; line-height:1.8; font-weight:600; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin-top:10px; }
+.mb-btn:hover{ background:var(--part-accent); color:#fff; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Drag Just Two Vectors — Predict Where Every Other Vector Goes</div>
+<div class="mb-sub">Drag where the basis vectors i and j land. A third test vector (3,2) is NOT draggable — watch it get repositioned automatically, purely computed from where you put i and j. That computation is literally what a matrix is.</div>
+<div class="layout-row">
+<div class="mb-stage"><svg id="matSvg" viewBox="0 0 300 260"></svg></div>
+<div>
+<div class="readout" id="readout"></div>
+<button class="mb-btn" onclick="resetBasis()">Reset to identity</button>
+<button class="mb-btn" onclick="setRotation()">Snap to 90° rotation</button>
+</div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">Knowing only where i and j land is genuinely sufficient to determine the transformation's effect on every other vector — since every vector is some combination of these two basis directions, and the transformation must respect that combination.</div>
+</div>
+<script>
+let iVec={x:1,y:0}, jVec={x:0,y:1};
+let dragTarget=null;
+const testVec={x:3,y:2};
+const scale=32, origin={x:120,y:220};
+function toSvg(p){ return {x:origin.x+p.x*scale, y:origin.y-p.y*scale}; }
+function toMath(sx,sy){ return {x:(sx-origin.x)/scale, y:(origin.y-sy)/scale}; }
+function transform(v){ return {x: v.x*iVec.x+v.y*jVec.x, y: v.x*iVec.y+v.y*jVec.y}; }
+function draw(){
+  const svg=document.getElementById('matSvg');
+  svg.innerHTML='';
+  const o=toSvg({x:0,y:0});
+  for(let i=-4;i<=4;i++){
+    const gx=origin.x+i*scale;
+    const gl=document.createElementNS('http://www.w3.org/2000/svg','line');
+    gl.setAttribute('x1',gx); gl.setAttribute('y1',10); gl.setAttribute('x2',gx); gl.setAttribute('y2',230);
+    gl.setAttribute('stroke','#F1F5F9'); svg.appendChild(gl);
+  }
+  const testTransformed = transform(testVec);
+  [[testVec,'#94A3B8',false,'testOrig'],[testTransformed,'#7C3AED',false,'testNew']].forEach(([v,color,drag,id])=>{
+    const p=toSvg(v);
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',o.x); line.setAttribute('y1',o.y); line.setAttribute('x2',p.x); line.setAttribute('y2',p.y);
+    line.setAttribute('stroke',color); line.setAttribute('stroke-width','2'); line.setAttribute('stroke-dasharray', id==='testOrig'?'4,3':'0');
+    svg.appendChild(line);
+  });
+  [[iVec,'var(--part-accent)','i'],[jVec,'var(--part-highlight)','j']].forEach(([v,color,lbl])=>{
+    const p=toSvg(v);
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',o.x); line.setAttribute('y1',o.y); line.setAttribute('x2',p.x); line.setAttribute('y2',p.y);
+    line.setAttribute('stroke',color); line.setAttribute('stroke-width','3');
+    svg.appendChild(line);
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',p.x); dot.setAttribute('cy',p.y); dot.setAttribute('r',9); dot.setAttribute('fill',color);
+    dot.id='drag_'+lbl; dot.style.cursor='grab';
+    svg.appendChild(dot);
+  });
+  document.getElementById('readout').innerHTML=
+    `Matrix columns:<br>i → (${iVec.x.toFixed(2)}, ${iVec.y.toFixed(2)})<br>j → (${jVec.x.toFixed(2)}, ${jVec.y.toFixed(2)})<br><br>Test vector (3,2) → (${testTransformed.x.toFixed(2)}, ${testTransformed.y.toFixed(2)})<br>(never dragged — computed automatically)`;
+  document.getElementById('fb').innerHTML = `(3,2) = 3i + 2j. Its transformed position is ALWAYS 3×(i's new spot) + 2×(j's new spot) — currently (${testTransformed.x.toFixed(2)}, ${testTransformed.y.toFixed(2)}) — recomputed instantly every time you move either basis vector.`;
+}
+function getPoint(evt){
+  const rect=document.getElementById('matSvg').getBoundingClientRect();
+  const t=evt.touches?evt.touches[0]:evt;
+  return toMath((t.clientX-rect.left)*(300/rect.width), (t.clientY-rect.top)*(260/rect.height));
+}
+document.getElementById('matSvg').addEventListener('mousedown',e=>{ if(e.target.id==='drag_i') dragTarget='i'; else if(e.target.id==='drag_j') dragTarget='j'; });
+document.getElementById('matSvg').addEventListener('touchstart',e=>{ if(e.target.id==='drag_i') dragTarget='i'; else if(e.target.id==='drag_j') dragTarget='j'; });
+window.addEventListener('mouseup',()=>dragTarget=null);
+window.addEventListener('touchend',()=>dragTarget=null);
+function handleMove(e){
+  if(!dragTarget) return;
+  const p=getPoint(e);
+  const snapped={x:Math.round(p.x*2)/2, y:Math.round(p.y*2)/2};
+  if(dragTarget==='i') iVec=snapped; else jVec=snapped;
+  draw();
+}
+window.addEventListener('mousemove',handleMove);
+window.addEventListener('touchmove',e=>{ if(dragTarget) e.preventDefault(); handleMove(e); },{passive:false});
+function resetBasis(){ iVec={x:1,y:0}; jVec={x:0,y:1}; draw(); }
+function setRotation(){ iVec={x:0,y:1}; jVec={x:-1,y:0}; draw(); }
+document.getElementById('aha').innerHTML=`<strong>Aha:</strong> the gray test vector never moved by your hand — its purple transformed version was fully, mechanically determined the instant you positioned i and j. This is Chapter 32's entire core idea made undeniable: two dragged vectors carry the transformation's complete information content.`;
+draw();
+</script>
+</body></html>

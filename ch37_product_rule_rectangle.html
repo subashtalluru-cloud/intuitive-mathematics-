@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C3AED; --part-accent-light:#EDE9FE; --part-highlight:#DB2777;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F5F3FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.layout-row{ display:grid; grid-template-columns:1.2fr 1fr; gap:28px; align-items:start; }
+@media (max-width:800px){ .layout-row{ grid-template-columns:1fr; } }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#rectSvg{ width:100%; height:auto; aspect-ratio:1.2/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">A Growing Rectangle Has Two Reasons to Change Area</div>
+<div class="mb-sub">Width and height both grow slightly. Drag the growth amount and watch the area increase split visibly into two strips (one per changing dimension) plus a tiny corner square that vanishes as the growth shrinks.</div>
+<div class="layout-row">
+<div class="mb-stage"><svg id="rectSvg" viewBox="0 0 260 220"></svg></div>
+<div>
+<div class="slider-row"><label>Growth amount (both dw and dh): <span id="growVal">0.50</span></label><input type="range" id="growSlider" min="1" max="100" value="50"></div>
+<div class="readout" id="readout"></div>
+</div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">The corner term carries dw times dh - a product of two small quantities - so it vanishes in the limit far faster than either single strip, leaving behind exactly the product rule's two-term formula.</div>
+</div>
+<script>
+const w=4, h=3, scale=35, origin={x:20,y:190};
+function draw(){
+  const growRaw=parseInt(document.getElementById('growSlider').value);
+  const grow=growRaw/100;
+  document.getElementById('growVal').textContent=grow.toFixed(2);
+  const dw=grow, dh=grow*0.6;
+
+  const svg=document.getElementById('rectSvg');
+  svg.innerHTML='';
+  const baseRect=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  baseRect.setAttribute('x',origin.x); baseRect.setAttribute('y',origin.y-h*scale); baseRect.setAttribute('width',w*scale); baseRect.setAttribute('height',h*scale);
+  baseRect.setAttribute('fill','var(--part-accent-light)'); baseRect.setAttribute('stroke','var(--part-accent)'); baseRect.setAttribute('stroke-width','2');
+  svg.appendChild(baseRect);
+
+  const rightStrip=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  rightStrip.setAttribute('x',origin.x+w*scale); rightStrip.setAttribute('y',origin.y-h*scale); rightStrip.setAttribute('width',dw*scale); rightStrip.setAttribute('height',h*scale);
+  rightStrip.setAttribute('fill','var(--good)'); rightStrip.setAttribute('fill-opacity','0.6');
+  svg.appendChild(rightStrip);
+
+  const topStrip=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  topStrip.setAttribute('x',origin.x); topStrip.setAttribute('y',origin.y-h*scale-dh*scale); topStrip.setAttribute('width',w*scale); topStrip.setAttribute('height',dh*scale);
+  topStrip.setAttribute('fill','var(--part-highlight)'); topStrip.setAttribute('fill-opacity','0.6');
+  svg.appendChild(topStrip);
+
+  const corner=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  corner.setAttribute('x',origin.x+w*scale); corner.setAttribute('y',origin.y-h*scale-dh*scale); corner.setAttribute('width',dw*scale); corner.setAttribute('height',dh*scale);
+  corner.setAttribute('fill','#94A3B8');
+  svg.appendChild(corner);
+
+  const strip1=h*dw, strip2=w*dh, cornerArea=dw*dh;
+  const exactNew=(w+dw)*(h+dh);
+  document.getElementById('readout').innerHTML =
+    `Original area: ${(w*h).toFixed(2)}<br>Right strip (h*dw): ${strip1.toFixed(3)}<br>Top strip (w*dh): ${strip2.toFixed(3)}<br>Corner (dw*dh): ${cornerArea.toFixed(4)}<br>New area: ${exactNew.toFixed(4)}`;
+  document.getElementById('fb').innerHTML = `Sum of original area plus both strips (ignoring the tiny gray corner) = ${(w*h+strip1+strip2).toFixed(4)}, versus the exact new area ${exactNew.toFixed(4)} — the difference is exactly the corner's own area, ${cornerArea.toFixed(4)}, which shrinks toward zero far faster than the strips as growth shrinks.`;
+}
+document.getElementById('growSlider').addEventListener('input', draw);
+document.getElementById('aha').innerHTML=`<strong>Aha:</strong> shrink the growth slider to its smallest setting — watch the gray corner square shrink to an invisible speck while the two colored strips remain clearly visible, just thinner. That's exactly why the product rule's formula only keeps two terms (one strip each), discarding the corner entirely — it's not an approximation error, it's what genuinely survives in the limit.`;
+draw();
+</script>
+</body></html>

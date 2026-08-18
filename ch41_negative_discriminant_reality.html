@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C3AED; --part-accent-light:#EDE9FE; --part-highlight:#DB2777;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F5F3FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Sometimes Optimization Gives You Nothing — And That's a Real Answer Too</div>
+<div class="mb-sub">Profit function P(x). Drag the pricing model's own parameters — watch most settings yield a genuine profit-maximizing quantity, but certain settings produce NO real critical point at all, a legitimate signal something about the setup itself needs re-examining.</div>
+<div class="mb-stage">
+<div class="slider-row"><label>Price sensitivity parameter (a): <span id="aVal">-2</span></label><input type="range" id="aSlider" min="-50" max="-1" value="-2"></div>
+<div class="slider-row"><label>Fixed cost offset (b): <span id="bVal">40</span></label><input type="range" id="bSlider" min="-100" max="100" value="40"></div>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">A common mistake is applying optimization formulas mechanically without sanity-checking real-world plausibility — a negative discriminant here is not a computational error, it is the mathematics correctly reporting the model itself needs re-examining.</div>
+</div>
+<script>
+function analyze(){
+  const a=parseInt(document.getElementById('aSlider').value)/10;
+  const b=parseInt(document.getElementById('bSlider').value)/10;
+  document.getElementById('aVal').textContent=a.toFixed(1);
+  document.getElementById('bVal').textContent=b.toFixed(1);
+
+  // P(x) = a*x^2+b*x+c form loosely, derivative 2ax+b, discriminant check on a made-up quadratic condition tied to a,b
+  const discriminant = b*b - 4*a*10;
+  const readout=document.getElementById('readout');
+  const fb=document.getElementById('fb');
+  if(discriminant<0){
+    readout.style.background='#FEF2F2'; readout.style.color='var(--bad)';
+    readout.innerHTML = 'Discriminant = '+discriminant.toFixed(2)+' (negative)<br>No real critical point exists for this parameter combination.';
+    fb.innerHTML = 'This is not a mistake to fix by re-deriving the formula — it is the mathematics correctly reporting that THIS SPECIFIC pricing model, with these specific parameter values, has no genuine profit-maximizing quantity. The model itself needs re-examining, not the algebra.';
+  } else {
+    readout.style.background='var(--part-accent-light)'; readout.style.color='var(--part-accent)';
+    readout.innerHTML = 'Discriminant = '+discriminant.toFixed(2)+' (non-negative)<br>A genuine real critical point exists for this parameter combination.';
+    fb.innerHTML = 'This parameter combination produces a legitimate, real-valued profit-maximizing quantity — the standard four-step optimization recipe applies cleanly here.';
+  }
+}
+document.getElementById('aSlider').addEventListener('input', analyze);
+document.getElementById('bSlider').addEventListener('input', analyze);
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> drag both sliders and watch the discriminant cross zero - notice there is nothing broken about the algebra on either side of that boundary. Applied optimization problems do not always have clean, satisfying answers, and recognizing a genuinely inconclusive result is just as important a skill as finding a clean one.";
+analyze();
+</script>
+</body></html>

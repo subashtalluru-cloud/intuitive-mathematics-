@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C3AED; --part-accent-light:#EDE9FE; --part-highlight:#DB2777;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F5F3FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:24px; }
+@media (max-width:760px){ .two-col{ grid-template-columns:1fr; } }
+.panel{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:16px; }
+.panel-header{ font-weight:700; text-align:center; margin-bottom:8px; font-size:clamp(0.9rem,1.05vw,1.02rem); }
+.panelSvg{ width:100%; height:auto; aspect-ratio:1.2/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin:14px 0; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); text-align:center; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Bowl or Dome — Watch Where the Curve Sits Relative to Its Own Tangent</div>
+<div class="mb-sub">Drag the tangent point along each curve. A concave-up curve (bowl) always stays ABOVE its own tangent line nearby; concave-down (dome) always stays BELOW. Watch this hold everywhere you drag to.</div>
+<div class="two-col">
+<div class="panel"><div class="panel-header" style="color:var(--good);">Concave Up: f(x)=x^2</div><svg class="panelSvg" id="upSvg" viewBox="0 0 200 200"></svg></div>
+<div class="panel"><div class="panel-header" style="color:var(--bad, #B91C1C);">Concave Down: f(x)=-x^2</div><svg class="panelSvg" id="downSvg" viewBox="0 0 200 200"></svg></div>
+</div>
+<div class="slider-row"><label>Tangent point x = <span id="xVal">1.0</span></label><input type="range" id="xSlider" min="-150" max="150" value="100"></div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">This "curve above its own tangent" versus "curve below its own tangent" behavior is not merely a visual coincidence — it is precisely what a positive versus negative second derivative guarantees, everywhere along the curve.</div>
+</div>
+<script>
+function fUp(x){ return x*x; }
+function fDown(x){ return -x*x; }
+const scale=25, origin={x:100,y:100};
+function toSvg(x,y){ return {x:origin.x+x*scale, y:origin.y-y*scale}; }
+function drawPanel(svgId, fn, fp, color){
+  const x0=parseInt(document.getElementById('xSlider').value)/100;
+  const svg=document.getElementById(svgId);
+  svg.innerHTML='';
+  let d='M';
+  for(let x=-3;x<=3;x+=0.05){
+    const p=toSvg(x,fn(x));
+    d+=p.x+','+p.y+' L';
+  }
+  const curve=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve.setAttribute('d',d.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke',color); curve.setAttribute('stroke-width','2.5');
+  svg.appendChild(curve);
+
+  const slope=fp(x0);
+  const y0=fn(x0);
+  const t1=toSvg(x0-1.5, y0-slope*1.5), t2=toSvg(x0+1.5, y0+slope*1.5);
+  const tanLine=document.createElementNS('http://www.w3.org/2000/svg','line');
+  tanLine.setAttribute('x1',t1.x); tanLine.setAttribute('y1',t1.y); tanLine.setAttribute('x2',t2.x); tanLine.setAttribute('y2',t2.y);
+  tanLine.setAttribute('stroke','#94A3B8'); tanLine.setAttribute('stroke-width','2'); tanLine.setAttribute('stroke-dasharray','4,3');
+  svg.appendChild(tanLine);
+  const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  const p0=toSvg(x0,y0);
+  dot.setAttribute('cx',p0.x); dot.setAttribute('cy',p0.y); dot.setAttribute('r',6); dot.setAttribute('fill',color);
+  svg.appendChild(dot);
+}
+function draw(){
+  const x0=parseInt(document.getElementById('xSlider').value)/100;
+  document.getElementById('xVal').textContent=x0.toFixed(2);
+  drawPanel('upSvg', fUp, (x)=>2*x, 'var(--good)');
+  drawPanel('downSvg', fDown, (x)=>-2*x, '#B91C1C');
+  document.getElementById('fb').innerHTML = 'At x='+x0.toFixed(2)+': the bowl curve sits above its dashed tangent everywhere nearby; the dome curve sits below its dashed tangent everywhere nearby. Drag anywhere — this relationship never flips for either curve, because neither curve ever changes its own concavity.';
+}
+document.getElementById('xSlider').addEventListener('input', draw);
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> notice neither panel's relationship ever reverses, no matter where you drag the tangent point - x^2 is concave up EVERYWHERE, -x^2 is concave down EVERYWHERE. A curve that only sometimes sits above its tangent and sometimes below (like the cubic from the worked example) must cross from one behavior to the other somewhere - and that crossing point is exactly the inflection point.";
+draw();
+</script>
+</body></html>

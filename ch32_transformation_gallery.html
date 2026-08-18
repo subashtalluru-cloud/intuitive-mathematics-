@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#059669; --part-accent-light:#D1FAE5; --part-highlight:#C2410C;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#ECFDF5; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.layout-row{ display:grid; grid-template-columns:1.2fr 1fr; gap:28px; align-items:start; }
+@media (max-width:800px){ .layout-row{ grid-template-columns:1fr; } }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#galSvg{ width:100%; height:auto; aspect-ratio:1.2/1; display:block; }
+.mb-btn{ font-size:0.85rem; padding:9px 14px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; display:block; width:100%; margin-bottom:8px; text-align:left; }
+.mb-btn:hover, .mb-btn.active{ background:var(--part-accent); color:#fff; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Four Named Transformations, One Mechanism</div>
+<div class="mb-sub">Scale, reflect, shear, and rotate LOOK like different operations with different names — but every single one is nothing more than choosing where i and j land. Click each to see its own effect on a square.</div>
+<div class="layout-row">
+<div class="mb-stage"><svg id="galSvg" viewBox="0 0 260 220"></svg></div>
+<div>
+<button class="mb-btn active" onclick="show('scale',this)">Scale (stretch)</button>
+<button class="mb-btn" onclick="show('reflect',this)">Reflect (mirror flip)</button>
+<button class="mb-btn" onclick="show('shear',this)">Shear (skew)</button>
+<button class="mb-btn" onclick="show('rotate',this)">Rotate (spin)</button>
+<div class="readout" id="readout"></div>
+</div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">A shear looks the most exotic of the four, yet it's built from identical machinery: just move j to a new spot while leaving i fixed, and the square tilts into a parallelogram automatically.</div>
+</div>
+<script>
+const transforms = {
+  scale: {M:[[2,0],[0,0.5]], name:'Scale', desc:'Stretch horizontally x2, compress vertically x0.5'},
+  reflect: {M:[[1,0],[0,-1]], name:'Reflect', desc:'Flip across the x-axis - a mirror image'},
+  shear: {M:[[1,0.8],[0,1]], name:'Shear', desc:'Tilt the top edge sideways while the bottom stays fixed'},
+  rotate: {M:[[0,-1],[1,0]], name:'Rotate 90 degrees', desc:'Spin the entire square a quarter turn'}
+};
+const scale=45, origin={x:60,y:170};
+function toSvg(p){ return {x:origin.x+p.x*scale, y:origin.y-p.y*scale}; }
+function mv(M,v){ return {x:M[0][0]*v.x+M[0][1]*v.y, y:M[1][0]*v.x+M[1][1]*v.y}; }
+function draw(key){
+  const t = transforms[key];
+  const svg=document.getElementById('galSvg');
+  svg.innerHTML='';
+  const square=[{x:0,y:0},{x:1,y:0},{x:1,y:1},{x:0,y:1}];
+  const orig = square.map(toSvg);
+  const origPath=document.createElementNS('http://www.w3.org/2000/svg','path');
+  origPath.setAttribute('d',`M${orig.map(p=>p.x+','+p.y).join(' L')} Z`);
+  origPath.setAttribute('fill','none'); origPath.setAttribute('stroke','#CBD5E1'); origPath.setAttribute('stroke-width','1.5'); origPath.setAttribute('stroke-dasharray','3,2');
+  svg.appendChild(origPath);
+  const transformed = square.map(p=>toSvg(mv(t.M,p)));
+  const transPath=document.createElementNS('http://www.w3.org/2000/svg','path');
+  transPath.setAttribute('d',`M${transformed.map(p=>p.x+','+p.y).join(' L')} Z`);
+  transPath.setAttribute('fill','var(--part-accent-light)'); transPath.setAttribute('fill-opacity','0.6');
+  transPath.setAttribute('stroke','var(--part-accent)'); transPath.setAttribute('stroke-width','2.5');
+  svg.appendChild(transPath);
+  document.getElementById('readout').innerHTML =
+    `${t.name}: ${t.desc}<br>Matrix columns: i to (${t.M[0][0]},${t.M[1][0]}), j to (${t.M[0][1]},${t.M[1][1]})`;
+  document.getElementById('fb').innerHTML = `Notice the dashed original square and the shaded transformed shape - the SAME two-column matrix mechanism produced every one of these four visually distinct effects, just by choosing different landing spots for i and j.`;
+}
+function show(key, btn){
+  document.querySelectorAll('.mb-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  draw(key);
+}
+document.getElementById('aha').innerHTML=`<strong>Aha:</strong> scale, reflect, shear, and rotate are convenient human names for specific matrices, not four separate mathematical machineries. Underneath, every one of them is the identical "where do i and j land" question, just with different answers.`;
+draw('scale');
+</script>
+</body></html>

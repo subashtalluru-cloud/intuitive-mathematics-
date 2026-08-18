@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C3AED; --part-accent-light:#EDE9FE; --part-highlight:#DB2777;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F5F3FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.layout-row{ display:grid; grid-template-columns:1.2fr 1fr; gap:28px; align-items:start; }
+@media (max-width:800px){ .layout-row{ grid-template-columns:1fr; } }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#epsSvg{ width:100%; height:auto; aspect-ratio:1.2/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">The Skeptic's Challenge — Can You Guarantee the Closeness?</div>
+<div class="mb-sub">f(x)=(x^2-4)/(x-2) approaches 4 as x approaches 2. A skeptic demands: get f(x) within epsilon of 4. Shrink epsilon and drag delta — watch whether your response band ACTUALLY keeps every output inside the target band.</div>
+<div class="layout-row">
+<div class="mb-stage"><svg id="epsSvg" viewBox="0 0 300 260"></svg></div>
+<div>
+<div class="slider-row"><label>Skeptic demands epsilon = <span id="epsVal">1.0</span></label><input type="range" id="epsSlider" min="5" max="100" value="100"></div>
+<div class="slider-row"><label>Your response: delta = <span id="deltaVal">1.0</span></label><input type="range" id="deltaSlider" min="1" max="100" value="100"></div>
+<div class="readout" id="readout"></div>
+</div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">This challenge-and-response structure — skeptic proposes an arbitrarily small target band, you must guarantee a delta that keeps every output inside it — is exactly what the formal epsilon-delta definition encodes symbolically.</div>
+</div>
+<script>
+function f(x){ if(Math.abs(x-2)<0.0001) return 4; return (x*x-4)/(x-2); }
+const scale=45, origin={x:150,y:220};
+function toSvg(x,y){ return {x:origin.x+(x-2)*scale, y:origin.y-(y-4)*scale}; }
+function draw(){
+  const eps=parseInt(document.getElementById('epsSlider').value)/100;
+  const delta=parseInt(document.getElementById('deltaSlider').value)/100;
+  document.getElementById('epsVal').textContent=eps.toFixed(2);
+  document.getElementById('deltaVal').textContent=delta.toFixed(2);
+
+  const svg=document.getElementById('epsSvg');
+  svg.innerHTML='';
+  const epsTop=toSvg(2,4+eps), epsBottom=toSvg(2,4-eps);
+  const epsBand=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  epsBand.setAttribute('x',10); epsBand.setAttribute('y',epsTop.y); epsBand.setAttribute('width',280); epsBand.setAttribute('height',epsBottom.y-epsTop.y);
+  epsBand.setAttribute('fill','var(--part-accent-light)'); epsBand.setAttribute('fill-opacity','0.5');
+  svg.appendChild(epsBand);
+
+  const deltaLeft=toSvg(2-delta,4), deltaRight=toSvg(2+delta,4);
+  const deltaBand=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  deltaBand.setAttribute('x',deltaLeft.x); deltaBand.setAttribute('y',10); deltaBand.setAttribute('width',deltaRight.x-deltaLeft.x); deltaBand.setAttribute('height',240);
+  deltaBand.setAttribute('fill','#FDF2F8'); deltaBand.setAttribute('fill-opacity','0.6');
+  svg.appendChild(deltaBand);
+
+  let d='M';
+  for(let x=0.2;x<=3.8;x+=0.05){
+    if(Math.abs(x-2)<0.03) continue;
+    const p=toSvg(x,f(x));
+    d+=`${p.x},${p.y} L`;
+  }
+  const curve=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve.setAttribute('d',d.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke','var(--part-accent)'); curve.setAttribute('stroke-width','2.5');
+  svg.appendChild(curve);
+
+  const openDot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  const c=toSvg(2,4);
+  openDot.setAttribute('cx',c.x); openDot.setAttribute('cy',c.y); openDot.setAttribute('r',5); openDot.setAttribute('fill','#fff'); openDot.setAttribute('stroke','var(--part-highlight)'); openDot.setAttribute('stroke-width','2');
+  svg.appendChild(openDot);
+
+  let allSafe=true, testX=null;
+  for(let x=2-delta+0.001; x<=2+delta-0.001; x+=delta/20){
+    if(Math.abs(x-2)<0.01) continue;
+    const fx=f(x);
+    if(Math.abs(fx-4)>=eps){ allSafe=false; testX=x; break; }
+  }
+  document.getElementById('readout').innerHTML =
+    `epsilon band: (4-${eps.toFixed(2)}, 4+${eps.toFixed(2)})<br>delta band: (2-${delta.toFixed(2)}, 2+${delta.toFixed(2)})<br>Status: ${allSafe?'SUCCESS - delta works':'FAILS - some x escapes epsilon band'}`;
+  const fb=document.getElementById('fb');
+  fb.style.background = allSafe? 'var(--part-accent-light)':'#FEF2F2';
+  fb.style.color = allSafe? 'var(--part-accent)':'var(--bad)';
+  fb.innerHTML = allSafe
+    ? `Every x within delta=${delta.toFixed(2)} of 2 (pink vertical band) produces f(x) within epsilon=${eps.toFixed(2)} of 4 (purple horizontal band) — your delta successfully answers the skeptic's challenge.`
+    : `At x=${testX.toFixed(3)}, f(x)=${f(testX).toFixed(3)} escapes the epsilon band — your delta is too generous for this tight an epsilon demand. Shrink delta.`;
+}
+document.getElementById('epsSlider').addEventListener('input', draw);
+document.getElementById('deltaSlider').addEventListener('input', draw);
+document.getElementById('aha').innerHTML=`<strong>Aha:</strong> shrink epsilon to its smallest setting, then shrink delta to match — notice you can ALWAYS find a small enough delta that works, no matter how demanding the skeptic's epsilon gets. That "always findable, however small" property is the entire rigorous content of "the limit equals 4."`;
+draw();
+</script>
+</body></html>

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#059669; --part-accent-light:#D1FAE5; --part-highlight:#C2410C;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#ECFDF5; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.layout-row{ display:grid; grid-template-columns:1.2fr 1fr; gap:28px; align-items:start; }
+@media (max-width:800px){ .layout-row{ grid-template-columns:1fr; } }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#forceSvg{ width:100%; height:auto; aspect-ratio:1.2/1; display:block; touch-action:none; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">A Bridge Cable Under Three Forces at Once</div>
+<div class="mb-sub">Weight, wind, and traffic load all pull on this cable simultaneously, each with its own magnitude and direction. Drag any force vector — the net force (bold black) recomputes instantly as their tip-to-tail sum.</div>
+<div class="layout-row">
+<div class="mb-stage"><svg id="forceSvg" viewBox="0 0 300 260"></svg></div>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">Attempting this with separately-tracked magnitude and direction numbers would require constant, error-prone conversion. Vector addition handles the combination automatically and correctly, because each vector's components already encode both pieces of information in directly combinable form.</div>
+</div>
+<script>
+let forces=[{x:2,y:1,label:'Weight',color:'var(--part-accent)'},{x:-1.5,y:1.8,label:'Wind',color:'var(--part-highlight)'},{x:0.5,y:-2.2,label:'Traffic',color:'#7C3AED'}];
+let dragTarget=null;
+const scale=32, origin={x:150,y:170};
+function toSvg(p){ return {x:origin.x+p.x*scale, y:origin.y-p.y*scale}; }
+function toMath(sx,sy){ return {x:(sx-origin.x)/scale, y:(origin.y-sy)/scale}; }
+function draw(){
+  const svg=document.getElementById('forceSvg');
+  svg.innerHTML='';
+  const o=toSvg({x:0,y:0});
+  forces.forEach((f,i)=>{
+    const p=toSvg(f);
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',o.x); line.setAttribute('y1',o.y); line.setAttribute('x2',p.x); line.setAttribute('y2',p.y);
+    line.setAttribute('stroke',f.color); line.setAttribute('stroke-width','2.5');
+    svg.appendChild(line);
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',p.x); dot.setAttribute('cy',p.y); dot.setAttribute('r',8); dot.setAttribute('fill',f.color);
+    dot.id='drag_'+i; dot.style.cursor='grab';
+    svg.appendChild(dot);
+    const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',p.x+8); lbl.setAttribute('y',p.y-8); lbl.setAttribute('font-size','10'); lbl.setAttribute('fill',f.color); lbl.setAttribute('font-weight','700');
+    lbl.textContent=f.label;
+    svg.appendChild(lbl);
+  });
+  const net={x:forces.reduce((s,f)=>s+f.x,0), y:forces.reduce((s,f)=>s+f.y,0)};
+  const np=toSvg(net);
+  const netLine=document.createElementNS('http://www.w3.org/2000/svg','line');
+  netLine.setAttribute('x1',o.x); netLine.setAttribute('y1',o.y); netLine.setAttribute('x2',np.x); netLine.setAttribute('y2',np.y);
+  netLine.setAttribute('stroke','var(--ink)'); netLine.setAttribute('stroke-width','4');
+  svg.appendChild(netLine);
+  const mag = Math.hypot(net.x,net.y);
+  document.getElementById('readout').innerHTML = `Weight: (${forces[0].x.toFixed(1)},${forces[0].y.toFixed(1)})<br>Wind: (${forces[1].x.toFixed(1)},${forces[1].y.toFixed(1)})<br>Traffic: (${forces[2].x.toFixed(1)},${forces[2].y.toFixed(1)})<br><strong>Net force: (${net.x.toFixed(1)},${net.y.toFixed(1)}), magnitude ${mag.toFixed(2)}</strong>`;
+  document.getElementById('fb').innerHTML = `The net force (bold black) is nothing but adding all three x-components together and all three y-components together — three completely independent forces, combined by pure component-wise addition.`;
+}
+function getPoint(evt){
+  const rect=document.getElementById('forceSvg').getBoundingClientRect();
+  const t=evt.touches?evt.touches[0]:evt;
+  return toMath((t.clientX-rect.left)*(300/rect.width), (t.clientY-rect.top)*(260/rect.height));
+}
+document.getElementById('forceSvg').addEventListener('mousedown',e=>{ forces.forEach((f,i)=>{ if(e.target.id==='drag_'+i) dragTarget=i; }); });
+document.getElementById('forceSvg').addEventListener('touchstart',e=>{ forces.forEach((f,i)=>{ if(e.target.id==='drag_'+i) dragTarget=i; }); });
+window.addEventListener('mouseup',()=>dragTarget=null);
+window.addEventListener('touchend',()=>dragTarget=null);
+function handleMove(e){
+  if(dragTarget===null) return;
+  const p=getPoint(e);
+  forces[dragTarget].x=Math.round(p.x*2)/2; forces[dragTarget].y=Math.round(p.y*2)/2;
+  draw();
+}
+window.addEventListener('mousemove',handleMove);
+window.addEventListener('touchmove',e=>{ if(dragTarget!==null) e.preventDefault(); handleMove(e); },{passive:false});
+document.getElementById('aha').innerHTML=`<strong>Aha:</strong> drag the forces until the net force line shrinks to nearly nothing — that's structural equilibrium, the exact condition engineers check for when certifying a bridge cable is safely balanced under all its combined real-world loads.`;
+draw();
+</script>
+</body></html>

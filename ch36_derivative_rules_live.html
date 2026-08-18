@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C3AED; --part-accent-light:#EDE9FE; --part-highlight:#DB2777;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F5F3FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:12px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.term-display{ font-family:var(--font-mono); font-size:clamp(0.95rem,1.15vw,1.1rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:16px 18px; line-height:2; margin-top:14px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Differentiate Term by Term — Watch the Sum Rule in Action</div>
+<div class="mb-sub">Drag any coefficient of this 4-term polynomial. Watch each term differentiate INDEPENDENTLY via the power rule, then get added back together — never treating the whole expression as one combined operation.</div>
+<div class="mb-stage">
+<div class="slider-row"><label>Constant term (a): <span id="aVal">5</span></label><input type="range" id="aSlider" min="-10" max="10" value="5"></div>
+<div class="slider-row"><label>x coefficient (b): <span id="bVal">3</span></label><input type="range" id="bSlider" min="-10" max="10" value="3"></div>
+<div class="slider-row"><label>x^2 coefficient (c): <span id="cSlider2Val">-2</span></label><input type="range" id="cSlider" min="-10" max="10" value="-2"></div>
+<div class="slider-row"><label>x^3 coefficient (d): <span id="dVal">4</span></label><input type="range" id="dSlider" min="-10" max="10" value="4"></div>
+<div class="term-display" id="display"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">A common mistake is forgetting the sum rule and treating a multi-term expression as one combined operation — each term genuinely differentiates on its own, with zero interaction between terms.</div>
+</div>
+<script>
+function update(){
+  const a=parseInt(document.getElementById('aSlider').value);
+  const b=parseInt(document.getElementById('bSlider').value);
+  const c=parseInt(document.getElementById('cSlider').value);
+  const d=parseInt(document.getElementById('dSlider').value);
+  document.getElementById('aVal').textContent=a;
+  document.getElementById('bVal').textContent=b;
+  document.getElementById('cSlider2Val').textContent=c;
+  document.getElementById('dVal').textContent=d;
+
+  document.getElementById('display').innerHTML =
+    `f(x) = ${a} + ${b}x + ${c}x^2 + ${d}x^3<br>` +
+    `d/dx[${a}] = 0 (constant rule)<br>` +
+    `d/dx[${b}x] = ${b} (power rule, x^1 to x^0)<br>` +
+    `d/dx[${c}x^2] = ${2*c}x (power rule, exponent down front)<br>` +
+    `d/dx[${d}x^3] = ${3*d}x^2 (power rule)<br>` +
+    `<strong>f prime(x) = ${b} + ${2*c}x + ${3*d}x^2</strong>`;
+  document.getElementById('fb').innerHTML = `Four completely independent differentiations, then summed — exactly the sum rule. Drag the constant term (a) alone: watch it vanish entirely from f prime(x) every time, no matter its value, confirming the constant rule.`;
+}
+['aSlider','bSlider','cSlider','dSlider'].forEach(id=>document.getElementById(id).addEventListener('input', update));
+document.getElementById('aha').innerHTML=`<strong>Aha:</strong> drag the constant term (a) to any value from -10 to 10 — it NEVER appears in f prime(x). A constant function has zero rate of change by definition, so its derivative must always be exactly zero, regardless of how large the constant itself is.`;
+update();
+</script>
+</body></html>

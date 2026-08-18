@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C3AED; --part-accent-light:#EDE9FE; --part-highlight:#DB2777;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F5F3FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.layout-row{ display:grid; grid-template-columns:1.2fr 1fr; gap:28px; align-items:start; }
+@media (max-width:800px){ .layout-row{ grid-template-columns:1fr; } }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#trapSvg{ width:100%; height:auto; aspect-ratio:1.2/1; display:block; }
+.step-card{ font-family:var(--font-mono); font-size:clamp(0.82rem,1vw,0.95rem); background:#f8fafc; border:1px solid var(--line); border-radius:8px; padding:10px 14px; margin-bottom:8px; opacity:0.3; transition:opacity 0.3s,border-color 0.3s; }
+.step-card.shown{ opacity:1; border-color:var(--part-accent); }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin-top:10px; }
+.mb-btn:hover{ background:var(--part-accent); color:#fff; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">0/0 Isn't "No Limit" — It's "Keep Working"</div>
+<div class="mb-sub">Direct substitution of x=2 into (x^2-4)/(x-2) gives the forbidden 0/0. Click through the algebra — watch the graph's hole stay exactly where it is, while the limit value becomes undeniable.</div>
+<div class="layout-row">
+<div class="mb-stage"><svg id="trapSvg" viewBox="0 0 280 220"></svg></div>
+<div>
+<div id="stepsContainer"></div>
+<button class="mb-btn" onclick="advance()">Reveal next step</button>
+</div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">A common mistake is concluding "no limit" the moment 0/0 appears, without attempting further simplification — physicists and engineers instead treat 0/0 as an automatic prompt to factor and simplify first.</div>
+</div>
+<script>
+const steps=[
+  "Direct substitution: f(2) = (2^2-4)/(2-2) = 0/0 - forbidden, undefined. But NOT proof the limit fails.",
+  "Factor the numerator: x^2-4 = (x-2)(x+2)",
+  "Rewrite: f(x) = (x-2)(x+2)/(x-2)",
+  "Cancel the (x-2) factor - legal for every x NEAR 2, since we never actually evaluate AT x=2 itself: f(x) = x+2 for x not equal to 2",
+  "Now substitute: limit = 2+2 = 4. The hole at x=2 remains (f is still undefined there), but the LIMIT is fully, rigorously determined."
+];
+let revealed=0;
+function f(x){ if(Math.abs(x-2)<0.001) return null; return (x*x-4)/(x-2); }
+const scale=45, origin={x:20,y:190};
+function toSvg(x,y){ return {x:origin.x+x*scale, y:origin.y-y*scale}; }
+function draw(){
+  const svg=document.getElementById('trapSvg');
+  svg.innerHTML='';
+  let d='M';
+  for(let x=0.2;x<=3.8;x+=0.05){
+    if(Math.abs(x-2)<0.03) continue;
+    const val=f(x);
+    if(val===null) continue;
+    const p=toSvg(x,val);
+    d+=`${p.x},${p.y} L`;
+  }
+  const curve=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve.setAttribute('d',d.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke','var(--part-accent)'); curve.setAttribute('stroke-width','2.5');
+  svg.appendChild(curve);
+  const hole=toSvg(2,4);
+  const holeDot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  holeDot.setAttribute('cx',hole.x); holeDot.setAttribute('cy',hole.y); holeDot.setAttribute('r',6);
+  holeDot.setAttribute('fill','#fff'); holeDot.setAttribute('stroke','var(--part-highlight)'); holeDot.setAttribute('stroke-width','2.5');
+  svg.appendChild(holeDot);
+  if(revealed>=4){
+    const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',hole.x+10); lbl.setAttribute('y',hole.y-10); lbl.setAttribute('font-size','11'); lbl.setAttribute('fill','var(--part-highlight)'); lbl.setAttribute('font-weight','700');
+    lbl.textContent='limit=4, but f(2) undefined';
+    svg.appendChild(lbl);
+  }
+}
+function render(){
+  const c=document.getElementById('stepsContainer');
+  c.innerHTML='';
+  steps.forEach((s,i)=>{
+    const div=document.createElement('div');
+    div.className='step-card'+(i<revealed?' shown':'');
+    div.textContent=`${i+1}. ${s}`;
+    c.appendChild(div);
+  });
+}
+function advance(){
+  if(revealed<steps.length){
+    revealed++;
+    render();
+    draw();
+    const fb=document.getElementById('fb');
+    fb.innerHTML = revealed===steps.length
+      ? `Confirmed: as x approaches 2 from either side, f(x) approaches exactly 4 — verified numerically at x=1.999 (f=3.999) and x=2.001 (f=4.001), matching the algebraic result exactly.`
+      : `Step ${revealed} applied. The hole (pink circle, still open) never moves — only our understanding of what value the curve approaches there sharpens with each step.`;
+  }
+}
+draw();
+render();
+document.getElementById('aha').innerHTML=`<strong>Aha:</strong> the cancellation (x-2)/(x-2)=1 is legal EXACTLY because the limit definition itself excludes x=2 from consideration — we're only ever looking at x values near 2, never AT 2, so dividing by (x-2) never actually divides by zero anywhere the limit cares about.`;
+</script>
+</body></html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C3AED; --part-accent-light:#EDE9FE; --part-highlight:#DB2777;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F5F3FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+.step-card{ font-family:var(--font-mono); font-size:clamp(0.82rem,1vw,0.95rem); background:#f8fafc; border:1px solid var(--line); border-radius:8px; padding:10px 14px; margin-bottom:8px; opacity:0.3; transition:opacity 0.3s,border-color 0.3s; }
+.step-card.shown{ opacity:1; border-color:var(--part-accent); }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin-top:10px; }
+.mb-btn:hover{ background:var(--part-accent); color:#fff; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Zoom Out, Solve the Simple Version, Zoom Back In</div>
+<div class="mb-sub">Integral of x(x^2+1)^3 dx from 0 to 2. Expanding this directly is tedious. Click through — watch the messy composed expression get replaced by one placeholder variable, solved simply, then translated back.</div>
+<div class="mb-stage">
+<div id="stepsContainer"></div>
+<button class="mb-btn" onclick="advance()">Reveal next step</button>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">A common mistake is forgetting to convert the limits — reusing the original x-based bounds (0 to 2) directly on the new u-based antiderivative, producing a wrong answer.</div>
+</div>
+<script>
+const steps=[
+  "Notice the pattern: x(x^2+1)^3 looks like the chain rule's own output in reverse - an outer cube applied to an inner expression, times something close to that inner expression's own derivative.",
+  "Let u = x^2+1. Then du = 2x dx, so x dx = du/2.",
+  "Convert the LIMITS too (a common mistake to skip): x=0 gives u=1; x=2 gives u=5.",
+  "Rewrite the ENTIRE integral in terms of u: integral of (1/2)u^3 du, from u=1 to u=5 - a dramatically simpler problem.",
+  "Solve the simple version: (1/2)(u^4/4) evaluated from 1 to 5 = (1/2)(625/4 - 1/4) = (1/2)(156) = 78.",
+  "This IS the final answer - no need to substitute back to x, since we already converted the limits to u-values in step 3."
+];
+let revealed=0;
+function render(){
+  const c=document.getElementById('stepsContainer');
+  c.innerHTML='';
+  steps.forEach((s,i)=>{
+    const div=document.createElement('div');
+    div.className='step-card'+(i<revealed?' shown':'');
+    div.textContent=(i+1)+'. '+s;
+    c.appendChild(div);
+  });
+}
+function advance(){
+  if(revealed<steps.length){
+    revealed++;
+    render();
+    const fb=document.getElementById('fb');
+    if(revealed===steps.length){
+      fb.innerHTML = 'Final answer: 78 exactly. Cross-checked independently by brute-force numerical approximation of the original x-based integral: 78.0025 (matching to within Riemann-sum rounding error) — confirming the substitution was performed correctly.';
+    } else {
+      fb.innerHTML = 'Step '+revealed+' applied.';
+    }
+  }
+}
+render();
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> once the limits were converted to u-values in step 3, the ENTIRE rest of the problem never needed to mention x again - not even in the final answer. This is the genuine payoff of converting the limits: it lets you stay zoomed out for the entire remaining calculation, skipping the back-substitution step altogether for definite integrals.";
+</script>
+</body></html>

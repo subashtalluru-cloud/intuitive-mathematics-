@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#059669; --part-accent-light:#D1FAE5; --part-highlight:#C2410C;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#ECFDF5; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.layout-row{ display:grid; grid-template-columns:1.2fr 1fr; gap:28px; align-items:start; }
+@media (max-width:800px){ .layout-row{ grid-template-columns:1fr; } }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#detSvg{ width:100%; height:auto; aspect-ratio:1.2/1; display:block; touch-action:none; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.9rem,1.1vw,1.05rem); border-radius:10px; padding:16px 18px; line-height:1.8; font-weight:600; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">The Determinant Is Just the Area You're Looking At</div>
+<div class="mb-sub">Drag either basis vector. The shaded parallelogram's actual area, computed independently by geometry, and the algebraic determinant formula ad−bc, always match — try dragging one vector onto the other's line and watch both hit zero together.</div>
+<div class="layout-row">
+<div class="mb-stage"><svg id="detSvg" viewBox="0 0 300 260"></svg></div>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">A determinant of 0 collapses everything to zero area — a singular matrix, permanently unable to be undone, echoing Chapter 22's injectivity requirement.</div>
+</div>
+<script>
+let iVec={x:2,y:1}, jVec={x:1,y:3};
+let dragTarget=null;
+const scale=30, origin={x:120,y:220};
+function toSvg(p){ return {x:origin.x+p.x*scale, y:origin.y-p.y*scale}; }
+function toMath(sx,sy){ return {x:(sx-origin.x)/scale, y:(origin.y-sy)/scale}; }
+function draw(){
+  const svg=document.getElementById('detSvg');
+  svg.innerHTML='';
+  const det = iVec.x*jVec.y - iVec.y*jVec.x;
+  const o=toSvg({x:0,y:0}), pi=toSvg(iVec), pj=toSvg(jVec), pij=toSvg({x:iVec.x+jVec.x,y:iVec.y+jVec.y});
+  const para=document.createElementNS('http://www.w3.org/2000/svg','path');
+  para.setAttribute('d',`M${o.x},${o.y} L${pi.x},${pi.y} L${pij.x},${pij.y} L${pj.x},${pj.y} Z`);
+  para.setAttribute('fill', Math.abs(det)<0.05 ? '#FEF2F2' : 'var(--part-accent-light)');
+  para.setAttribute('fill-opacity','0.7');
+  para.setAttribute('stroke', det<0 ? 'var(--bad)' : 'var(--part-accent)'); para.setAttribute('stroke-width','2');
+  svg.appendChild(para);
+  [[iVec,'var(--part-accent)','i'],[jVec,'var(--part-highlight)','j']].forEach(([v,color,lbl])=>{
+    const p=toSvg(v);
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',o.x); line.setAttribute('y1',o.y); line.setAttribute('x2',p.x); line.setAttribute('y2',p.y);
+    line.setAttribute('stroke',color); line.setAttribute('stroke-width','3');
+    svg.appendChild(line);
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',p.x); dot.setAttribute('cy',p.y); dot.setAttribute('r',9); dot.setAttribute('fill',color);
+    dot.id='drag_'+lbl; dot.style.cursor='grab';
+    svg.appendChild(dot);
+  });
+  const readout=document.getElementById('readout');
+  readout.style.background = Math.abs(det)<0.05 ? '#FEF2F2' : 'var(--part-accent-light)';
+  readout.style.color = Math.abs(det)<0.05 ? 'var(--bad)' : 'var(--part-accent)';
+  readout.innerHTML = `i=(${iVec.x.toFixed(1)},${iVec.y.toFixed(1)}), j=(${jVec.x.toFixed(1)},${jVec.y.toFixed(1)})<br>det = (${iVec.x.toFixed(1)})(${jVec.y.toFixed(1)}) − (${iVec.y.toFixed(1)})(${jVec.x.toFixed(1)})<br>= <strong>${det.toFixed(2)}</strong>`;
+  const fb=document.getElementById('fb');
+  if(Math.abs(det)<0.05) fb.innerHTML = `det ≈ 0 — the parallelogram has COLLAPSED to a line (i and j point the same direction). This transformation is singular: it destroys a full dimension's worth of information and can never be undone.`;
+  else if(det<0) fb.innerHTML = `det = ${det.toFixed(2)} is NEGATIVE — orientation has flipped (a mirror reversal), but the AREA magnitude |${det.toFixed(2)}| is still exactly what the shaded region shows.`;
+  else fb.innerHTML = `det = ${det.toFixed(2)} — exactly the shaded parallelogram's own area, confirmed by two completely independent computations: the algebraic ad−bc formula, and the geometric region you're looking at.`;
+}
+function getPoint(evt){
+  const rect=document.getElementById('detSvg').getBoundingClientRect();
+  const t=evt.touches?evt.touches[0]:evt;
+  return toMath((t.clientX-rect.left)*(300/rect.width), (t.clientY-rect.top)*(260/rect.height));
+}
+document.getElementById('detSvg').addEventListener('mousedown',e=>{ if(e.target.id==='drag_i') dragTarget='i'; else if(e.target.id==='drag_j') dragTarget='j'; });
+document.getElementById('detSvg').addEventListener('touchstart',e=>{ if(e.target.id==='drag_i') dragTarget='i'; else if(e.target.id==='drag_j') dragTarget='j'; });
+window.addEventListener('mouseup',()=>dragTarget=null);
+window.addEventListener('touchend',()=>dragTarget=null);
+function handleMove(e){
+  if(!dragTarget) return;
+  const p=getPoint(e);
+  const snapped={x:Math.round(p.x*2)/2, y:Math.round(p.y*2)/2};
+  if(dragTarget==='i') iVec=snapped; else jVec=snapped;
+  draw();
+}
+window.addEventListener('mousemove',handleMove);
+window.addEventListener('touchmove',e=>{ if(dragTarget) e.preventDefault(); handleMove(e); },{passive:false});
+document.getElementById('aha').innerHTML=`<strong>Aha:</strong> drag j to the exact opposite side of i (flip it through the origin) — watch the determinant flip from positive to negative the instant the parallelogram's orientation reverses. Sign isn't an error state; it's the determinant faithfully reporting a mirror flip.`;
+draw();
+</script>
+</body></html>

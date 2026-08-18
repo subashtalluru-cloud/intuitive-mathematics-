@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+:root{
+  --part-accent: #0891B2; --part-accent-light: #CFFAFE; --part-highlight: #C2410C;
+  --ink: #1A202C; --ink-soft: #4A5568; --paper: #FAFAF7; --line: #D6D3CB;
+  --good: #15803D; --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+*{ box-sizing: border-box; }
+html, body{ height:100%; }
+body{ margin:0; padding: clamp(16px, 3vw, 40px); background:#ECFEFF; font-family: var(--font-sans); color: var(--ink);
+  display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: clamp(20px, 2.5vw, 36px);
+  width: 100%; max-width: 1100px; }
+.mb-title{ font-size: clamp(1.3rem, 2vw, 1.7rem); font-weight: 700; color: var(--part-accent); margin: 0 0 6px 0; }
+.mb-sub{ font-size: clamp(0.9rem, 1.1vw, 1.05rem); color: var(--ink-soft); margin-bottom: 20px; line-height:1.5; max-width: 900px; }
+.layout-row{ display: grid; grid-template-columns: 1.2fr 1fr; gap: 28px; align-items: start; }
+@media (max-width: 760px){ .layout-row{ grid-template-columns: 1fr; } }
+.mb-stage{ background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: clamp(16px, 2vw, 28px); }
+#ropeSvg{ width:100%; height:auto; aspect-ratio: 4/3; display:block; touch-action:none; }
+.controls-panel{ display:flex; flex-direction:column; gap:14px; }
+.live-eq{ font-family: var(--font-mono); font-size: clamp(0.85rem, 1.05vw, 1.05rem); background: var(--part-accent-light);
+  color: var(--part-accent); border-radius: 10px; padding: 16px 18px; line-height: 1.8; font-weight:600; }
+.mb-feedback{ font-size: clamp(1.05rem, 1.3vw, 1.25rem); padding: 16px 20px; border-radius: 10px; margin-top: 16px;
+  line-height: 1.65; background: var(--part-accent-light); color: var(--part-accent); border: 1px solid var(--line); }
+.aha{ font-size: clamp(1.05rem, 1.3vw, 1.25rem); padding: 16px 20px; border-radius: 10px; margin-top: 14px;
+  line-height: 1.65; background: #FFF7ED; color: #9A3412; border: 1px solid #FED7AA; }
+.aha strong{ color: #C2410C; }
+.mb-caption{ font-size: clamp(0.95rem, 1.05vw, 1.05rem); color: var(--ink-soft); margin-top: 12px; font-style:italic; line-height:1.6; }
+.mb-btn{ font-size: 0.9rem; padding: 10px 18px; border-radius: 8px; border: 1px solid var(--part-accent);
+  background: #fff; color: var(--part-accent); cursor:pointer; font-weight:600; align-self:flex-start; }
+.mb-btn:hover{ background: var(--part-accent); color:#fff; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">4,000 Years Later, the Same Rope — No Rope Required</div>
+  <div class="mb-sub">The Egyptian rope-stretchers' 3-4-5 triangle is preset below. Drag the top vertex to ANY position and watch the distance formula recompute the hypotenuse live — click "Snap to 3-4-5" to return to the exact physically-verified original.</div>
+
+  <div class="layout-row">
+    <div class="mb-stage">
+      <svg id="ropeSvg" viewBox="0 0 320 240"></svg>
+    </div>
+    <div class="controls-panel">
+      <div class="live-eq" id="liveCalc"></div>
+      <button class="mb-btn" onclick="snapTo345()">Snap to 3-4-5 (the original rope)</button>
+    </div>
+  </div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="aha" id="aha"></div>
+  <div class="mb-caption">This isn't a new fact — the 3-4-5 relationship was already fully known, physically, to the Egyptians. What's new is a method that works for ANY two points anywhere, with no physical rope ever required again.</div>
+</div>
+
+<script>
+const O = {x:0,y:0}, P = {x:3,y:0};
+let Q = {x:3,y:4};
+let dragging = false;
+const scale = 42, origin = {x:35, y:210};
+function toSvg(pt){ return {x: origin.x+pt.x*scale, y: origin.y-pt.y*scale}; }
+function toMath(sx,sy){ return {x:(sx-origin.x)/scale, y:(origin.y-sy)/scale}; }
+
+function draw(){
+  const svg = document.getElementById('ropeSvg');
+  svg.innerHTML='';
+  const o = toSvg(O), p = toSvg(P), q = toSvg(Q);
+  [[o,p],[p,q],[o,q]].forEach(([a,b],i)=>{
+    const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',a.x); line.setAttribute('y1',a.y); line.setAttribute('x2',b.x); line.setAttribute('y2',b.y);
+    line.setAttribute('stroke', i===2 ? 'var(--part-highlight)':'var(--part-accent)');
+    line.setAttribute('stroke-width', i===2?'3':'2.5');
+    svg.appendChild(line);
+  });
+  [[o,`(0,0)`,false],[p,`(3,0)`,false],[q,`(${Q.x.toFixed(1)},${Q.y.toFixed(1)})`,true]].forEach(([pt,lbl,drag])=>{
+    const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',pt.x); dot.setAttribute('cy',pt.y); dot.setAttribute('r', drag?10:6);
+    dot.setAttribute('fill', drag ? 'var(--part-highlight)' : 'var(--ink)');
+    if(drag){ dot.id='dragQ'; dot.style.cursor='grab'; }
+    svg.appendChild(dot);
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',pt.x+10); t.setAttribute('y',pt.y-10); t.setAttribute('font-size','11'); t.setAttribute('font-family','monospace');
+    t.textContent = lbl;
+    svg.appendChild(t);
+  });
+
+  const dx = Q.x-O.x, dy=Q.y-O.y;
+  const dist = Math.sqrt(dx*dx+dy*dy);
+  const is345 = Math.abs(Q.x-3)<0.05 && Math.abs(Q.y-4)<0.05;
+
+  document.getElementById('liveCalc').innerHTML =
+    `distance O→Q = √((${dx.toFixed(1)})²+(${dy.toFixed(1)})²)<br>= √(${(dx*dx).toFixed(2)}+${(dy*dy).toFixed(2)})<br>= <strong>${dist.toFixed(3)}</strong>` +
+    (is345 ? `<br><span style="color:var(--good);">✓ Exactly the ancient rope's length — 5, no remainder.</span>` : '');
+
+  const fb = document.getElementById('fb');
+  if(is345){
+    fb.innerHTML = `distance = √(9+16) = √25 = <strong>5</strong> — exactly the rope's own fixed length, recovered purely from coordinate arithmetic. Four thousand years of mathematical development didn't discover a new fact; it discovered a dramatically more portable METHOD for reaching that same fact.`;
+  } else {
+    fb.innerHTML = `You've moved off the exact 3-4-5 configuration — distance is now ${dist.toFixed(3)}, not the clean whole number 5. This is exactly the point: the FORMULA works identically whether the triangle happens to be a "nice" whole-number one or not. The ancient rope only ever worked for exactly 3-4-5; the formula works for literally any triangle at all.`;
+  }
+}
+function snapTo345(){ Q = {x:3,y:4}; draw(); }
+function getPoint(evt){
+  const rect = document.getElementById('ropeSvg').getBoundingClientRect();
+  const t = evt.touches ? evt.touches[0] : evt;
+  const scaleX = 320/rect.width, scaleY = 240/rect.height;
+  return toMath((t.clientX-rect.left)*scaleX, (t.clientY-rect.top)*scaleY);
+}
+document.getElementById('ropeSvg').addEventListener('mousedown', (e)=>{ if(e.target.id==='dragQ') dragging=true; });
+document.getElementById('ropeSvg').addEventListener('touchstart', (e)=>{ if(e.target.id==='dragQ') dragging=true; });
+window.addEventListener('mouseup', ()=> dragging=false);
+window.addEventListener('touchend', ()=> dragging=false);
+window.addEventListener('mousemove', (e)=>{
+  if(!dragging) return;
+  const p = getPoint(e);
+  Q = { x: Math.max(-1,Math.min(6,Math.round(p.x*2)/2)), y: Math.max(-1,Math.min(6,Math.round(p.y*2)/2)) };
+  draw();
+});
+window.addEventListener('touchmove', (e)=>{
+  if(!dragging) return;
+  e.preventDefault();
+  const p = getPoint(e);
+  Q = { x: Math.max(-1,Math.min(6,Math.round(p.x*2)/2)), y: Math.max(-1,Math.min(6,Math.round(p.y*2)/2)) };
+  draw();
+}, {passive:false});
+
+document.getElementById('aha').innerHTML = `<strong>Aha:</strong> the ancient rope-stretchers could ONLY verify a right angle by physically building exactly this one 3-4-5 configuration. Drag the point anywhere else and the distance formula still tells you the exact length instantly — for a triangle that would have needed a completely different rope, tied completely differently, to check physically at all.`;
+draw();
+</script>
+</body>
+</html>

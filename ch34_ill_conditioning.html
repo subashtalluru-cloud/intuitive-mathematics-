@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#059669; --part-accent-light:#D1FAE5; --part-highlight:#C2410C;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#ECFDF5; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">When "Technically Invertible" Is Still Dangerous</div>
+<div class="mb-sub">Drag the slider to make matrix A nearly (but not exactly) singular. Watch what a microscopic 0.0001 change to the input b does to the solved answer as det(A) approaches zero.</div>
+<div class="mb-stage">
+<div class="slider-row"><label>Matrix near-singularity: entry = <span id="epsVal">0.5</span> (1.0 = perfectly safe, 0.0 = singular)</label>
+<input type="range" id="epsSlider" min="0" max="100" value="50"></div>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">A near-zero determinant is a direct, early warning sign of dangerous error-amplification — not merely a theoretical edge case, but a genuine, practically consequential numerical hazard in real engineering computation.</div>
+</div>
+<script>
+function computeAndShow(){
+  const epsRaw = parseInt(document.getElementById('epsSlider').value);
+  const eps = epsRaw/100;
+  document.getElementById('epsVal').textContent = eps.toFixed(2);
+  const A = [[1,1],[1,1+eps*0.01+0.0001]];
+  const det = A[0][0]*A[1][1]-A[0][1]*A[1][0];
+  const Ainv = [[A[1][1]/det, -A[0][1]/det],[-A[1][0]/det, A[0][0]/det]];
+  function mv(M,v){ return [M[0][0]*v[0]+M[0][1]*v[1], M[1][0]*v[0]+M[1][1]*v[1]]; }
+  const b1=[2,2], b2=[2,2.0001];
+  const x1=mv(Ainv,b1), x2=mv(Ainv,b2);
+  const diff = Math.hypot(x1[0]-x2[0], x1[1]-x2[1]);
+
+  document.getElementById('readout').innerHTML =
+    `det(A) = ${det.toExponential(3)}<br>Input change: 0.0001 (tiny)<br>Output change: ${diff.toFixed(4)} (amplification factor: ${(diff/0.0001).toExponential(2)}x)`;
+  const fb=document.getElementById('fb');
+  fb.innerHTML = Math.abs(det)<0.001
+    ? `DANGER ZONE: det(A) ≈ ${det.toExponential(2)}. A microscopic 0.0001 input error has been amplified into a ${diff.toFixed(2)}-magnitude output error — any real measurement noise would make this solution completely unreliable, despite A being technically invertible.`
+    : `det(A) = ${det.toExponential(2)} — comfortably away from zero. The tiny input perturbation stays tiny in the output. Safe.`;
+}
+document.getElementById('epsSlider').addEventListener('input', computeAndShow);
+document.getElementById('aha').innerHTML=`<strong>Aha:</strong> drag the slider all the way to 0 — watch the amplification factor explode toward infinity. This is exactly why numerical analysts treat "determinant technically nonzero" and "determinant safely nonzero" as two completely different practical situations, even though Chapter 34's own strict mathematical definition of invertibility only cares about the first.`;
+computeAndShow();
+</script>
+</body></html>

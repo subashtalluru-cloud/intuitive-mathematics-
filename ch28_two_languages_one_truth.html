@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+:root{
+  --part-accent: #0891B2; --part-accent-light: #CFFAFE; --part-highlight: #C2410C;
+  --ink: #1A202C; --ink-soft: #4A5568; --paper: #FAFAF7; --line: #D6D3CB;
+  --good: #15803D; --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+*{ box-sizing: border-box; }
+html, body{ height:100%; }
+body{ margin:0; padding: clamp(16px, 3vw, 40px); background:#ECFEFF; font-family: var(--font-sans); color: var(--ink);
+  display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: clamp(20px, 2.5vw, 36px);
+  width: 100%; max-width: 1150px; }
+.mb-title{ font-size: clamp(1.3rem, 2vw, 1.7rem); font-weight: 700; color: var(--part-accent); margin: 0 0 6px 0; }
+.mb-sub{ font-size: clamp(0.9rem, 1.1vw, 1.05rem); color: var(--ink-soft); margin-bottom: 20px; line-height:1.5; max-width: 950px; }
+.two-col{ display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+@media (max-width: 760px){ .two-col{ grid-template-columns: 1fr; } }
+.lang-panel{ background: #fff; border: 2px solid var(--line); border-radius: 12px; padding: clamp(18px, 2vw, 26px); }
+.lang-panel.geo{ border-color: var(--part-accent); }
+.lang-panel.alg{ border-color: var(--part-highlight); }
+.lang-header{ font-weight:700; font-size: clamp(1rem, 1.2vw, 1.15rem); margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+.lang-header.geo{ color: var(--part-accent); }
+.lang-header.alg{ color: var(--part-highlight); }
+.civ-tag{ font-size:0.75rem; font-weight:400; color: var(--ink-soft); background:#F1F5F9; padding:2px 8px; border-radius:10px; }
+#euclidSvg{ width:100%; height:auto; aspect-ratio:1/1; display:block; margin-bottom: 12px; }
+.alg-steps{ font-family: var(--font-mono); font-size: clamp(0.85rem, 1vw, 0.98rem); line-height:2; }
+.alg-steps .step{ padding: 6px 0; border-bottom: 1px dashed var(--line); }
+.result-banner{ text-align:center; font-size: clamp(1.1rem, 1.4vw, 1.3rem); font-weight:700; color: var(--good);
+  background:#F0FDF4; border:2px solid var(--good); border-radius: 10px; padding: 14px; margin-top:20px; }
+.mb-feedback{ font-size: clamp(1.05rem, 1.3vw, 1.25rem); padding: 16px 20px; border-radius: 10px; margin-top: 16px;
+  line-height: 1.65; background: var(--part-accent-light); color: var(--part-accent); border: 1px solid var(--line); }
+.aha{ font-size: clamp(1.05rem, 1.3vw, 1.25rem); padding: 16px 20px; border-radius: 10px; margin-top: 14px;
+  line-height: 1.65; background: #FFF7ED; color: #9A3412; border: 1px solid #FED7AA; }
+.aha strong{ color: #C2410C; }
+.mb-caption{ font-size: clamp(0.95rem, 1.05vw, 1.05rem); color: var(--ink-soft); margin-top: 12px; font-style:italic; line-height:1.6; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Two Civilizations, One Truth — Watch Them Meet</div>
+  <div class="mb-sub">Euclid (Greece, ~300 BCE) proved this fact using pure geometric construction. Descartes (France, 1637) proved the identical fact using pure algebra. Neither knew the other's method. Compare both proofs, side by side, of the same claim: the diagonal of a 3-by-4 rectangle is 5.</div>
+
+  <div class="two-col">
+    <div class="lang-panel geo">
+      <div class="lang-header geo">📐 Euclid's Language <span class="civ-tag">Geometry, ~300 BCE</span></div>
+      <svg id="euclidSvg" viewBox="0 0 240 240"></svg>
+      <div style="font-size:0.85rem; color:var(--ink-soft); line-height:1.6;">
+        Construct squares on each of the two legs (area 9 and area 16). Construct a square on the hypotenuse. Euclid's own geometric proof (Book I, Proposition 47) shows the two smaller squares' combined AREA exactly fills the larger square — no algebra, no coordinates, purely constructed shapes.
+      </div>
+    </div>
+    <div class="lang-panel alg">
+      <div class="lang-header alg">🔢 Descartes's Language <span class="civ-tag">Algebra, 1637 CE</span></div>
+      <div class="alg-steps">
+        <div class="step">1. Place the rectangle's corner at origin (0,0).</div>
+        <div class="step">2. Opposite corner sits at (3,4) — pure coordinate numbers, no shape drawn.</div>
+        <div class="step">3. Distance formula: d = √((3−0)² + (4−0)²)</div>
+        <div class="step">4. d = √(9 + 16) = √25</div>
+        <div class="step">5. d = 5</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="result-banner">Both methods: diagonal = 5. Same truth, zero shared vocabulary.</div>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="aha" id="aha"></div>
+  <div class="mb-caption">Chapter 1 promised mathematics reveals a coherent language for describing reality. Nowhere is that more vivid than here: Euclid's shapes and Descartes's symbols, developed 1,900 years apart with no communication whatsoever, are the identical mathematical territory, viewed through two historically independent lenses.</div>
+</div>
+
+<script>
+function draw(){
+  const svg = document.getElementById('euclidSvg');
+  svg.innerHTML='';
+  // main right triangle: legs 3,4 scaled up, at bottom-left
+  const scale = 20;
+  const ox=20, oy=200;
+  const A={x:ox,y:oy}, B={x:ox+3*scale,y:oy}, C={x:ox+3*scale,y:oy-4*scale};
+
+  // square on leg AB (bottom, area 9)
+  const sq1 = document.createElementNS('http://www.w3.org/2000/svg','rect');
+  sq1.setAttribute('x',A.x); sq1.setAttribute('y',oy); sq1.setAttribute('width',3*scale); sq1.setAttribute('height',3*scale);
+  sq1.setAttribute('fill','var(--part-accent)'); sq1.setAttribute('fill-opacity','0.25'); sq1.setAttribute('stroke','var(--part-accent)'); sq1.setAttribute('stroke-width','2');
+  svg.appendChild(sq1);
+  const lbl1 = document.createElementNS('http://www.w3.org/2000/svg','text');
+  lbl1.setAttribute('x',A.x+1.5*scale); lbl1.setAttribute('y',oy+1.5*scale+4); lbl1.setAttribute('text-anchor','middle'); lbl1.setAttribute('font-size','12'); lbl1.setAttribute('font-weight','700'); lbl1.setAttribute('fill','var(--part-accent)');
+  lbl1.textContent = '9';
+  svg.appendChild(lbl1);
+
+  // square on leg BC (right, area 16)
+  const sq2 = document.createElementNS('http://www.w3.org/2000/svg','rect');
+  sq2.setAttribute('x',B.x); sq2.setAttribute('y',C.y); sq2.setAttribute('width',4*scale); sq2.setAttribute('height',4*scale);
+  sq2.setAttribute('fill','var(--part-accent)'); sq2.setAttribute('fill-opacity','0.25'); sq2.setAttribute('stroke','var(--part-accent)'); sq2.setAttribute('stroke-width','2');
+  svg.appendChild(sq2);
+  const lbl2 = document.createElementNS('http://www.w3.org/2000/svg','text');
+  lbl2.setAttribute('x',B.x+2*scale); lbl2.setAttribute('y',C.y+2*scale+4); lbl2.setAttribute('text-anchor','middle'); lbl2.setAttribute('font-size','12'); lbl2.setAttribute('font-weight','700'); lbl2.setAttribute('fill','var(--part-accent)');
+  lbl2.textContent = '16';
+  svg.appendChild(lbl2);
+
+  // main triangle
+  const tri = document.createElementNS('http://www.w3.org/2000/svg','path');
+  tri.setAttribute('d',`M${A.x},${A.y} L${B.x},${B.y} L${C.x},${C.y} Z`);
+  tri.setAttribute('fill','#fff'); tri.setAttribute('stroke','var(--ink)'); tri.setAttribute('stroke-width','2');
+  svg.appendChild(tri);
+
+  // square on hypotenuse (area 25) - rotated, tilted outward from the hypotenuse
+  const hx = C.x - A.x, hy = C.y - A.y;
+  const len = Math.sqrt(hx*hx+hy*hy);
+  const ux = hx/len, uy = hy/len;
+  const px = -uy, py = ux; // perpendicular
+  const p1 = A, p2 = C;
+  const p3 = {x: C.x + px*len, y: C.y + py*len};
+  const p4 = {x: A.x + px*len, y: A.y + py*len};
+  const sq3fixed = document.createElementNS('http://www.w3.org/2000/svg','path');
+  sq3fixed.setAttribute('d',`M${p1.x},${p1.y} L${p2.x},${p2.y} L${p3.x},${p3.y} L${p4.x},${p4.y} Z`);
+  sq3fixed.setAttribute('fill','var(--part-highlight)'); sq3fixed.setAttribute('fill-opacity','0.25'); sq3fixed.setAttribute('stroke','var(--part-highlight)'); sq3fixed.setAttribute('stroke-width','2');
+  svg.appendChild(sq3fixed);
+  const lbl3 = document.createElementNS('http://www.w3.org/2000/svg','text');
+  const centerX = (p1.x+p2.x+p3.x+p4.x)/4, centerY = (p1.y+p2.y+p3.y+p4.y)/4;
+  lbl3.setAttribute('x',centerX); lbl3.setAttribute('y',centerY+4); lbl3.setAttribute('text-anchor','middle'); lbl3.setAttribute('font-size','12'); lbl3.setAttribute('font-weight','700'); lbl3.setAttribute('fill','var(--part-highlight)');
+  lbl3.textContent = '25';
+  svg.appendChild(lbl3);
+}
+draw();
+
+document.getElementById('fb').innerHTML = `9 + 16 = 25 (Euclid's areas, geometrically constructed) exactly equals 3² + 4² = 5² (Descartes's algebra, purely symbolic) — the SAME numerical fact, reached by two people who never met, working in different centuries, different countries, different notations, different mental pictures entirely.`;
+
+document.getElementById('aha').innerHTML = `<strong>Aha:</strong> this is a genuinely different kind of mathematical discovery than "extending a rule to new cases" (like Chapter 10's sign rule or Chapter 12's exponents). Nothing new was found here — both facts were already fully known separately. What's remarkable is realizing two entire, independently-developed BODIES of knowledge were secretly the same territory the whole time, just described in two different languages.`;
+</script>
+</body>
+</html>

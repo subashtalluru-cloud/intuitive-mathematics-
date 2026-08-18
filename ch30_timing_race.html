@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+:root{
+  --part-accent: #0891B2; --part-accent-light: #CFFAFE; --part-highlight: #C2410C;
+  --ink: #1A202C; --ink-soft: #4A5568; --paper: #FAFAF7; --line: #D6D3CB;
+  --good: #15803D; --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+*{ box-sizing: border-box; }
+html, body{ height:100%; }
+body{ margin:0; padding: clamp(16px, 3vw, 40px); background:#ECFEFF; font-family: var(--font-sans); color: var(--ink);
+  display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: clamp(20px, 2.5vw, 36px);
+  width: 100%; max-width: 1150px; }
+.mb-title{ font-size: clamp(1.3rem, 2vw, 1.7rem); font-weight: 700; color: var(--part-accent); margin: 0 0 6px 0; }
+.mb-sub{ font-size: clamp(0.9rem, 1.1vw, 1.05rem); color: var(--ink-soft); margin-bottom: 20px; line-height:1.5; max-width: 950px; }
+.mb-stage{ background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: clamp(16px, 2vw, 28px); }
+#raceSvg{ width:100%; height:auto; aspect-ratio: 2.2/1; display:block; }
+.mb-btn{ font-size: 0.9rem; padding: 10px 18px; border-radius: 8px; border: 1px solid var(--part-accent);
+  background: #fff; color: var(--part-accent); cursor:pointer; font-weight:600; margin-top: 14px; }
+.mb-btn:hover{ background: var(--part-accent); color:#fff; }
+.timer-readout{ display:flex; gap:24px; font-family: var(--font-mono); font-size: clamp(0.9rem, 1.1vw, 1.05rem); margin-top:10px; }
+.timer-box{ flex:1; padding:12px 16px; border-radius:8px; }
+.timer-box.gentle{ background: var(--part-accent-light); color: var(--part-accent); }
+.timer-box.hard{ background: #FFF1E8; color: var(--part-highlight); }
+.mb-feedback{ font-size: clamp(1.05rem, 1.3vw, 1.25rem); padding: 16px 20px; border-radius: 10px; margin-top: 16px;
+  line-height: 1.65; background: var(--part-accent-light); color: var(--part-accent); border: 1px solid var(--line); }
+.aha{ font-size: clamp(1.05rem, 1.3vw, 1.25rem); padding: 16px 20px; border-radius: 10px; margin-top: 14px;
+  line-height: 1.65; background: #FFF7ED; color: #9A3412; border: 1px solid #FED7AA; }
+.aha strong{ color: #C2410C; }
+.mb-caption{ font-size: clamp(0.95rem, 1.05vw, 1.05rem); color: var(--ink-soft); margin-top: 12px; font-style:italic; line-height:1.6; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Same Path, Two Different Clocks — Watch What "Eliminating the Parameter" Throws Away</div>
+  <div class="mb-sub">A gentle lob and a hard flat throw trace the EXACT same parabolic path through space. Race them — the gentle throw takes 3 seconds, the hard throw takes 1 second. An outfielder who only knew the shared shape equation would have no idea which ball is about to land first.</div>
+
+  <div class="mb-stage">
+    <svg id="raceSvg" viewBox="0 0 440 200"></svg>
+    <div class="timer-readout">
+      <div class="timer-box gentle" id="gentleTimer">Gentle lob: t=0.00s</div>
+      <div class="timer-box hard" id="hardTimer">Hard throw: t=0.00s</div>
+    </div>
+  </div>
+  <button class="mb-btn" onclick="runRace()">Throw both balls</button>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="aha" id="aha"></div>
+  <div class="mb-caption">Solving the eliminate-the-parameter procedure on either throw produces the IDENTICAL final equation — because that equation, by construction, describes only the shape, with every trace of timing algebraically erased in the process of substituting the parameter away.</div>
+</div>
+
+<script>
+function pathPoint(s){
+  const x = 4*s;
+  const y = -x*x/4 + x;
+  return {x, y};
+}
+const scale = 90, origin = {x:20, y:180};
+function toSvg(pt){ return {x: origin.x+pt.x*scale, y: origin.y-pt.y*scale}; }
+
+function drawPath(){
+  const svg = document.getElementById('raceSvg');
+  svg.innerHTML='';
+  let d='M';
+  for(let s=0;s<=1;s+=0.02){
+    const p = pathPoint(s);
+    const sp = toSvg(p);
+    d += `${sp.x},${sp.y} L`;
+  }
+  const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+  path.setAttribute('d',d.slice(0,-1)); path.setAttribute('fill','none'); path.setAttribute('stroke','#CBD5E1'); path.setAttribute('stroke-width','2'); path.setAttribute('stroke-dasharray','4,3');
+  svg.appendChild(path);
+}
+
+let animId = null;
+function runRace(){
+  if(animId) cancelAnimationFrame(animId);
+  drawPath();
+  const svg = document.getElementById('raceSvg');
+  const gentleDur = 3000, hardDur = 1000;
+  const startTime = performance.now();
+  const gentleDot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  gentleDot.setAttribute('r',7); gentleDot.setAttribute('fill','var(--part-accent)');
+  svg.appendChild(gentleDot);
+  const hardDot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  hardDot.setAttribute('r',7); hardDot.setAttribute('fill','var(--part-highlight)');
+  svg.appendChild(hardDot);
+
+  function frame(now){
+    const elapsed = now - startTime;
+    const gS = Math.min(1, elapsed/gentleDur);
+    const hS = Math.min(1, elapsed/hardDur);
+    const gp = toSvg(pathPoint(gS)), hp = toSvg(pathPoint(hS));
+    gentleDot.setAttribute('cx',gp.x); gentleDot.setAttribute('cy',gp.y);
+    hardDot.setAttribute('cx',hp.x); hardDot.setAttribute('cy',hp.y);
+    document.getElementById('gentleTimer').textContent = `Gentle lob: t=${(elapsed/1000).toFixed(2)}s ${gS>=1?'— LANDED':''}`;
+    document.getElementById('hardTimer').textContent = `Hard throw: t=${(elapsed/1000).toFixed(2)}s ${hS>=1?'— LANDED':''}`;
+    if(gS<1 || hS<1){
+      animId = requestAnimationFrame(frame);
+    } else {
+      const fb = document.getElementById('fb');
+      fb.innerHTML = `The hard throw landed at t=1.00s — a full 2 seconds before the gentle lob, which didn't land until t=3.00s. Both balls traced the IDENTICAL path through space (same dashed curve) — an outfielder using only the shape equation, with timing eliminated, would have zero way to know the hard throw was already on the ground while the lob was still in the air.`;
+    }
+  }
+  animId = requestAnimationFrame(frame);
+}
+drawPath();
+document.getElementById('aha').innerHTML = `<strong>Aha:</strong> eliminating the parameter isn't a neutral simplification — it's a genuine, irreversible information loss. The parametric description x(t), y(t) preserves exactly what a single y=f(x) equation cannot: which specific moment the object occupied each position. Choosing which description to use is a real modeling decision, not just a matter of algebraic convenience.`;
+</script>
+</body>
+</html>

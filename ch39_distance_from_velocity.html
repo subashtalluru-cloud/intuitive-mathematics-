@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C3AED; --part-accent-light:#EDE9FE; --part-highlight:#DB2777;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F5F3FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.layout-row{ display:grid; grid-template-columns:1.2fr 1fr; gap:28px; align-items:start; }
+@media (max-width:800px){ .layout-row{ grid-template-columns:1fr; } }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#velSvg{ width:100%; height:auto; aspect-ratio:1.2/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">A Car's Speedometer Reading Over Time — Total Distance Is the Area</div>
+<div class="mb-sub">v(t)=2t: a car accelerating steadily. Simple distance=speed x time only works for CONSTANT speed. Drag the strip count and watch the area-under-the-curve approach the true total distance traveled.</div>
+<div class="layout-row">
+<div class="mb-stage"><svg id="velSvg" viewBox="0 0 260 220"></svg></div>
+<div>
+<div class="slider-row"><label>Strips (time intervals): <span id="nVal">4</span></label><input type="range" id="nSlider" min="1" max="60" value="4"></div>
+<div class="readout" id="readout"></div>
+</div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">Finding exact distance traveled from a continuously varying velocity record is not simple speed times time — it is the area under a curved velocity-versus-time graph, computed exactly by the integral.</div>
+</div>
+<script>
+function v(t){ return 2*t; }
+const scale=50, origin={x:20,y:200};
+function toSvg(t,y){ return {x:origin.x+t*scale, y:origin.y-y*scale*0.2}; }
+function draw(){
+  const n=parseInt(document.getElementById('nSlider').value);
+  document.getElementById('nVal').textContent=n;
+  const a=0,b=4;
+  const dt=(b-a)/n;
+
+  const svg=document.getElementById('velSvg');
+  svg.innerHTML='';
+  let total=0;
+  for(let i=1;i<=n;i++){
+    const t=a+i*dt;
+    const height=v(t);
+    total+=height*dt;
+    const p1=toSvg(t-dt,0), p2=toSvg(t,height);
+    const rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rect.setAttribute('x',p1.x); rect.setAttribute('y',p2.y); rect.setAttribute('width',p2.x-p1.x); rect.setAttribute('height',p1.y-p2.y);
+    rect.setAttribute('fill','var(--part-accent)'); rect.setAttribute('fill-opacity','0.4'); rect.setAttribute('stroke','var(--part-accent)'); rect.setAttribute('stroke-width','1');
+    svg.appendChild(rect);
+  }
+  const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+  const s0=toSvg(0,0), s1=toSvg(4,v(4));
+  line.setAttribute('x1',s0.x); line.setAttribute('y1',s0.y); line.setAttribute('x2',s1.x); line.setAttribute('y2',s1.y);
+  line.setAttribute('stroke','var(--part-highlight)'); line.setAttribute('stroke-width','2.5');
+  svg.appendChild(line);
+
+  document.getElementById('readout').innerHTML =
+    'Strips: '+n+'<br>Riemann sum (approx distance): '+total.toFixed(3)+' miles<br>True distance (triangle area): 16.000 miles';
+  document.getElementById('fb').innerHTML = 'At '+n+' strips, approximate distance='+total.toFixed(3)+' miles, versus the true exact value 16 miles (computed geometrically here as a simple triangle, but the SAME integral method works for any velocity curve, however irregular).';
+}
+document.getElementById('nSlider').addEventListener('input', draw);
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> this specific velocity curve happens to be a straight line, so the true area is an ordinary triangle, easily checked by hand (16 miles). But the identical rectangle-summing method works completely unchanged for any wildly irregular, non-geometric velocity curve - real recorded speedometer data, with no simple formula at all.";
+draw();
+</script>
+</body></html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#059669; --part-accent-light:#D1FAE5; --part-highlight:#C2410C;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#ECFDF5; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#signalSvg{ width:100%; height:auto; aspect-ratio:2.5/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin:10px 0; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Undo Motion Blur — Recover the Original Signal Exactly</div>
+<div class="mb-sub">A known blur process mixes two signal readings together. Drag the original signal's own bars — watch the blurred (corrupted) version and the inverse-recovered version both update, with recovery always landing back exactly on the original.</div>
+<div class="mb-stage">
+<svg id="signalSvg" viewBox="0 0 400 180"></svg>
+<div class="slider-row"><label>Signal A: <span id="aVal">100</span></label><input type="range" id="aSlider" min="0" max="150" value="100"></div>
+<div class="slider-row"><label>Signal B: <span id="bVal">20</span></label><input type="range" id="bSlider" min="0" max="150" value="20"></div>
+<div class="readout" id="readout"></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">Recovering an original, undistorted signal from a version corrupted by a known linear distortion process — such as motion blur in a photograph — requires applying the inverse of the matrix representing that distortion.</div>
+</div>
+<script>
+const B=[[0.6,0.4],[0.3,0.7]];
+const det=B[0][0]*B[1][1]-B[0][1]*B[1][0];
+const Binv=[[B[1][1]/det,-B[0][1]/det],[-B[1][0]/det,B[0][0]/det]];
+function draw(orig, blurred, recovered){
+  const svg=document.getElementById('signalSvg');
+  svg.innerHTML='';
+  const groups=[['Original',orig,'var(--part-accent)',20],['Blurred',blurred,'var(--part-highlight)',150],['Recovered',recovered,'#7C3AED',280]];
+  groups.forEach(([label,vals,color,xBase])=>{
+    vals.forEach((v,i)=>{
+      const h=v*0.7;
+      const rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
+      rect.setAttribute('x',xBase+i*35); rect.setAttribute('y',150-h); rect.setAttribute('width',25); rect.setAttribute('height',h);
+      rect.setAttribute('fill',color);
+      svg.appendChild(rect);
+      const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('x',xBase+i*35+12); t.setAttribute('y',165); t.setAttribute('text-anchor','middle'); t.setAttribute('font-size','9');
+      t.textContent=v.toFixed(0);
+      svg.appendChild(t);
+    });
+    const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',xBase+30); lbl.setAttribute('y',15); lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('font-size','11'); lbl.setAttribute('font-weight','700'); lbl.setAttribute('fill',color);
+    lbl.textContent=label;
+    svg.appendChild(lbl);
+  });
+}
+function update(){
+  const a=parseInt(document.getElementById('aSlider').value);
+  const b=parseInt(document.getElementById('bSlider').value);
+  document.getElementById('aVal').textContent=a;
+  document.getElementById('bVal').textContent=b;
+  const orig=[a,b];
+  const blurred=[B[0][0]*a+B[0][1]*b, B[1][0]*a+B[1][1]*b];
+  const recovered=[Binv[0][0]*blurred[0]+Binv[0][1]*blurred[1], Binv[1][0]*blurred[0]+Binv[1][1]*blurred[1]];
+  draw(orig, blurred, recovered);
+  document.getElementById('readout').innerHTML =
+    `Original: (${orig[0]},${orig[1]})<br>After blur: (${blurred[0].toFixed(1)},${blurred[1].toFixed(1)})<br>After inverse recovery: (${recovered[0].toFixed(2)},${recovered[1].toFixed(2)})`;
+  document.getElementById('fb').innerHTML = `Recovered signal matches the original to within rounding error, for ANY values you drag to — B-inverse times B always returns exactly the identity, undoing the blur completely.`;
+}
+document.getElementById('aSlider').addEventListener('input', update);
+document.getElementById('bSlider').addEventListener('input', update);
+document.getElementById('aha').innerHTML=`<strong>Aha:</strong> the middle (blurred) bars always look meaningfully different from the original — real information has been mixed together. Yet the inverse matrix perfectly reconstructs the original every time, PROVIDED the blur matrix itself is known exactly and is non-singular — exactly the same "no undo without a nonzero determinant" rule from earlier in this chapter, now protecting a real signal from permanent corruption.`;
+update();
+</script>
+</body></html>

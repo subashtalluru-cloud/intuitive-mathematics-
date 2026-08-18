@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C3AED; --part-accent-light:#EDE9FE; --part-highlight:#DB2777;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F5F3FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.layout-row{ display:grid; grid-template-columns:1.2fr 1fr; gap:28px; align-items:start; }
+@media (max-width:800px){ .layout-row{ grid-template-columns:1fr; } }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#balloonSvg{ width:100%; height:auto; aspect-ratio:1/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Constant Air Flow, Slowing Radius Growth</div>
+<div class="mb-sub">A balloon inflates at a CONSTANT volume rate (100 cubic cm per second, always). Drag the current radius and watch how fast the radius itself is growing at that instant — it slows down dramatically as the balloon gets bigger, even though the air flow never changes.</div>
+<div class="layout-row">
+<div class="mb-stage"><svg id="balloonSvg" viewBox="0 0 260 260"></svg></div>
+<div>
+<div class="slider-row"><label>Current radius r = <span id="rVal">5.0</span> cm</label><input type="range" id="rSlider" min="10" max="150" value="50"></div>
+<div class="readout" id="readout"></div>
+</div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">A common mistake is substituting the known numerical radius into the volume equation BEFORE differentiating — this destroys the variable relationship the derivative needs, producing a meaningless constant instead of a genuine rate.</div>
+</div>
+<script>
+function draw(){
+  const rRaw=parseInt(document.getElementById('rSlider').value);
+  const r=rRaw/10;
+  document.getElementById('rVal').textContent=r.toFixed(1);
+  const dVdt=100;
+  const drdt = dVdt/(4*Math.PI*r*r);
+
+  const svg=document.getElementById('balloonSvg');
+  svg.innerHTML='';
+  const displayR=Math.min(100, r*8);
+  const circle=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  circle.setAttribute('cx',130); circle.setAttribute('cy',130); circle.setAttribute('r',displayR);
+  circle.setAttribute('fill','var(--part-accent-light)'); circle.setAttribute('stroke','var(--part-accent)'); circle.setAttribute('stroke-width','2.5');
+  svg.appendChild(circle);
+  const label=document.createElementNS('http://www.w3.org/2000/svg','text');
+  label.setAttribute('x',130); label.setAttribute('y',130); label.setAttribute('text-anchor','middle'); label.setAttribute('font-size','12'); label.setAttribute('font-weight','700'); label.setAttribute('fill','var(--part-accent)');
+  label.textContent='r='+r.toFixed(1);
+  svg.appendChild(label);
+
+  document.getElementById('readout').innerHTML =
+    'V=(4/3)pi*r^3<br>'+
+    'Differentiate: dV/dt=4*pi*r^2*(dr/dt)<br>'+
+    'Given dV/dt=100 (constant)<br>'+
+    'dr/dt = 100/(4*pi*r^2) = '+drdt.toFixed(4)+' cm/s';
+  document.getElementById('fb').innerHTML = 'At r='+r.toFixed(1)+' cm, the radius is currently growing at '+drdt.toFixed(4)+' cm/s. Air flows in at the SAME constant 100 cubic cm/s throughout, yet the radius growth rate itself keeps shrinking as the balloon gets bigger.';
+}
+document.getElementById('rSlider').addEventListener('input', draw);
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> drag r from small to large and watch dr/dt shrink dramatically, even though dV/dt never changes from a constant 100. A bigger balloon has more surface area to distribute the same volume increase across, so its radius grows more slowly - exactly what 4*pi*r^2 in the denominator captures.";
+draw();
+</script>
+</body></html>

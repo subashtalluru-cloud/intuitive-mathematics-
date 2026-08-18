@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#059669; --part-accent-light:#D1FAE5; --part-highlight:#C2410C;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#ECFDF5; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+.grid-container{ display:grid; grid-template-columns:repeat(6,1fr); gap:3px; max-width:300px; margin:0 auto; }
+.pixel{ aspect-ratio:1/1; display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-size:0.7rem; cursor:pointer; border-radius:3px; color:#fff; font-weight:700; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:14px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">A Photo Blur Is the Same Matrix Applied to Every Pixel</div>
+<div class="mb-sub">Click any pixel on this tiny 6x6 grayscale grid — watch the blur value computed by averaging that pixel with its immediate neighbors, exactly Chapter 32's own "single transformation applied consistently to many inputs" principle.</div>
+<div class="mb-stage">
+<div class="grid-container" id="pixelGrid"></div>
+<div class="readout" id="readout">Click any pixel to see its blur computation.</div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">Applying a blur, sharpen, or edge-detection effect to a digital photograph is, at its computational core, a matrix-based operation applied uniformly across every pixel neighborhood in the image.</div>
+</div>
+<script>
+const size=6;
+let grid=[];
+for(let r=0;r<size;r++){ grid.push([]); for(let c=0;c<size;c++){ grid[r].push(Math.floor(Math.random()*200)+30); } }
+function colorFor(v){ return `rgb(${v},${v},${v})`; }
+function render(){
+  const container=document.getElementById('pixelGrid');
+  container.innerHTML='';
+  for(let r=0;r<size;r++){
+    for(let c=0;c<size;c++){
+      const px=document.createElement('div');
+      px.className='pixel';
+      px.style.background=colorFor(grid[r][c]);
+      px.textContent=grid[r][c];
+      px.onclick=()=>blurAt(r,c);
+      container.appendChild(px);
+    }
+  }
+}
+function blurAt(r,c){
+  let total=0, count=0, neighbors=[];
+  for(let dr=-1;dr<=1;dr++){
+    for(let dc=-1;dc<=1;dc++){
+      const nr=r+dr, nc=c+dc;
+      if(nr>=0&&nr<size&&nc>=0&&nc<size){
+        total+=grid[nr][nc]; count++;
+        neighbors.push(grid[nr][nc]);
+      }
+    }
+  }
+  const blurred = total/count;
+  document.getElementById('readout').innerHTML =
+    `Pixel (${r},${c}) original value: ${grid[r][c]}<br>Neighbors: [${neighbors.join(', ')}]<br>Blur = average of all ${count} neighbors = ${blurred.toFixed(2)}`;
+  document.getElementById('fb').innerHTML = `Every single pixel in a real photo — millions of them — gets this IDENTICAL averaging computation applied, just centered on a different location each time. That uniformity is precisely why GPUs can parallelize this operation across an entire image simultaneously.`;
+}
+document.getElementById('aha').innerHTML=`<strong>Aha:</strong> click a corner pixel, then a center pixel — notice corner pixels average FEWER neighbors (only 4, since they're at the grid's edge) while center pixels average all 9. Real image-processing code must handle exactly this edge case, but the CORE averaging rule itself never changes.`;
+render();
+</script>
+</body></html>

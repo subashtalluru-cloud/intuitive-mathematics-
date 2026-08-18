@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#059669; --part-accent-light:#D1FAE5; --part-highlight:#C2410C;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#ECFDF5; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.layout-row{ display:grid; grid-template-columns:1.2fr 1fr; gap:28px; align-items:start; }
+@media (max-width:800px){ .layout-row{ grid-template-columns:1fr; } }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#armSvg{ width:100%; height:auto; aspect-ratio:1.2/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">A Robot Arm Is Just Chained Rotation Matrices</div>
+<div class="mb-sub">Two joint angles control a two-segment arm. Drag either slider — the elbow and hand positions are computed purely by combining rotation matrices in sequence, exactly Chapter 32's composition idea applied to real hardware.</div>
+<div class="layout-row">
+<div class="mb-stage"><svg id="armSvg" viewBox="0 0 260 260"></svg></div>
+<div>
+<div class="slider-row"><label>Shoulder angle: <span id="t1Val">40</span> deg</label><input type="range" id="t1Slider" min="-90" max="90" value="40"></div>
+<div class="slider-row"><label>Elbow angle: <span id="t2Val">-30</span> deg</label><input type="range" id="t2Slider" min="-150" max="150" value="-30"></div>
+<div class="readout" id="readout"></div>
+</div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">Real industrial robots compute exactly this chained-matrix calculation, many times per second, to know precisely where their own end-effector sits in space.</div>
+</div>
+<script>
+const L1=2.2, L2=1.8;
+const scale=45, origin={x:130,y:220};
+function toSvg(p){ return {x:origin.x+p.x*scale, y:origin.y-p.y*scale}; }
+function rot(deg){ const t=deg*Math.PI/180; return [[Math.cos(t),-Math.sin(t)],[Math.sin(t),Math.cos(t)]]; }
+function mv(M,v){ return {x:M[0][0]*v.x+M[0][1]*v.y, y:M[1][0]*v.x+M[1][1]*v.y}; }
+function draw(){
+  const t1=parseFloat(document.getElementById('t1Slider').value);
+  const t2=parseFloat(document.getElementById('t2Slider').value);
+  document.getElementById('t1Val').textContent=t1;
+  document.getElementById('t2Val').textContent=t2;
+
+  const shoulder={x:0,y:0};
+  const elbowVec = mv(rot(t1),{x:L1,y:0});
+  const elbow = {x:elbowVec.x, y:elbowVec.y};
+  const handVecRel = mv(rot(t1+t2),{x:L2,y:0});
+  const hand = {x:elbow.x+handVecRel.x, y:elbow.y+handVecRel.y};
+
+  const svg=document.getElementById('armSvg');
+  svg.innerHTML='';
+  const s=toSvg(shoulder), e=toSvg(elbow), h=toSvg(hand);
+  const arm1=document.createElementNS('http://www.w3.org/2000/svg','line');
+  arm1.setAttribute('x1',s.x); arm1.setAttribute('y1',s.y); arm1.setAttribute('x2',e.x); arm1.setAttribute('y2',e.y);
+  arm1.setAttribute('stroke','var(--part-accent)'); arm1.setAttribute('stroke-width','6'); arm1.setAttribute('stroke-linecap','round');
+  svg.appendChild(arm1);
+  const arm2=document.createElementNS('http://www.w3.org/2000/svg','line');
+  arm2.setAttribute('x1',e.x); arm2.setAttribute('y1',e.y); arm2.setAttribute('x2',h.x); arm2.setAttribute('y2',h.y);
+  arm2.setAttribute('stroke','var(--part-highlight)'); arm2.setAttribute('stroke-width','6'); arm2.setAttribute('stroke-linecap','round');
+  svg.appendChild(arm2);
+  [[s,'var(--ink)'],[e,'var(--part-accent)'],[h,'var(--part-highlight)']].forEach(([p,c])=>{
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',p.x); dot.setAttribute('cy',p.y); dot.setAttribute('r',7); dot.setAttribute('fill',c);
+    svg.appendChild(dot);
+  });
+  document.getElementById('readout').innerHTML =
+    `Shoulder: (0,0)<br>Elbow: (${elbow.x.toFixed(2)}, ${elbow.y.toFixed(2)})<br>Hand (end-effector): (${hand.x.toFixed(2)}, ${hand.y.toFixed(2)})`;
+  document.getElementById('fb').innerHTML = `The hand's position was never directly specified — it's the mechanical RESULT of two chained rotation matrices, applied one after another exactly like Chapter 32's own composition element.`;
+}
+document.getElementById('t1Slider').addEventListener('input',draw);
+document.getElementById('t2Slider').addEventListener('input',draw);
+document.getElementById('aha').innerHTML=`<strong>Aha:</strong> the elbow's rotation angle (t2) is added to the shoulder's own angle (t1) before rotating the second segment — because the second segment's orientation is relative to the FIRST segment's own already-rotated frame, not to the fixed ground. This nested relativity is precisely why matrix composition, not simple addition, is the right tool.`;
+draw();
+</script>
+</body></html>

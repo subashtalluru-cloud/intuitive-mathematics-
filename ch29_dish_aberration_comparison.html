@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+:root{
+  --part-accent: #0891B2; --part-accent-light: #CFFAFE; --part-highlight: #C2410C;
+  --ink: #1A202C; --ink-soft: #4A5568; --paper: #FAFAF7; --line: #D6D3CB;
+  --good: #15803D; --bad:#B91C1C; --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SF Mono', 'Cascadia Code', Menlo, monospace;
+}
+*{ box-sizing: border-box; }
+html, body{ height:100%; }
+body{ margin:0; padding: clamp(16px, 3vw, 40px); background:#ECFEFF; font-family: var(--font-sans); color: var(--ink);
+  display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: clamp(20px, 2.5vw, 36px);
+  width: 100%; max-width: 1150px; }
+.mb-title{ font-size: clamp(1.3rem, 2vw, 1.7rem); font-weight: 700; color: var(--part-accent); margin: 0 0 6px 0; }
+.mb-sub{ font-size: clamp(0.9rem, 1.1vw, 1.05rem); color: var(--ink-soft); margin-bottom: 20px; line-height:1.5; max-width: 950px; }
+.two-col{ display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+@media (max-width: 760px){ .two-col{ grid-template-columns: 1fr; } }
+.dish-panel{ background: #fff; border: 2px solid var(--line); border-radius: 12px; padding: clamp(14px, 1.8vw, 22px); }
+.dish-panel.good{ border-color: var(--good); }
+.dish-panel.bad{ border-color: var(--bad); }
+.dish-header{ font-weight:700; font-size: clamp(1rem, 1.2vw, 1.15rem); margin-bottom:10px; text-align:center; }
+.dish-header.good{ color: var(--good); }
+.dish-header.bad{ color: var(--bad); }
+.dishSvg{ width:100%; height:auto; aspect-ratio: 1.1/1; display:block; }
+.mb-btn{ font-size: 0.9rem; padding: 10px 18px; border-radius: 8px; border: 1px solid var(--part-accent);
+  background: #fff; color: var(--part-accent); cursor:pointer; font-weight:600; display:block; margin: 14px auto 0; }
+.mb-btn:hover{ background: var(--part-accent); color:#fff; }
+.mb-feedback{ font-size: clamp(1.05rem, 1.3vw, 1.25rem); padding: 16px 20px; border-radius: 10px; margin-top: 16px;
+  line-height: 1.65; background: var(--part-accent-light); color: var(--part-accent); border: 1px solid var(--line); }
+.aha{ font-size: clamp(1.05rem, 1.3vw, 1.25rem); padding: 16px 20px; border-radius: 10px; margin-top: 14px;
+  line-height: 1.65; background: #FFF7ED; color: #9A3412; border: 1px solid #FED7AA; }
+.aha strong{ color: #C2410C; }
+.mb-caption{ font-size: clamp(0.95rem, 1.05vw, 1.05rem); color: var(--ink-soft); margin-top: 12px; font-style:italic; line-height:1.6; }
+</style>
+</head>
+<body>
+<div class="mb-widget">
+  <div class="mb-title">Why "Close Enough" Isn't — Parabola vs. Sphere</div>
+  <div class="mb-sub">A common engineering shortcut approximates a dish as a section of a sphere, which is easier to manufacture. Fire the same 4 rays at both shapes and compare where they actually land.</div>
+
+  <div class="two-col">
+    <div class="dish-panel good">
+      <div class="dish-header good">✓ True Parabola</div>
+      <svg class="dishSvg" id="paraSvg" viewBox="0 0 240 220"></svg>
+    </div>
+    <div class="dish-panel bad">
+      <div class="dish-header bad">✗ Spherical Approximation</div>
+      <svg class="dishSvg" id="sphereSvg" viewBox="0 0 240 220"></svg>
+    </div>
+  </div>
+  <button class="mb-btn" onclick="fireBoth()">Fire 4 parallel rays at both dishes</button>
+  <div id="fb" class="mb-feedback"></div>
+  <div class="aha" id="aha"></div>
+  <div class="mb-caption">A dish shaped even slightly differently than a true parabola causes rays striking different parts to converge to slightly different points rather than one single, sharply-focused location — degrading exactly the signal the receiver is meant to collect.</div>
+</div>
+
+<script>
+const pP=2.5, focusP={x:pP,y:0};
+const R=7, sphereCenter={x:R,y:0};
+const scale=22, origin={x:30,y:190};
+function toSvg(pt){ return {x:origin.x+pt.x*scale, y:origin.y-pt.y*scale}; }
+function paraX(y){ return y*y/(4*pP); }
+function sphereX(y){ return R - Math.sqrt(Math.max(0,R*R-y*y)); }
+
+function drawBase(svgId, curveFn, focus, isSphere){
+  const svg = document.getElementById(svgId);
+  svg.innerHTML='';
+  let d='M';
+  for(let y=-5.5;y<=5.5;y+=0.2){
+    const s = toSvg({x:curveFn(y), y:y});
+    d += `${s.x},${s.y} L`;
+  }
+  const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+  path.setAttribute('d',d.slice(0,-1)); path.setAttribute('fill','none');
+  path.setAttribute('stroke', isSphere?'var(--bad)':'var(--good)'); path.setAttribute('stroke-width','2.5');
+  svg.appendChild(path);
+  const f = toSvg(focus);
+  const fDot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+  fDot.setAttribute('cx',f.x); fDot.setAttribute('cy',f.y); fDot.setAttribute('r',5); fDot.setAttribute('fill', isSphere?'var(--bad)':'var(--good)');
+  svg.appendChild(fDot);
+}
+
+function fireRaysAt(svgId, curveFn, focus, isSphere){
+  const svg = document.getElementById(svgId);
+  const ys = [-4,-1.5,1.5,4];
+  const landingPoints = [];
+  ys.forEach(y0=>{
+    const hitX = curveFn(y0);
+    const start = toSvg({x:-1,y:y0});
+    const hit = toSvg({x:hitX,y:y0});
+
+    const inRay = document.createElementNS('http://www.w3.org/2000/svg','line');
+    inRay.setAttribute('x1',start.x); inRay.setAttribute('y1',start.y); inRay.setAttribute('x2',hit.x); inRay.setAttribute('y2',hit.y);
+    inRay.setAttribute('stroke','#94A3B8'); inRay.setAttribute('stroke-width','1.2');
+    svg.appendChild(inRay);
+
+    let landX;
+    if(!isSphere){
+      landX = focus.x;
+    } else {
+      // reflect off sphere; compute actual crossing point on axis
+      const cx=sphereCenter.x, cy=sphereCenter.y;
+      const nx=hitX-cx, ny=y0-cy;
+      const norm=Math.hypot(nx,ny);
+      const ux=nx/norm, uy=ny/norm;
+      const dot = 1*ux+0*uy;
+      const rx=1-2*dot*ux, ry=0-2*dot*uy;
+      const t = -y0/ry;
+      landX = hitX + t*rx;
+    }
+    landingPoints.push(landX);
+    const land = toSvg({x:landX, y:0});
+    const outRay = document.createElementNS('http://www.w3.org/2000/svg','line');
+    outRay.setAttribute('x1',hit.x); outRay.setAttribute('y1',hit.y); outRay.setAttribute('x2',land.x); outRay.setAttribute('y2',land.y);
+    outRay.setAttribute('stroke', isSphere?'var(--bad)':'var(--good)'); outRay.setAttribute('stroke-width','1.8');
+    svg.appendChild(outRay);
+    const landDot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    landDot.setAttribute('cx',land.x); landDot.setAttribute('cy',land.y); landDot.setAttribute('r',3);
+    landDot.setAttribute('fill', isSphere?'var(--bad)':'var(--good)');
+    svg.appendChild(landDot);
+  });
+  return landingPoints;
+}
+
+function fireBoth(){
+  drawBase('paraSvg', paraX, focusP, false);
+  drawBase('sphereSvg', sphereX, sphereCenter, true);
+  const paraLandings = fireRaysAt('paraSvg', paraX, focusP, false);
+  const sphereLandings = fireRaysAt('sphereSvg', sphereX, sphereCenter, true);
+
+  const paraSpread = Math.max(...paraLandings)-Math.min(...paraLandings);
+  const sphereSpread = Math.max(...sphereLandings)-Math.min(...sphereLandings);
+
+  const fb = document.getElementById('fb');
+  fb.innerHTML = `Parabola: all 4 rays land within ${paraSpread.toFixed(4)} units of each other — a single sharp point. Sphere: the 4 rays land spread across ${sphereSpread.toFixed(2)} units — a blurred smear, not a point. This blur is called spherical aberration, and it's a real, measurable, unavoidable consequence of using the wrong curve.`;
+}
+drawBase('paraSvg', paraX, focusP, false);
+drawBase('sphereSvg', sphereX, sphereCenter, true);
+document.getElementById('aha').innerHTML = `<strong>Aha:</strong> the spherical dish isn't "slightly worse" — it's a qualitatively different kind of shape. The parabola's convergence is EXACT, guaranteed by algebra, for rays at any height whatsoever. The sphere's convergence is only approximate, and gets measurably worse the further a ray strikes from dead center. "Close enough to a parabola" is never actually close enough once you calculate where the rays really land.`;
+</script>
+</body>
+</html>

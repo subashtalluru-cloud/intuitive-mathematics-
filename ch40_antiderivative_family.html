@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#7C3AED; --part-accent-light:#EDE9FE; --part-highlight:#DB2777;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F5F3FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.layout-row{ display:grid; grid-template-columns:1.2fr 1fr; gap:28px; align-items:start; }
+@media (max-width:800px){ .layout-row{ grid-template-columns:1fr; } }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#familySvg{ width:100%; height:auto; aspect-ratio:1.2/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Infinitely Many Antiderivatives, One Shared Slope Everywhere</div>
+<div class="mb-sub">f(x)=x has antiderivative F(x)=x^2/2+C for ANY constant C. Drag C and watch the whole curve slide vertically — but its slope at every single point never changes, always matching f(x)=x exactly.</div>
+<div class="layout-row">
+<div class="mb-stage"><svg id="familySvg" viewBox="0 0 260 220"></svg></div>
+<div>
+<div class="slider-row"><label>Constant C = <span id="cVal">0</span></label><input type="range" id="cSlider" min="-80" max="80" value="0"></div>
+<div class="readout" id="readout"></div>
+</div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">An antiderivative is never unique — any two antiderivatives of the same function differ by exactly a constant, since differentiating a constant always yields zero regardless of its value.</div>
+</div>
+<script>
+const scale=25, origin={x:130,y:180};
+function toSvg(x,y){ return {x:origin.x+x*scale, y:origin.y-y*scale*0.3}; }
+function draw(){
+  const C=parseInt(document.getElementById('cSlider').value)/10;
+  document.getElementById('cVal').textContent=C.toFixed(1);
+
+  const svg=document.getElementById('familySvg');
+  svg.innerHTML='';
+  const axisX=document.createElementNS('http://www.w3.org/2000/svg','line');
+  axisX.setAttribute('x1',10); axisX.setAttribute('y1',origin.y); axisX.setAttribute('x2',250); axisX.setAttribute('y2',origin.y);
+  axisX.setAttribute('stroke','#E2E8F0');
+  svg.appendChild(axisX);
+
+  let d='M';
+  for(let x=-5;x<=5;x+=0.1){
+    const y = x*x/2+C;
+    const p=toSvg(x,y);
+    d+=p.x+','+p.y+' L';
+  }
+  const curve=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve.setAttribute('d',d.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke','var(--part-accent)'); curve.setAttribute('stroke-width','2.5');
+  svg.appendChild(curve);
+
+  const x0=2;
+  const y0=x0*x0/2+C;
+  const slope=x0;
+  const p0=toSvg(x0,y0);
+  const t1=toSvg(x0-1,y0-slope), t2=toSvg(x0+1,y0+slope);
+  const tanLine=document.createElementNS('http://www.w3.org/2000/svg','line');
+  tanLine.setAttribute('x1',t1.x); tanLine.setAttribute('y1',t1.y); tanLine.setAttribute('x2',t2.x); tanLine.setAttribute('y2',t2.y);
+  tanLine.setAttribute('stroke','var(--part-highlight)'); tanLine.setAttribute('stroke-width','2.5');
+  svg.appendChild(tanLine);
+  const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  dot.setAttribute('cx',p0.x); dot.setAttribute('cy',p0.y); dot.setAttribute('r',6); dot.setAttribute('fill','var(--part-highlight)');
+  svg.appendChild(dot);
+
+  document.getElementById('readout').innerHTML =
+    'F(x) = x^2/2 + '+C.toFixed(1)+'<br>At x=2: F(2)='+y0.toFixed(2)+'<br>Slope at x=2: F prime(2)='+slope+' (matches f(2)=2 always)';
+  document.getElementById('fb').innerHTML = 'The curve has shifted vertically by exactly '+C.toFixed(1)+', but the tangent line (pink) at x=2 always has slope exactly 2, no matter what C is set to — confirming F prime(x)=x regardless of the vertical shift.';
+}
+document.getElementById('cSlider').addEventListener('input', draw);
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> drag C across its entire range and watch the curve slide up and down freely - but the tangent line's own angle at x=2 never rotates even slightly. Every member of this infinite family shares the identical slope at every single x-value, which is exactly why a single derivative rule (the power rule) can recover ANY of them - only the definite integral's own two-endpoint subtraction (FTC Part 2) makes the unknown C cancel out completely.";
+draw();
+</script>
+</body></html>

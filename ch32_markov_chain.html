@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#059669; --part-accent-light:#D1FAE5; --part-highlight:#C2410C;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#ECFDF5; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#markovSvg{ width:100%; height:auto; aspect-ratio:2.2/1; display:block; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin-top:14px; }
+.mb-btn:hover{ background:var(--part-accent); color:#fff; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Weather Tomorrow, and the Day After, and After That</div>
+<div class="mb-sub">Starting 100% sunny today. Each click applies the SAME transition matrix once more — click repeatedly and watch the probabilities settle into a stable long-run equilibrium, regardless of today's certain starting weather.</div>
+<div class="mb-stage"><svg id="markovSvg" viewBox="0 0 440 200"></svg></div>
+<button class="mb-btn" onclick="step()">Advance one day</button>
+<button class="mb-btn" onclick="reset()">Reset to Day 0</button>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">Modeling how a system probabilistically transitions between states over time uses a transition matrix directly, with repeated matrix multiplication computing how probabilities evolve over successive time steps.</div>
+</div>
+<script>
+const M=[[0.7,0.3],[0.4,0.6]];
+let state=[1,0];
+let day=0;
+let history=[[1,0]];
+function draw(){
+  const svg=document.getElementById('markovSvg');
+  svg.innerHTML='';
+  history.forEach((s,i)=>{
+    const x=30+i*35;
+    const sunnyH=s[0]*140, rainyH=s[1]*140;
+    const sunnyBar=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    sunnyBar.setAttribute('x',x); sunnyBar.setAttribute('y',170-sunnyH); sunnyBar.setAttribute('width',14); sunnyBar.setAttribute('height',sunnyH);
+    sunnyBar.setAttribute('fill','#FBBF24');
+    svg.appendChild(sunnyBar);
+    const rainyBar=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rainyBar.setAttribute('x',x+15); rainyBar.setAttribute('y',170-rainyH); rainyBar.setAttribute('width',14); rainyBar.setAttribute('height',rainyH);
+    rainyBar.setAttribute('fill','#3B82F6');
+    svg.appendChild(rainyBar);
+    const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',x+14); lbl.setAttribute('y',185); lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('font-size','9');
+    lbl.textContent='D'+i;
+    svg.appendChild(lbl);
+  });
+  const legend=document.createElementNS('http://www.w3.org/2000/svg','text');
+  legend.setAttribute('x',300); legend.setAttribute('y',20); legend.setAttribute('font-size','10'); legend.setAttribute('fill','#FBBF24');
+  legend.textContent='yellow=sunny';
+  svg.appendChild(legend);
+  const legend2=document.createElementNS('http://www.w3.org/2000/svg','text');
+  legend2.setAttribute('x',300); legend2.setAttribute('y',35); legend2.setAttribute('font-size','10'); legend2.setAttribute('fill','#3B82F6');
+  legend2.textContent='blue=rainy';
+  svg.appendChild(legend2);
+}
+function step(){
+  const newState=[state[0]*M[0][0]+state[1]*M[1][0], state[0]*M[0][1]+state[1]*M[1][1]];
+  state=newState;
+  day++;
+  history.push([...state]);
+  if(history.length>10) history.shift();
+  draw();
+  document.getElementById('fb').innerHTML = `Day ${day}: P(sunny)=${state[0].toFixed(3)}, P(rainy)=${state[1].toFixed(3)}. ${day>5 ? 'Notice the bars have nearly stopped changing — this system is converging toward a stable long-run equilibrium regardless of how certain the starting weather was.' : 'Keep clicking to watch the probabilities evolve.'}`;
+}
+function reset(){ state=[1,0]; day=0; history=[[1,0]]; draw(); document.getElementById('fb').innerHTML=''; }
+document.getElementById('aha').innerHTML=`<strong>Aha:</strong> click "advance" ten times — the bars converge to roughly 57% sunny, 43% rainy, and STAY there no matter how many more times you click. That stable point is a special vector this exact transition matrix leaves unchanged — a genuine preview of Chapter 91's eigenvector concept, already visible here as "the probability distribution the system eventually settles into."`;
+draw();
+</script>
+</body></html>
