@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#1E3A8A; --part-accent-light:#DBEAFE; --part-highlight:#7C2D92;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#EFF6FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#gridSvg{ width:100%; height:auto; aspect-ratio:2.2/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">95% Accurate Test, Rare Disease — Positive Result: Under 0.5% Chance You're Sick</div>
+<div class="mb-sub">Disease affects 1 in 10,000. Test: 95% true-positive, 2% false-positive. Drag the base rate and watch how dramatically it — not the test's own accuracy — determines what a positive result actually means.</div>
+<div class="mb-stage">
+<svg id="gridSvg" viewBox="0 0 400 160"></svg>
+<div class="slider-row"><label>Disease base rate: 1 in <span id="baseVal">10,000</span></label><input type="range" id="baseSlider" min="2" max="5" step="0.05" value="4"></div>
+<div class="readout" id="readoutBase"></div>
+</div>
+<div id="fbBase" class="mb-feedback"></div>
+<div class="aha" id="ahaBase"></div>
+<div class="mb-caption">The test remains genuinely useful — often dramatically so, in direct proportion to how much it shifts the probability upward from its original tiny base rate — even when the final resulting probability remains relatively low.</div>
+</div>
+<script>
+function drawBase(){
+  const logBase=parseFloat(document.getElementById('baseSlider').value);
+  const denom=Math.round(Math.pow(10,logBase));
+  document.getElementById('baseVal').textContent=denom.toLocaleString();
+  const pDisease=1/denom;
+  const pPosGivenDisease=0.95, pPosGivenNoDisease=0.02;
+  const pNoDisease=1-pDisease;
+  const pPos=pPosGivenDisease*pDisease+pPosGivenNoDisease*pNoDisease;
+  const pDiseaseGivenPos=(pPosGivenDisease*pDisease)/pPos;
+  const increaseFactor=pDiseaseGivenPos/pDisease;
+
+  const svg=document.getElementById('gridSvg');
+  svg.innerHTML='';
+  const trueP=pPosGivenDisease*pDisease*denom;
+  const falseP=pPosGivenNoDisease*pNoDisease*denom;
+  const total=trueP+falseP;
+  const scale=Math.min(300/Math.max(total,1),8);
+
+  const trueBar=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  trueBar.setAttribute('x',30); trueBar.setAttribute('y',60); trueBar.setAttribute('width',Math.max(2,trueP*scale)); trueBar.setAttribute('height',30);
+  trueBar.setAttribute('fill','var(--good)');
+  svg.appendChild(trueBar);
+  const trueLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  trueLbl.setAttribute('x',30); trueLbl.setAttribute('y',50); trueLbl.setAttribute('font-size','10'); trueLbl.setAttribute('fill','var(--good)');
+  trueLbl.textContent='true positives: '+trueP.toFixed(1);
+  svg.appendChild(trueLbl);
+
+  const falseBar=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  falseBar.setAttribute('x',30); falseBar.setAttribute('y',100); falseBar.setAttribute('width',Math.max(2,falseP*scale)); falseBar.setAttribute('height',30);
+  falseBar.setAttribute('fill','var(--bad)');
+  svg.appendChild(falseBar);
+  const falseLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  falseLbl.setAttribute('x',30); falseLbl.setAttribute('y',95); falseLbl.setAttribute('font-size','10'); falseLbl.setAttribute('fill','var(--bad)');
+  falseLbl.textContent='false positives: '+falseP.toFixed(1);
+  svg.appendChild(falseLbl);
+
+  document.getElementById('readoutBase').innerHTML =
+    'Base rate: 1 in '+denom.toLocaleString()+'<br>'+
+    'P(positive test) = '+(pPos*100).toFixed(3)+'%<br>'+
+    'P(disease | positive) = '+(pDiseaseGivenPos*100).toFixed(3)+'%<br>'+
+    'Increase from base rate: '+increaseFactor.toFixed(1)+'x';
+  document.getElementById('fbBase').innerHTML = pDiseaseGivenPos<0.01
+    ? 'Despite the test\u2019s genuinely respectable 95%/98% accuracy figures, a positive result here means well under 1% actual chance of disease — because false positives from the enormous healthy majority swamp true positives from the tiny diseased minority.'
+    : 'As the disease becomes more common, the same test\u2019s positive result becomes considerably more informative — the base rate, not the test\u2019s own accuracy, is doing most of the work here.';
+}
+document.getElementById('baseSlider').addEventListener('input', drawBase);
+drawBase();
+document.getElementById('ahaBase').innerHTML="<strong>Aha:</strong> the test's own accuracy figures (95% true-positive, 2% false-positive) never change as you drag this slider - only the disease's rarity changes, yet the final answer swings dramatically. This is base rate neglect made visible: intuition tends to focus almost entirely on a test's reported accuracy while badly underweighting how rare the condition actually is - exactly the systematic, well-documented error Kahneman and Tversky's Nobel-winning research identified.";
+</script>
+</body></html>

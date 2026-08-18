@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#9D174D; --part-accent-light:#FCE7F3; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FDF2F8; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#gdSvg{ width:100%; height:auto; aspect-ratio:1.5/1; display:block; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin:4px; }
+.mb-btn:hover, .mb-btn.active{ background:var(--part-accent); color:#fff; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Same Starting Point, Four Learning Rates — One Diverges Completely</div>
+<div class="mb-sub">f(x,y)=x\u00b2+y\u00b2, starting at (3,4), true minimum at the origin. Click each learning rate and watch the exact same first step land in a dramatically different place.</div>
+<div class="mb-stage">
+<svg id="gdSvg" viewBox="0 0 300 300"></svg>
+<button class="mb-btn active" onclick="showLR(0.1,this)">\u03b1=0.1 (small)</button>
+<button class="mb-btn" onclick="showLR(0.4,this)">\u03b1=0.4 (larger)</button>
+<button class="mb-btn" onclick="showLR(0.5,this)">\u03b1=0.5 (exact)</button>
+<button class="mb-btn" onclick="showLR(0.6,this)">\u03b1=0.6 (overshoot)</button>
+<div class="readout" id="readoutGD"></div>
+</div>
+<div id="fbGD" class="mb-feedback"></div>
+<div class="aha" id="ahaGD"></div>
+<div class="mb-caption">Too small a learning rate causes impractically slow convergence; too large risks repeated overshoot and even outright divergence — choosing well requires genuine care, often determined through systematic experimentation.</div>
+</div>
+<script>
+function drawGD(alpha){
+  const svg=document.getElementById('gdSvg');
+  svg.innerHTML='';
+  const origin={x:150,y:270}, scale=20;
+
+  [1,2,3,4,5].forEach(r=>{
+    const circ=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circ.setAttribute('cx',origin.x); circ.setAttribute('cy',origin.y); circ.setAttribute('r',r*scale);
+    circ.setAttribute('fill','none'); circ.setAttribute('stroke','#E5B8CE'); circ.setAttribute('stroke-width','1');
+    svg.appendChild(circ);
+  });
+
+  const x0=3,y0=4;
+  const grad=[2*x0,2*y0];
+  const x1=x0-alpha*grad[0], y1=y0-alpha*grad[1];
+
+  const startDot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  startDot.setAttribute('cx',origin.x+x0*scale); startDot.setAttribute('cy',origin.y-y0*scale); startDot.setAttribute('r',6); startDot.setAttribute('fill','var(--ink)');
+  svg.appendChild(startDot);
+
+  const arrow=document.createElementNS('http://www.w3.org/2000/svg','line');
+  arrow.setAttribute('x1',origin.x+x0*scale); arrow.setAttribute('y1',origin.y-y0*scale);
+  arrow.setAttribute('x2',origin.x+x1*scale); arrow.setAttribute('y2',origin.y-y1*scale);
+  arrow.setAttribute('stroke','var(--part-accent)'); arrow.setAttribute('stroke-width','2.5');
+  svg.appendChild(arrow);
+
+  const endDot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  endDot.setAttribute('cx',origin.x+x1*scale); endDot.setAttribute('cy',origin.y-y1*scale); endDot.setAttribute('r',6);
+  endDot.setAttribute('fill', alpha>=0.6 ? 'var(--bad)' : (alpha===0.5 ? 'var(--good)' : 'var(--part-highlight)'));
+  svg.appendChild(endDot);
+
+  const dist=Math.sqrt(x1*x1+y1*y1);
+  const startDist=Math.sqrt(x0*x0+y0*y0);
+  document.getElementById('readoutGD').innerHTML =
+    'Starting point: (3, 4), distance from minimum = '+startDist.toFixed(2)+'<br>'+
+    'Gradient: (6, 8)<br>'+
+    'After 1 step with \u03b1='+alpha+': ('+x1.toFixed(2)+', '+y1.toFixed(2)+')<br>'+
+    'New distance from minimum: '+dist.toFixed(2);
+  if(alpha===0.1) document.getElementById('fbGD').innerHTML = 'Modest progress \u2014 distance shrank from 5.0 to 4.0. Safe, but would need many more steps to converge.';
+  else if(alpha===0.4) document.getElementById('fbGD').innerHTML = 'Much faster progress \u2014 distance shrank from 5.0 to just 1.0, without any overshoot.';
+  else if(alpha===0.5) document.getElementById('fbGD').innerHTML = 'Landed EXACTLY at the minimum in a single step \u2014 for this specific bowl-shaped function, \u03b1=0.5 is precisely optimal.';
+  else if(alpha===0.6) document.getElementById('fbGD').innerHTML = 'Overshot past the minimum to the opposite side \u2014 the point is now on the far side of the origin. Repeated overshooting like this can cause outright divergence for many functions.';
+}
+function showLR(alpha,btn){
+  document.querySelectorAll('.mb-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  drawGD(alpha);
+}
+drawGD(0.1);
+document.getElementById('ahaGD').innerHTML="<strong>Aha:</strong> click through all four learning rates and watch the SAME starting point and SAME gradient produce dramatically different outcomes purely from the step-size choice - shrinking distance to 4, then to 1, then landing exactly at zero, then overshooting past the target entirely. This single comparison captures gradient descent's entire central practical challenge: the gradient tells you WHICH direction to step, but choosing HOW FAR to step in that direction is a separate decision with no universal right answer, requiring genuine care and often real experimentation.";
+</script>
+</body></html>

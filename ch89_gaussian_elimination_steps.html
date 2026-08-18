@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#0E7490; --part-accent-light:#CFFAFE; --part-highlight:#7C2D92;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#ECFEFF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+.matrix-box{ font-family:var(--font-mono); font-size:1.1rem; text-align:center; background:var(--part-accent-light); border-radius:10px; padding:20px; margin:10px 0; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin-top:10px; }
+.mb-btn:hover{ background:var(--part-accent); color:#fff; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Systematically Zero Out the Lower-Left — Then Solve Backward</div>
+<div class="mb-sub">2x+3y=8, 4x-y=2. Click through Gaussian elimination's exact mechanical steps: eliminate, then back-substitute.</div>
+<div class="mb-stage">
+<div class="matrix-box" id="matrixDisplay"></div>
+<button class="mb-btn" onclick="nextGaussStep()">Next step</button>
+<button class="mb-btn" onclick="resetGauss()">Reset</button>
+</div>
+<div id="fbGauss" class="mb-feedback"></div>
+<div class="aha" id="ahaGauss"></div>
+<div class="mb-caption">This is directly, exactly Chapter 15's own hand-elimination process, now organized into a systematic, mechanical, computer-executable procedure applicable to systems of any size.</div>
+</div>
+<script>
+let gaussStep=0;
+const steps=[
+  { display: '[ 2   3 | 8 ]<br>[ 4  -1 | 2 ]', explain: 'Starting system, written in augmented matrix form.' },
+  { display: '[ 2   3 | 8 ]<br>[ 0  -7 |-14 ]', explain: 'Row 2 \u2192 Row 2 - 2\u00d7Row 1: eliminates the x-coefficient below the diagonal (4-2\u00d72=0).' },
+  { display: 'From Row 2: -7y = -14<br>y = 2', explain: 'Back-substitution begins: the last row now involves only y, solved directly.' },
+  { display: 'From Row 1: 2x + 3(2) = 8<br>2x = 2<br>x = 1', explain: 'Substitute y=2 back into Row 1 and solve for x directly. Final solution: x=1, y=2.' }
+];
+function render(){
+  document.getElementById('matrixDisplay').innerHTML = steps[gaussStep].display;
+  document.getElementById('fbGauss').innerHTML = steps[gaussStep].explain;
+}
+function nextGaussStep(){
+  if(gaussStep<steps.length-1) gaussStep++;
+  render();
+}
+function resetGauss(){
+  gaussStep=0;
+  render();
+}
+render();
+document.getElementById('ahaGauss').innerHTML="<strong>Aha:</strong> notice the entire process never needed to compute a matrix inverse at any point - just row operations (multiply, subtract) followed by simple back-substitution. For a small 2x2 system like this one, the distinction barely matters computationally. But for a system with thousands of unknowns, this elimination-and-back-substitution structure costs roughly n\u00b3 operations - dramatically fewer than explicitly constructing the full matrix inverse - which is exactly why Gaussian elimination, not matrix inversion, is what real engineering software actually uses.";
+</script>
+</body></html>

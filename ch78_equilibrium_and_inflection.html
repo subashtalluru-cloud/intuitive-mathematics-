@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#B91C1C; --part-accent-light:#FEE2E2; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FEF2F2; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#rateSvg{ width:100%; height:auto; aspect-ratio:2.4/1; display:block; cursor:pointer; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Growth Rate Peaks at Exactly Half the Carrying Capacity — Click Anywhere to Check</div>
+<div class="mb-sub">Growth doesn't slow down monotonically the whole way. It actually speeds up first, peaks at P=K/2, then slows. Click any point on the curve to read the exact growth rate there.</div>
+<div class="mb-stage">
+<svg id="rateSvg" viewBox="0 0 400 160"></svg>
+<div class="readout" id="readoutRate">Click any point on the curve.</div>
+</div>
+<div id="fb3" class="mb-feedback"></div>
+<div class="aha" id="aha3"></div>
+<div class="mb-caption">A population sitting exactly at carrying capacity is, according to this model's own explicit assumptions, perfectly sustainable indefinitely — K is a stable equilibrium, not a tipping point toward inevitable collapse.</div>
+</div>
+<script>
+const K=5000, r=0.4;
+function growthRate(P){ return r*P*(1-P/K); }
+function draw10(){
+  const svg=document.getElementById('rateSvg');
+  svg.innerHTML='';
+  const scaleX=0.07, scaleY=0.28, origin={x:20,y:130};
+
+  let d='M';
+  for(let P=0;P<=K;P+=25){
+    const rate=growthRate(P);
+    d+=(origin.x+P*scaleX)+','+(origin.y-rate*scaleY)+' L';
+  }
+  const curve=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve.setAttribute('d',d.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke','var(--part-accent)'); curve.setAttribute('stroke-width','2.5');
+  curve.setAttribute('id','rateCurve');
+  svg.appendChild(curve);
+
+  const axis=document.createElementNS('http://www.w3.org/2000/svg','line');
+  axis.setAttribute('x1',origin.x); axis.setAttribute('y1',origin.y); axis.setAttribute('x2',380); axis.setAttribute('y2',origin.y);
+  axis.setAttribute('stroke','#94A3B8');
+  svg.appendChild(axis);
+
+  [0,K/2,K].forEach(P=>{
+    const x=origin.x+P*scaleX;
+    const tick=document.createElementNS('http://www.w3.org/2000/svg','line');
+    tick.setAttribute('x1',x); tick.setAttribute('y1',origin.y); tick.setAttribute('x2',x); tick.setAttribute('y2',origin.y+5);
+    tick.setAttribute('stroke','#94A3B8');
+    svg.appendChild(tick);
+    const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',x); lbl.setAttribute('y',origin.y+18); lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('font-size','9');
+    lbl.textContent='P='+P;
+    svg.appendChild(lbl);
+  });
+}
+document.getElementById('rateSvg').addEventListener('click', e=>{
+  const rect=document.getElementById('rateSvg').getBoundingClientRect();
+  const scaleXpx=400/rect.width;
+  const sx=(e.clientX-rect.left)*scaleXpx;
+  const P=(sx-20)/0.07;
+  if(P<0||P>K) return;
+  const rate=growthRate(P);
+  document.getElementById('readoutRate').innerHTML = 'P = '+P.toFixed(0)+'<br>Growth rate dP/dt = '+rate.toFixed(1)+' individuals/year';
+  document.getElementById('fb3').innerHTML = (P<10||P>K-10)
+    ? 'Near '+(P<10?'zero':'carrying capacity')+' — growth rate is essentially zero, exactly the equilibrium behavior this model predicts.'
+    : (Math.abs(P-K/2)<200
+      ? 'Right near the peak — this is the fastest the population EVER grows, at exactly P=K/2=2500.'
+      : 'A meaningful positive growth rate — population expanding at this point.');
+});
+draw10();
+document.getElementById('aha3').innerHTML="<strong>Aha:</strong> click at P=0, then P=2500 (the middle), then P=5000 - the growth rate is zero at both ends but genuinely POSITIVE and at its very maximum right in the middle. Contrary to the natural assumption that growth simply 'slows down' throughout the whole process, this population actually accelerates FIRST, peaks in speed exactly halfway to carrying capacity, and only then begins slowing - the inflection point of the S-shaped curve, not a monotonic slowdown from day one.";
+</script>
+</body></html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#9D174D; --part-accent-light:#FCE7F3; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FDF2F8; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#lagSvg{ width:100%; height:auto; aspect-ratio:1.6/1; display:block; cursor:pointer; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Maximize xy Along x+y=10 — Click Points Along the Line to Search</div>
+<div class="mb-sub">Click anywhere along the constraint line and watch xy's value change. The true maximum occurs exactly where the constraint line becomes tangent to one of xy's own curved contour lines.</div>
+<div class="mb-stage">
+<svg id="lagSvg" viewBox="0 0 300 220"></svg>
+<div class="readout" id="readoutLag">Click any point along the diagonal constraint line.</div>
+</div>
+<div id="fbLag" class="mb-feedback"></div>
+<div class="aha" id="ahaLag"></div>
+<div class="mb-caption">At a genuine constrained optimum, the objective function's gradient and the constraint's gradient must point in exactly the same (or exactly opposite) direction — otherwise a small further move along the constraint could still improve the objective.</div>
+</div>
+<script>
+function drawLagrange(highlightX){
+  const svg=document.getElementById('lagSvg');
+  svg.innerHTML='';
+  const origin={x:20,y:190}, scale=18;
+
+  // constraint line x+y=10
+  const lineD='M'+origin.x+','+(origin.y-10*scale)+' L'+(origin.x+10*scale)+','+origin.y;
+  const line=document.createElementNS('http://www.w3.org/2000/svg','path');
+  line.setAttribute('d',lineD); line.setAttribute('stroke','var(--part-highlight)'); line.setAttribute('stroke-width','2.5'); line.setAttribute('fill','none');
+  svg.appendChild(line);
+
+  // contour lines for xy = const (hyperbolas)
+  [5,15,25,35].forEach(level=>{
+    let d='M';
+    for(let x=0.3;x<=10;x+=0.1){
+      const y=level/x;
+      if(y>10||y<0) continue;
+      d+=(origin.x+x*scale)+','+(origin.y-y*scale)+' L';
+    }
+    const contour=document.createElementNS('http://www.w3.org/2000/svg','path');
+    contour.setAttribute('d',d.slice(0,-1)); contour.setAttribute('fill','none'); contour.setAttribute('stroke', level===25?'var(--part-accent)':'#E5B8CE'); contour.setAttribute('stroke-width', level===25?'2.5':'1');
+    svg.appendChild(contour);
+  });
+
+  if(highlightX!==undefined){
+    const y=10-highlightX;
+    const val=highlightX*y;
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',origin.x+highlightX*scale); dot.setAttribute('cy',origin.y-y*scale); dot.setAttribute('r',6);
+    dot.setAttribute('fill', Math.abs(highlightX-5)<0.3 ? 'var(--good)' : 'var(--part-accent)');
+    svg.appendChild(dot);
+    document.getElementById('readoutLag').innerHTML = 'x='+highlightX.toFixed(1)+', y='+y.toFixed(1)+', xy='+val.toFixed(2);
+    document.getElementById('fbLag').innerHTML = Math.abs(highlightX-5)<0.3
+      ? 'This is the true maximum — x=y=5, xy=25. The constraint line is exactly tangent to the xy=25 contour here; any move along the line in either direction would decrease xy.'
+      : 'Not yet the maximum — xy='+val.toFixed(2)+' is less than 25. The constraint line crosses this contour rather than sitting tangent to it, meaning a further move along the line could still increase xy.';
+  }
+}
+document.getElementById('lagSvg').addEventListener('click', e=>{
+  const rect=document.getElementById('lagSvg').getBoundingClientRect();
+  const scaleXpx=300/rect.width;
+  const sx=(e.clientX-rect.left)*scaleXpx;
+  const x=(sx-20)/18;
+  if(x<0.3||x>9.7) return;
+  drawLagrange(x);
+});
+drawLagrange();
+document.getElementById('ahaLag').innerHTML="<strong>Aha:</strong> click at several points along the line - most crossings show the line CUTTING THROUGH a contour, meaning you could slide further along the line to reach a higher-value contour still. Only at x=5,y=5 does the line become perfectly TANGENT to a contour, touching but not crossing it - this is exactly the geometric meaning of Lagrange's gradient-alignment condition: at this one specific point, there's no direction left along the constraint that improves the objective any further.";
+</script>
+</body></html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#4338CA; --part-accent-light:#E0E7FF; --part-highlight:#BE185D;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#EEF2FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#mapSvg{ width:100%; height:auto; aspect-ratio:2.2/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">z\u00b2 Doesn't Just Scale Points — It Doubles Their Angle From the Origin</div>
+<div class="mb-sub">Drag a point's angle in the input plane and watch its image under z\u00b2 sweep around at exactly twice the rate — a specific geometric signature of complex squaring.</div>
+<div class="mb-stage">
+<svg id="mapSvg" viewBox="0 0 400 200"></svg>
+<div class="slider-row"><label>Input angle: <span id="angleVal">30</span>\u00b0</label><input type="range" id="angleSlider" min="0" max="180" value="30"></div>
+<div class="readout" id="readoutMap"></div>
+</div>
+<div class="aha" id="ahaMap"></div>
+<div class="mb-caption">This holomorphic function preserves the point's distance-squared from the origin while doubling its angle — a specific, checkable geometric consequence of satisfying the Cauchy-Riemann equations.</div>
+</div>
+<script>
+function drawMap(){
+  const angleDeg=parseInt(document.getElementById('angleSlider').value);
+  document.getElementById('angleVal').textContent=angleDeg;
+  const angleRad=angleDeg*Math.PI/180;
+  const r=1;
+
+  const svg=document.getElementById('mapSvg');
+  svg.innerHTML='';
+  const origin1={x:90,y:100}, origin2={x:300,y:100}, scale=60;
+
+  [origin1,origin2].forEach(o=>{
+    const circ=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circ.setAttribute('cx',o.x); circ.setAttribute('cy',o.y); circ.setAttribute('r',scale);
+    circ.setAttribute('fill','none'); circ.setAttribute('stroke','#E5E7EB'); circ.setAttribute('stroke-width','1');
+    svg.appendChild(circ);
+    const axisX=document.createElementNS('http://www.w3.org/2000/svg','line');
+    axisX.setAttribute('x1',o.x-scale-10); axisX.setAttribute('y1',o.y); axisX.setAttribute('x2',o.x+scale+10); axisX.setAttribute('y2',o.y);
+    axisX.setAttribute('stroke','#CBD5E1');
+    svg.appendChild(axisX);
+  });
+
+  const inputX=origin1.x+r*scale*Math.cos(angleRad), inputY=origin1.y-r*scale*Math.sin(angleRad);
+  const inputArrow=document.createElementNS('http://www.w3.org/2000/svg','line');
+  inputArrow.setAttribute('x1',origin1.x); inputArrow.setAttribute('y1',origin1.y); inputArrow.setAttribute('x2',inputX); inputArrow.setAttribute('y2',inputY);
+  inputArrow.setAttribute('stroke','var(--part-accent)'); inputArrow.setAttribute('stroke-width','2.5');
+  svg.appendChild(inputArrow);
+  const inputDot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  inputDot.setAttribute('cx',inputX); inputDot.setAttribute('cy',inputY); inputDot.setAttribute('r',5); inputDot.setAttribute('fill','var(--part-accent)');
+  svg.appendChild(inputDot);
+
+  const outAngle=2*angleRad;
+  const outX=origin2.x+r*r*scale*Math.cos(outAngle), outY=origin2.y-r*r*scale*Math.sin(outAngle);
+  const outArrow=document.createElementNS('http://www.w3.org/2000/svg','line');
+  outArrow.setAttribute('x1',origin2.x); outArrow.setAttribute('y1',origin2.y); outArrow.setAttribute('x2',outX); outArrow.setAttribute('y2',outY);
+  outArrow.setAttribute('stroke','var(--part-highlight)'); outArrow.setAttribute('stroke-width','2.5');
+  svg.appendChild(outArrow);
+  const outDot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  outDot.setAttribute('cx',outX); outDot.setAttribute('cy',outY); outDot.setAttribute('r',5); outDot.setAttribute('fill','var(--part-highlight)');
+  svg.appendChild(outDot);
+
+  const label1=document.createElementNS('http://www.w3.org/2000/svg','text');
+  label1.setAttribute('x',origin1.x); label1.setAttribute('y',20); label1.setAttribute('text-anchor','middle'); label1.setAttribute('font-size','10'); label1.setAttribute('fill','var(--part-accent)'); label1.setAttribute('font-weight','700');
+  label1.textContent='input plane (z)';
+  svg.appendChild(label1);
+  const label2=document.createElementNS('http://www.w3.org/2000/svg','text');
+  label2.setAttribute('x',origin2.x); label2.setAttribute('y',20); label2.setAttribute('text-anchor','middle'); label2.setAttribute('font-size','10'); label2.setAttribute('fill','var(--part-highlight)'); label2.setAttribute('font-weight','700');
+  label2.textContent='output plane (z\u00b2)';
+  svg.appendChild(label2);
+
+  document.getElementById('readoutMap').innerHTML =
+    'Input angle: '+angleDeg+'\u00b0<br>Output angle: '+((2*angleDeg)%360)+'\u00b0 (exactly double)';
+}
+document.getElementById('angleSlider').addEventListener('input', drawMap);
+drawMap();
+document.getElementById('ahaMap').innerHTML="<strong>Aha:</strong> drag the input angle from 0 up to 180 degrees and watch the output arrow sweep all the way around to 360 degrees - exactly twice as fast, every single time, with total precision. This angle-doubling isn't a coincidence specific to this one example; it's a genuine, provable structural signature of z\u00b2 as a holomorphic map, directly traceable back to the Cauchy-Riemann equations this function satisfies everywhere.";
+</script>
+</body></html>

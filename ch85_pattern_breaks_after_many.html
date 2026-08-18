@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#4C1D95; --part-accent-light:#EDE9FE; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F5F3FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#patternSvg{ width:100%; height:auto; aspect-ratio:2.5/1; display:block; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin-top:10px; }
+.mb-btn:hover{ background:var(--part-accent); color:#fff; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">40 Consecutive Successes. A Dataset This Size Would Convince Anyone. It's Still Not a Proof.</div>
+<div class="mb-sub">n\u00b2+n+41 produces a prime number for n=0, 1, 2... all the way through n=39 — a perfect, unbroken streak. Click to keep testing and watch exactly where it finally breaks.</div>
+<div class="mb-stage">
+<svg id="patternSvg" viewBox="0 0 400 100"></svg>
+<button class="mb-btn" onclick="testNext()">Test the next value of n</button>
+<div class="readout" id="readoutPattern"></div>
+</div>
+<div id="fbPattern" class="mb-feedback"></div>
+<div class="aha" id="ahaPattern"></div>
+<div class="mb-caption">A pattern that holds universally, without any exception, across every single available example can still, in principle, eventually fail for some further, as-yet-unexamined case lying entirely outside the original dataset's scope.</div>
+</div>
+<script>
+function isPrime(x){
+  if(x<2) return false;
+  for(let i=2;i<=Math.sqrt(x);i++){ if(x%i===0) return false; }
+  return true;
+}
+function f(n){ return n*n+n+41; }
+let n=-1;
+let successCount=0;
+function drawGrid(){
+  const svg=document.getElementById('patternSvg');
+  svg.innerHTML='';
+  const cols=20;
+  for(let i=0;i<=n && i<41;i++){
+    const val=f(i);
+    const prime=isPrime(val);
+    const col=i%cols, row=Math.floor(i/cols);
+    const x=15+col*19, y=15+row*35;
+    const box=document.createElementNS('http://www.w3.org/2000/svg','rect');
+    box.setAttribute('x',x); box.setAttribute('y',y); box.setAttribute('width',16); box.setAttribute('height',16); box.setAttribute('rx',2);
+    box.setAttribute('fill', prime ? 'var(--good)' : 'var(--bad)');
+    svg.appendChild(box);
+  }
+}
+function testNext(){
+  n++;
+  if(n>41) return;
+  const val=f(n);
+  const prime=isPrime(val);
+  if(prime) successCount++;
+  drawGrid();
+  document.getElementById('readoutPattern').innerHTML =
+    'n = '+n+': f(n) = n\u00b2+n+41 = '+val+'<br>'+
+    'Is prime? '+(prime?'YES':'NO \u2014 PATTERN BROKEN')+'<br>'+
+    'Consecutive successes so far: '+successCount;
+  document.getElementById('fbPattern').innerHTML = prime
+    ? 'Still holding — every single value tested so far has been prime, exactly as the pattern predicted.'
+    : 'The pattern just failed at n='+n+' — after '+ (successCount) +' consecutive successes, f('+n+')='+val+' is NOT prime (it equals '+Math.sqrt(val)+'\u00b2). A dataset of 40 perfect successes would convince almost anyone, yet the pattern was never actually universal.';
+}
+drawGrid();
+document.getElementById('ahaPattern').innerHTML="<strong>Aha:</strong> click through to n=40 and watch the streak of green (prime) boxes suddenly turn red - exactly at n=40, where 40\u00b2+40+41=1681=41\u00b2, obviously not prime. If a machine learning system had been trained only on n=0 through 39, it would have flagged 'this always produces a prime' with extremely high statistical confidence - and been wrong. This exact scenario is precisely why Chapter 84's conjecture/theorem distinction applies with full force to machine-learning-generated patterns: even a flawless streak of 40 successes is not a proof.";
+</script>
+</body></html>

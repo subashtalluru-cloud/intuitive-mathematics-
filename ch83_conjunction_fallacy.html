@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#1E3A8A; --part-accent-light:#DBEAFE; --part-highlight:#7C2D92;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#EFF6FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#vennSvg{ width:100%; height:auto; aspect-ratio:2.2/1; display:block; cursor:pointer; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">A Detailed Story Can FEEL More Likely Than a Vague One — It Never Is</div>
+<div class="mb-sub">"Bank teller" vs. "bank teller who is also a feminist" — the vivid, detailed option often feels more probable, but a conjunction of two things can never exceed either thing alone. Click to see why, visually.</div>
+<div class="mb-stage">
+<svg id="vennSvg" viewBox="0 0 400 160"></svg>
+<div class="readout" id="readoutConj">Click the diagram to reveal the areas.</div>
+</div>
+<div id="fbConj" class="mb-feedback"></div>
+<div class="aha" id="ahaConj"></div>
+<div class="mb-caption">This feeling is provably, mathematically incorrect — however vivid or specific a detailed scenario feels, adding more specific conditions can only shrink, never grow, the set of ways it can actually be true.</div>
+</div>
+<script>
+let revealed=false;
+function drawVenn(){
+  const svg=document.getElementById('vennSvg');
+  svg.innerHTML='';
+  const circle1=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  circle1.setAttribute('cx',160); circle1.setAttribute('cy',80); circle1.setAttribute('r',65);
+  circle1.setAttribute('fill','var(--part-accent)'); circle1.setAttribute('fill-opacity','0.35'); circle1.setAttribute('stroke','var(--part-accent)');
+  svg.appendChild(circle1);
+  const lbl1=document.createElementNS('http://www.w3.org/2000/svg','text');
+  lbl1.setAttribute('x',110); lbl1.setAttribute('y',35); lbl1.setAttribute('font-size','10'); lbl1.setAttribute('fill','var(--part-accent)'); lbl1.setAttribute('font-weight','700');
+  lbl1.textContent='Bank tellers';
+  svg.appendChild(lbl1);
+
+  if(revealed){
+    const circle2=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle2.setAttribute('cx',190); circle2.setAttribute('cy',80); circle2.setAttribute('r',35);
+    circle2.setAttribute('fill','var(--part-highlight)'); circle2.setAttribute('fill-opacity','0.6'); circle2.setAttribute('stroke','var(--part-highlight)');
+    svg.appendChild(circle2);
+    const lbl2=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl2.setAttribute('x',190); lbl2.setAttribute('y',85); lbl2.setAttribute('text-anchor','middle'); lbl2.setAttribute('font-size','9'); lbl2.setAttribute('fill','#fff'); lbl2.setAttribute('font-weight','700');
+    lbl2.textContent='+ feminist';
+    svg.appendChild(lbl2);
+  }
+}
+document.getElementById('vennSvg').addEventListener('click', ()=>{
+  revealed=true;
+  drawVenn();
+  document.getElementById('readoutConj').innerHTML =
+    'P(bank teller) = the entire large circle<br>'+
+    'P(bank teller AND feminist) = only the small overlap region<br>'+
+    'The overlap is ALWAYS a subset of the larger circle — never bigger.';
+  document.getElementById('fbConj').innerHTML = 'The purple "bank teller AND feminist" region sits entirely inside the blue "bank teller" region — every single feminist bank teller is also, automatically, simply a bank teller. Adding a second specific condition can only remove people from consideration, never add new ones.';
+});
+drawVenn();
+document.getElementById('ahaConj').innerHTML="<strong>Aha:</strong> the more detailed, specific description 'bank teller who is also active in the feminist movement' often FEELS more probable than plain 'bank teller' alone, because the extra vivid detail matches a coherent mental picture more convincingly. But the math is unambiguous: the set of feminist bank tellers is entirely contained within the set of all bank tellers, so it can never be larger. This is the conjunction fallacy - vividness and specificity make a scenario feel more probable while, if anything, actually making it strictly less probable.";
+</script>
+</body></html>

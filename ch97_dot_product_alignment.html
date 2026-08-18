@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#065F46; --part-accent-light:#D1FAE5; --part-highlight:#1D4ED8;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#ECFDF5; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#windSvg{ width:100%; height:auto; aspect-ratio:1.6/1; display:block; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin:4px; }
+.mb-btn:hover, .mb-btn.active{ background:var(--part-accent); color:#fff; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Wind Blows (3,4) — Only Part of It Pushes Your Boat, Depending Which Way You're Heading</div>
+<div class="mb-sub">The same wind vector, the same boat, two different headings. Click each to watch the dot product extract exactly the aligned component and discard the rest.</div>
+<div class="mb-stage">
+<svg id="windSvg" viewBox="0 0 300 250"></svg>
+<button class="mb-btn active" onclick="showHeading('east',this)">Boat heads EAST (1,0)</button>
+<button class="mb-btn" onclick="showHeading('north',this)">Boat heads NORTH (0,1)</button>
+<div class="readout" id="readoutWind"></div>
+</div>
+<div id="fbWind" class="mb-feedback"></div>
+<div class="aha" id="ahaWind"></div>
+<div class="mb-caption">This is exactly the mechanism the line integral relies on at every single point along a curve — extracting the field's aligned component using the dot product, with zero separate geometric reasoning about angles ever required.</div>
+</div>
+<script>
+function drawWind(heading){
+  const svg=document.getElementById('windSvg');
+  svg.innerHTML='';
+  const origin={x:60,y:190}, scale=30;
+
+  const windVec=[3,4];
+  const windArrow=document.createElementNS('http://www.w3.org/2000/svg','line');
+  windArrow.setAttribute('x1',origin.x); windArrow.setAttribute('y1',origin.y);
+  windArrow.setAttribute('x2',origin.x+windVec[0]*scale); windArrow.setAttribute('y2',origin.y-windVec[1]*scale);
+  windArrow.setAttribute('stroke','var(--part-highlight)'); windArrow.setAttribute('stroke-width','3');
+  svg.appendChild(windArrow);
+  const windLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  windLbl.setAttribute('x',origin.x+windVec[0]*scale+8); windLbl.setAttribute('y',origin.y-windVec[1]*scale); windLbl.setAttribute('font-size','10'); windLbl.setAttribute('fill','var(--part-highlight)'); windLbl.setAttribute('font-weight','700');
+  windLbl.textContent='wind (3,4)';
+  svg.appendChild(windLbl);
+
+  const boatVec = heading==='east' ? [1,0] : [0,1];
+  const boatArrow=document.createElementNS('http://www.w3.org/2000/svg','line');
+  boatArrow.setAttribute('x1',origin.x); boatArrow.setAttribute('y1',origin.y);
+  boatArrow.setAttribute('x2',origin.x+boatVec[0]*80); boatArrow.setAttribute('y2',origin.y-boatVec[1]*80);
+  boatArrow.setAttribute('stroke','var(--part-accent)'); boatArrow.setAttribute('stroke-width','4');
+  svg.appendChild(boatArrow);
+  const boatLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  boatLbl.setAttribute('x',origin.x+boatVec[0]*90); boatLbl.setAttribute('y',origin.y-boatVec[1]*90); boatLbl.setAttribute('font-size','10'); boatLbl.setAttribute('fill','var(--part-accent)'); boatLbl.setAttribute('font-weight','700');
+  boatLbl.textContent='boat heading';
+  svg.appendChild(boatLbl);
+
+  const dot = windVec[0]*boatVec[0]+windVec[1]*boatVec[1];
+  const alignedX=origin.x+boatVec[0]*dot*scale, alignedY=origin.y-boatVec[1]*dot*scale;
+  const alignedArrow=document.createElementNS('http://www.w3.org/2000/svg','line');
+  alignedArrow.setAttribute('x1',origin.x); alignedArrow.setAttribute('y1',origin.y);
+  alignedArrow.setAttribute('x2',alignedX); alignedArrow.setAttribute('y2',alignedY);
+  alignedArrow.setAttribute('stroke','var(--good)'); alignedArrow.setAttribute('stroke-width','5'); alignedArrow.setAttribute('stroke-dasharray','1,0');
+  alignedArrow.setAttribute('opacity','0.6');
+  svg.appendChild(alignedArrow);
+
+  document.getElementById('readoutWind').innerHTML =
+    'Wind vector: (3, 4)<br>Boat heading: ('+boatVec[0]+', '+boatVec[1]+')<br>'+
+    'Dot product = 3\u00d7'+boatVec[0]+' + 4\u00d7'+boatVec[1]+' = '+dot;
+  document.getElementById('fbWind').innerHTML = heading==='east'
+    ? 'Only the wind\u2019s eastward component (the "3") contributes \u2014 the northward "4" is entirely discarded, since it points perpendicular to the boat\u2019s own direction of travel and neither helps nor hinders eastward progress.'
+    : 'Only the wind\u2019s northward component (the "4") contributes this time \u2014 the eastward "3" is entirely discarded, since the boat is no longer travelling in that direction at all.';
+}
+function showHeading(h,btn){
+  document.querySelectorAll('.mb-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  drawWind(h);
+}
+drawWind('east');
+document.getElementById('ahaWind').innerHTML="<strong>Aha:</strong> click between both headings and watch the exact same wind vector contribute a completely different amount depending purely on which way the boat happens to be heading at that instant. The dot product performs this alignment-extraction automatically and correctly, with zero separate geometric reasoning about angles required - this is precisely the mechanism the line integral applies continuously at every single point along an entire curved path, accumulating exactly this kind of aligned contribution the whole way through.";
+</script>
+</body></html>

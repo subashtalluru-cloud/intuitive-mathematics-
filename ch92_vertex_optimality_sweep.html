@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#9D174D; --part-accent-light:#FCE7F3; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FDF2F8; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#sweepSvg{ width:100%; height:auto; aspect-ratio:1.6/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Sweep a Line Across the Triangle — It Always Leaves Through a Corner</div>
+<div class="mb-sub">Maximize 3x+2y subject to x\u22650, y\u22650, x+y\u22646. Drag the objective value and watch the parallel line sweep the feasible region — the very last point of contact is always a vertex, never an interior point.</div>
+<div class="mb-stage">
+<svg id="sweepSvg" viewBox="0 0 300 250"></svg>
+<div class="slider-row"><label>Objective value 3x+2y = <span id="objVal">0</span></label><input type="range" id="objSlider" min="0" max="22" value="0"></div>
+<div class="readout" id="readoutSweep"></div>
+</div>
+<div id="fbSweep" class="mb-feedback"></div>
+<div class="aha" id="ahaSweep"></div>
+<div class="mb-caption">This vertex-optimality guarantee makes linear programming especially tractable — rather than checking infinitely many interior points, checking only the finitely many corner vertices is fully, provably sufficient.</div>
+</div>
+<script>
+function drawSweep(){
+  const level=parseInt(document.getElementById('objSlider').value);
+  document.getElementById('objVal').textContent=level;
+
+  const svg=document.getElementById('sweepSvg');
+  svg.innerHTML='';
+  const origin={x:20,y:220}, scale=30;
+
+  const triangleD='M'+origin.x+','+origin.y+' L'+(origin.x+6*scale)+','+origin.y+' L'+origin.x+','+(origin.y-6*scale)+' Z';
+  const triangle=document.createElementNS('http://www.w3.org/2000/svg','path');
+  triangle.setAttribute('d',triangleD); triangle.setAttribute('fill','var(--part-accent-light)'); triangle.setAttribute('stroke','var(--part-accent)'); triangle.setAttribute('stroke-width','2');
+  svg.appendChild(triangle);
+
+  [[0,0],[6,0],[0,6]].forEach(([x,y])=>{
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',origin.x+x*scale); dot.setAttribute('cy',origin.y-y*scale); dot.setAttribute('r',5); dot.setAttribute('fill','var(--ink)');
+    svg.appendChild(dot);
+  });
+
+  // objective line 3x+2y=level -> y=(level-3x)/2
+  let d='M';
+  for(let x=-2;x<=10;x+=0.2){
+    const y=(level-3*x)/2;
+    d+=(origin.x+x*scale)+','+(origin.y-y*scale)+' L';
+  }
+  const objLine=document.createElementNS('http://www.w3.org/2000/svg','path');
+  objLine.setAttribute('d',d.slice(0,-1)); objLine.setAttribute('fill','none'); objLine.setAttribute('stroke','var(--part-highlight)'); objLine.setAttribute('stroke-width','2.5'); objLine.setAttribute('stroke-dasharray','5,3');
+  svg.appendChild(objLine);
+
+  const touchesRegion = level<=18;
+  document.getElementById('readoutSweep').innerHTML =
+    '3x+2y = '+level+'<br>'+
+    'Does this line still touch the feasible triangle? '+(touchesRegion?'YES':'NO \u2014 swept past the region entirely');
+  document.getElementById('fbSweep').innerHTML = level===18
+    ? 'This is the maximum — the line touches the triangle at exactly one point: the vertex (6,0). Any higher value and the line leaves the feasible region entirely.'
+    : (level<18 ? 'The line still crosses through the interior of the triangle — this value is achievable, but not yet the maximum possible.' : 'The line has swept completely past the feasible region — this value is not achievable under the given constraints.');
+}
+document.getElementById('objSlider').addEventListener('input', drawSweep);
+drawSweep();
+document.getElementById('ahaSweep').innerHTML="<strong>Aha:</strong> drag the slider up to 18 and watch the dashed blue line touch the triangle at exactly ONE point - the vertex (6,0), not anywhere along an edge or inside the triangle. Push even slightly higher and the line leaves the region entirely. This is the vertex-optimality theorem made completely visible: since the objective's own level lines are perfectly straight and the feasible region's boundary is made entirely of straight edges, the very last point of contact before the sweeping line exits the region must be a corner - never an edge's interior, never the inside of the shape.";
+</script>
+</body></html>

@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#4C1D95; --part-accent-light:#EDE9FE; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F5F3FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#roadSvg{ width:100%; height:auto; aspect-ratio:2.6/1; display:block; cursor:pointer; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.82rem,0.95vw,0.94rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Twenty Parts, Eighty-Six Chapters — and the Road Keeps Going</div>
+<div class="mb-sub">Click along the milestones to revisit this journey's major landmarks. Notice where the paved road ends and where the open horizon deliberately begins.</div>
+<div class="mb-stage">
+<svg id="roadSvg" viewBox="0 0 400 150"></svg>
+<div class="readout" id="readoutRoad">Click any milestone along the road.</div>
+</div>
+<div class="aha" id="ahaRoad"></div>
+<div class="mb-caption">This book's ending is a beginning rather than a completion — the specific mathematical content will fade somewhat, but the transferable way of seeing endures.</div>
+</div>
+<script>
+const milestones=[
+  {x:30, label:"Ch 1", desc:"Mathematics as a coherent human language for solving real problems."},
+  {x:80, label:"Part VIII", desc:"Calculus, emerging from the genuinely human need to understand change."},
+  {x:140, label:"Part X-XI", desc:"Probability and statistics, emerging from reasoning carefully under uncertainty."},
+  {x:200, label:"Part XVII", desc:"Fourier analysis, emerging from Fourier's own need to understand heat spreading through a rod."},
+  {x:260, label:"Part XVIII-XIX", desc:"Modeling and cross-disciplinary thinking, showing math's reach beyond its own boundaries."},
+  {x:320, label:"Ch 86", desc:"This final milestone \u2014 and the paved road doesn't stop here."}
+];
+function drawRoad(){
+  const svg=document.getElementById('roadSvg');
+  svg.innerHTML='';
+  const road=document.createElementNS('http://www.w3.org/2000/svg','line');
+  road.setAttribute('x1',20); road.setAttribute('y1',100); road.setAttribute('x2',320); road.setAttribute('y2',100);
+  road.setAttribute('stroke','var(--part-accent)'); road.setAttribute('stroke-width','6');
+  svg.appendChild(road);
+
+  let dashed='M320,100 ';
+  for(let x=320;x<=390;x+=14){
+    dashed+='L'+(x+7)+',100 M'+(x+10)+',100 ';
+  }
+  const openRoad=document.createElementNS('http://www.w3.org/2000/svg','path');
+  openRoad.setAttribute('d',dashed); openRoad.setAttribute('stroke','#94A3B8'); openRoad.setAttribute('stroke-width','4'); openRoad.setAttribute('fill','none');
+  svg.appendChild(openRoad);
+
+  milestones.forEach((m,i)=>{
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',m.x); dot.setAttribute('cy',100); dot.setAttribute('r',8); dot.setAttribute('fill','var(--part-highlight)');
+    dot.setAttribute('data-idx',i); dot.setAttribute('style','cursor:pointer');
+    svg.appendChild(dot);
+    const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',m.x); lbl.setAttribute('y',85); lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('font-size','8'); lbl.setAttribute('font-weight','700');
+    lbl.textContent=m.label;
+    svg.appendChild(lbl);
+  });
+  const openLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  openLbl.setAttribute('x',355); openLbl.setAttribute('y',85); openLbl.setAttribute('text-anchor','middle'); openLbl.setAttribute('font-size','9'); openLbl.setAttribute('fill','#94A3B8'); openLbl.setAttribute('font-style','italic');
+  openLbl.textContent='...beyond';
+  svg.appendChild(openLbl);
+}
+document.getElementById('roadSvg').addEventListener('click', e=>{
+  if(e.target.tagName!=='circle') return;
+  const idx=parseInt(e.target.getAttribute('data-idx'));
+  const m=milestones[idx];
+  document.getElementById('readoutRoad').innerHTML = '<strong>'+m.label+':</strong> '+m.desc;
+});
+drawRoad();
+document.getElementById('ahaRoad').innerHTML="<strong>Aha:</strong> click through each milestone and notice the pattern repeating at every single stop - a genuine human problem, motivating a genuine mathematical idea. This same generative pattern will continue holding for every further piece of mathematics still waiting beyond this book's own necessarily finite scope. The paved road ends at Chapter 86 deliberately - not because the journey is over, but because what comes next is yours to continue.";
+</script>
+</body></html>

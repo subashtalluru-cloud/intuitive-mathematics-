@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#4338CA; --part-accent-light:#E0E7FF; --part-highlight:#BE185D;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#EEF2FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#cifSvg{ width:100%; height:auto; aspect-ratio:1.6/1; display:block; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin-top:10px; }
+.mb-btn:hover{ background:var(--part-accent); color:#fff; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">The Boundary Alone Determines Every Interior Value — No Real-Variable Equivalent Exists</div>
+<div class="mb-sub">f(z)=z\u00b2, z\u2080=1 lies inside a circle of radius 2. Click to evaluate the contour integral \u222e z\u00b2/(z-1) dz using Cauchy's Integral Formula — no direct parameterization or real-variable integration required at all.</div>
+<div class="mb-stage">
+<svg id="cifSvg" viewBox="0 0 300 250"></svg>
+<button class="mb-btn" onclick="revealCIF()">Apply Cauchy's Integral Formula</button>
+<div class="readout" id="readoutCIF"></div>
+</div>
+<div id="fbCIF" class="mb-feedback"></div>
+<div class="aha" id="ahaCIF"></div>
+<div class="mb-caption">Cauchy's simpler integral theorem (guaranteeing zero) does NOT apply here — the integrand z²/(z-1) fails to be holomorphic exactly at z=1, which is why this different, more general formula was genuinely needed.</div>
+</div>
+<script>
+function drawCIF(highlight){
+  const svg=document.getElementById('cifSvg');
+  svg.innerHTML='';
+  const origin={x:150,y:125}, scale=45;
+
+  const circ=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  circ.setAttribute('cx',origin.x); circ.setAttribute('cy',origin.y); circ.setAttribute('r',2*scale);
+  circ.setAttribute('fill','none'); circ.setAttribute('stroke','var(--part-highlight)'); circ.setAttribute('stroke-width','2.5');
+  svg.appendChild(circ);
+
+  const axisX=document.createElementNS('http://www.w3.org/2000/svg','line');
+  axisX.setAttribute('x1',origin.x-100); axisX.setAttribute('y1',origin.y); axisX.setAttribute('x2',origin.x+100); axisX.setAttribute('y2',origin.y);
+  axisX.setAttribute('stroke','#CBD5E1');
+  svg.appendChild(axisX);
+  const axisY=document.createElementNS('http://www.w3.org/2000/svg','line');
+  axisY.setAttribute('x1',origin.x); axisY.setAttribute('y1',origin.y-100); axisY.setAttribute('x2',origin.x); axisY.setAttribute('y2',origin.y+100);
+  axisY.setAttribute('stroke','#CBD5E1');
+  svg.appendChild(axisY);
+
+  const z0dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  z0dot.setAttribute('cx',origin.x+1*scale); z0dot.setAttribute('cy',origin.y); z0dot.setAttribute('r',6); z0dot.setAttribute('fill','var(--part-accent)');
+  svg.appendChild(z0dot);
+  const z0lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  z0lbl.setAttribute('x',origin.x+1*scale); z0lbl.setAttribute('y',origin.y-14); z0lbl.setAttribute('text-anchor','middle'); z0lbl.setAttribute('font-size','10'); z0lbl.setAttribute('font-weight','700');
+  z0lbl.textContent='z\u2080=1';
+  svg.appendChild(z0lbl);
+
+  const contourLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  contourLbl.setAttribute('x',origin.x); contourLbl.setAttribute('y',20); contourLbl.setAttribute('text-anchor','middle'); contourLbl.setAttribute('font-size','10'); contourLbl.setAttribute('fill','var(--part-highlight)');
+  contourLbl.textContent='contour C: radius 2';
+  svg.appendChild(contourLbl);
+}
+function revealCIF(){
+  drawCIF(true);
+  const fz0 = 1*1; // f(z)=z^2, z0=1
+  document.getElementById('readoutCIF').innerHTML =
+    'f(z) = z\u00b2, so f(z\u2080) = f(1) = 1<br>'+
+    'Cauchy\u2019s Integral Formula: \u222e f(z)/(z-z\u2080) dz = 2\u03c0i \u00b7 f(z\u2080)<br>'+
+    'Result: \u222e z\u00b2/(z-1) dz = 2\u03c0i \u00b7 1 = 2\u03c0i \u2248 6.283i';
+  document.getElementById('fbCIF').innerHTML = 'Notice: the entire, genuinely difficult-looking contour integral collapsed to just evaluating f at a single interior point and multiplying by 2\u03c0i \u2014 no parameterization, no direct real-variable integration of any kind.';
+}
+drawCIF(false);
+document.getElementById('ahaCIF').innerHTML="<strong>Aha:</strong> a holomorphic function's value at literally every interior point of a region is already completely, exactly determined the moment its values along the region's own boundary are specified - there is no real-variable analog to this whatsoever. This is precisely why the Cauchy Integral Formula collapses what looks like a hard integration problem into a single function evaluation: the boundary information secretly already contains everything needed to know about the interior.";
+</script>
+</body></html>

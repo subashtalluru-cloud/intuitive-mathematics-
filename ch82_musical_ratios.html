@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#1E3A8A; --part-accent-light:#DBEAFE; --part-highlight:#7C2D92;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#EFF6FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin:4px; }
+.mb-btn:hover{ background:var(--part-accent); color:#fff; }
+#waveSvg{ width:100%; height:auto; aspect-ratio:2.5/1; display:block; margin-top:10px; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Consonant Chords Are Just Simple Whole-Number Wave Ratios</div>
+<div class="mb-sub">An octave is exactly a 2:1 frequency ratio. A perfect fifth is exactly 3:2. Click each interval and watch how simply the two waveforms line up — this alignment IS what your ear hears as harmonious.</div>
+<div class="mb-stage">
+<button class="mb-btn" onclick="showInterval('octave')">Octave (2:1)</button>
+<button class="mb-btn" onclick="showInterval('fifth')">Perfect Fifth (3:2)</button>
+<button class="mb-btn" onclick="showInterval('dissonant')">Dissonant (non-simple ratio)</button>
+<svg id="waveSvg" viewBox="0 0 400 150"></svg>
+<div class="readout" id="readoutMusic"></div>
+</div>
+<div class="aha" id="ahaMusic"></div>
+<div class="mb-caption">This connects the subjective, felt experience of musical harmony directly to simple, exact whole-number ratios — first documented by Pythagoras, and precisely analyzable using this book's own Fourier analysis material.</div>
+</div>
+<script>
+function drawWaves(freq1, freq2, label){
+  const svg=document.getElementById('waveSvg');
+  svg.innerHTML='';
+  const scaleX=350, scaleY=30, origin1={x:20,y:40}, origin2={x:20,y:110};
+
+  let d1='M', d2='M';
+  for(let t=0;t<=1;t+=0.005){
+    const y1=Math.sin(2*Math.PI*freq1*t);
+    const y2=Math.sin(2*Math.PI*freq2*t);
+    d1+=(origin1.x+t*scaleX)+','+(origin1.y-y1*scaleY)+' L';
+    d2+=(origin2.x+t*scaleX)+','+(origin2.y-y2*scaleY)+' L';
+  }
+  const curve1=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve1.setAttribute('d',d1.slice(0,-1)); curve1.setAttribute('fill','none'); curve1.setAttribute('stroke','var(--part-accent)'); curve1.setAttribute('stroke-width','2');
+  svg.appendChild(curve1);
+  const curve2=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve2.setAttribute('d',d2.slice(0,-1)); curve2.setAttribute('fill','none'); curve2.setAttribute('stroke','var(--part-highlight)'); curve2.setAttribute('stroke-width','2');
+  svg.appendChild(curve2);
+
+  const lbl1=document.createElementNS('http://www.w3.org/2000/svg','text');
+  lbl1.setAttribute('x',30); lbl1.setAttribute('y',20); lbl1.setAttribute('font-size','10'); lbl1.setAttribute('fill','var(--part-accent)');
+  lbl1.textContent='wave 1: '+freq1+' cycles';
+  svg.appendChild(lbl1);
+  const lbl2=document.createElementNS('http://www.w3.org/2000/svg','text');
+  lbl2.setAttribute('x',30); lbl2.setAttribute('y',135); lbl2.setAttribute('font-size','10'); lbl2.setAttribute('fill','var(--part-highlight)');
+  lbl2.textContent='wave 2: '+freq2+' cycles';
+  svg.appendChild(lbl2);
+}
+function showInterval(type){
+  let freq1, freq2, name, explanation;
+  if(type==='octave'){ freq1=4; freq2=8; name='Octave (2:1)'; explanation='Wave 2 completes exactly twice for every once of wave 1 — the simplest possible ratio after unison, and the most consonant interval in music.'; }
+  else if(type==='fifth'){ freq1=4; freq2=6; name='Perfect Fifth (3:2)'; explanation='Every 2 cycles of wave 1 line up exactly with every 3 cycles of wave 2 — a slightly more complex but still very simple ratio, producing a rich, stable-sounding harmony.'; }
+  else { freq1=4; freq2=6.7; name='Dissonant (irrational-ish ratio)'; explanation='These two waves never quite line up in any simple repeating pattern — the lack of simple alignment is exactly what your ear perceives as tension or dissonance.'; }
+  drawWaves(freq1,freq2,name);
+  document.getElementById('readoutMusic').innerHTML = name+'<br>Frequency ratio: '+(freq2/freq1).toFixed(3);
+  document.getElementById('ahaMusic').innerHTML = "<strong>"+name+":</strong> " + explanation;
+}
+showInterval('octave');
+</script>
+</body></html>

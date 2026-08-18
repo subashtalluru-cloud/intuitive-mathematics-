@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#4C1D95; --part-accent-light:#EDE9FE; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F5F3FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+.tier{ border:2px solid var(--line); border-radius:12px; padding:16px; margin-bottom:12px; cursor:pointer; }
+.tier.active{ border-color:var(--part-accent); background:var(--part-accent-light); }
+.tier-title{ font-weight:700; font-size:1rem; margin-bottom:4px; }
+.tier-detail{ font-size:0.85rem; color:var(--ink-soft); display:none; margin-top:8px; line-height:1.6; }
+.tier.active .tier-detail{ display:block; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Three Genuinely Different Roles Computers Play in Modern Mathematics</div>
+<div class="mb-sub">Click each tier to see exactly what kind of guarantee it provides — these are not interchangeable levels of "computer help," but three structurally distinct relationships between human insight and machine verification.</div>
+<div class="mb-stage">
+<div class="tier active" id="tier1" onclick="selectTier(1)">
+<div class="tier-title">Tier 1: Computer-Assisted Proof (e.g., the Four Color Theorem, 1976)</div>
+<div class="tier-detail">A human-designed proof strategy where a computer mechanically checks one large but finite, well-defined component (here, ~1,900 map configurations) that no human could realistically verify by hand. The overall conceptual structure remains fundamentally human.</div>
+</div>
+<div class="tier" id="tier2" onclick="selectTier(2)">
+<div class="tier-title">Tier 2: Formally Verified Proof (e.g., using Lean, Coq, Isabelle)</div>
+<div class="tier-detail">The ENTIRE logical structure of a proof — every single step — is mechanically checked against basic rules of inference, with zero possibility of a human oversight slipping through unnoticed. A considerably stronger guarantee than Tier 1's finite-case-checking alone.</div>
+</div>
+<div class="tier" id="tier3" onclick="selectTier(3)">
+<div class="tier-title">Tier 3: Machine-Learning-Suggested Conjecture</div>
+<div class="tier-detail">A machine learning system flags a statistically plausible pattern across a large dataset. This is NOT a proof of any kind — only a data-driven suggestion a human researcher must still independently, rigorously prove or refute using traditional mathematical toolkit before it can be accepted as a theorem.</div>
+</div>
+</div>
+<div class="aha" id="ahaTiers"></div>
+<div class="mb-caption">No current computational or machine learning system can, on its own, formulate genuinely meaningful new mathematical questions or construct the novel conceptual insight most new proofs still require.</div>
+</div>
+<script>
+function selectTier(n){
+  [1,2,3].forEach(i=>document.getElementById('tier'+i).classList.toggle('active', i===n));
+  const messages={
+    1: "<strong>Tier 1:</strong> The four color theorem's proof strategy was entirely human-conceived - a computer merely handled a checking task too large for any human to complete by hand, not unlike using a calculator for a genuinely enormous arithmetic problem, but at proof-verification scale.",
+    2: "<strong>Tier 2:</strong> Formal verification is qualitatively different from Tier 1 - rather than checking ONE finite component, it mechanically verifies the proof's ENTIRE logical chain, offering a genuinely new standard of certainty beyond even the most careful human peer review.",
+    3: "<strong>Tier 3:</strong> This is the weakest guarantee of the three - genuinely valuable for generating promising new leads, but explicitly NOT a proof. Chapter 84's conjecture/theorem distinction applies here in full, undiminished force: a pattern holding across every example in a dataset can still fail outside that dataset's scope."
+  };
+  document.getElementById('ahaTiers').innerHTML = messages[n];
+}
+selectTier(1);
+</script>
+</body></html>

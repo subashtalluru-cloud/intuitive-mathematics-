@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#4C1D95; --part-accent-light:#EDE9FE; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F5F3FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#webSvg{ width:100%; height:auto; aspect-ratio:1.5/1; display:block; cursor:pointer; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.82rem,0.95vw,0.94rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Nothing in This Book Stood Alone — Click a Part to See What It Fed Into</div>
+<div class="mb-sub">Click any node to highlight everything it connects to. This web of dependency, not a simple linear list, is the actual shape of the mathematics this book has built.</div>
+<div class="mb-stage">
+<svg id="webSvg" viewBox="0 0 350 350"></svg>
+<div class="readout" id="readoutWeb">Click any Part to see its direct connections.</div>
+</div>
+<div class="aha" id="ahaWeb"></div>
+<div class="mb-caption">Every single mathematical idea this book has developed arose, historically and conceptually, from some genuine human question — and every idea fed forward into further ideas built directly on top of it.</div>
+</div>
+<script>
+const nodes={
+  'Calc':[175,40,'Part VIII: Calculus'],
+  'DiffEq':[280,90,'Part IX: Differential Equations'],
+  'Prob':[300,180,'Part X-XI: Probability & Statistics'],
+  'DiscMath':[260,270,'Part XII: Discrete Math'],
+  'Fourier':[175,320,'Part XVII: Fourier Analysis'],
+  'Model':[90,270,'Part XVIII: Modeling'],
+  'CrossDisc':[50,180,'Part XIX: Cross-Disciplinary'],
+  'Modern':[90,90,'Part XX: Modern Math']
+};
+const edges=[
+  ['Calc','DiffEq'],['DiffEq','Fourier'],['Calc','Prob'],
+  ['Prob','Model'],['Model','CrossDisc'],['DiffEq','Model'],
+  ['DiscMath','Modern'],['Fourier','Model'],['Prob','CrossDisc'],
+  ['Calc','DiscMath']
+];
+function drawWeb(highlight){
+  const svg=document.getElementById('webSvg');
+  svg.innerHTML='';
+  edges.forEach(([a,b])=>{
+    const isHighlighted = highlight && (a===highlight || b===highlight);
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',nodes[a][0]); line.setAttribute('y1',nodes[a][1]);
+    line.setAttribute('x2',nodes[b][0]); line.setAttribute('y2',nodes[b][1]);
+    line.setAttribute('stroke', isHighlighted?'var(--part-accent)':'#CBD5E1');
+    line.setAttribute('stroke-width', isHighlighted?'3':'1.5');
+    svg.appendChild(line);
+  });
+  Object.keys(nodes).forEach(key=>{
+    const [x,y,label]=nodes[key];
+    const isSelected = key===highlight;
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',x); dot.setAttribute('cy',y); dot.setAttribute('r',isSelected?16:12);
+    dot.setAttribute('fill', isSelected?'var(--part-accent)':'var(--part-highlight)');
+    dot.setAttribute('data-key',key); dot.setAttribute('style','cursor:pointer');
+    svg.appendChild(dot);
+    const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',x); lbl.setAttribute('y',y+26); lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('font-size','8'); lbl.setAttribute('font-weight',isSelected?'700':'400');
+    lbl.textContent=key;
+    svg.appendChild(lbl);
+  });
+}
+document.getElementById('webSvg').addEventListener('click', e=>{
+  if(e.target.tagName!=='circle') return;
+  const key=e.target.getAttribute('data-key');
+  drawWeb(key);
+  const connections=edges.filter(([a,b])=>a===key||b===key).map(([a,b])=>a===key?b:a);
+  document.getElementById('readoutWeb').innerHTML = '<strong>'+nodes[key][2]+'</strong><br>Directly connects to: '+connections.join(', ');
+});
+drawWeb(null);
+document.getElementById('ahaWeb').innerHTML="<strong>Aha:</strong> click through several different Parts and notice none of them are isolated dead ends - every single one connects forward into at least one further Part, and most connect to several. This is the real shape of the mathematics in this book: not a simple linear checklist marched through once and then set aside, but a genuinely interconnected web where understanding one idea deepens and enables understanding several others, exactly the pattern this closing chapter has argued will keep extending naturally beyond this book's own particular scope.";
+</script>
+</body></html>

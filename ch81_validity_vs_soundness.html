@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#1E3A8A; --part-accent-light:#DBEAFE; --part-highlight:#7C2D92;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#EFF6FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+.arg-box{ background:var(--part-accent-light); border-radius:10px; padding:16px; font-size:0.95rem; line-height:1.6; margin-bottom:16px; }
+.toggle-row{ display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin-bottom:16px; }
+.toggle{ display:flex; flex-direction:column; align-items:center; gap:6px; }
+.toggle-btn{ padding:10px 16px; border-radius:8px; border:2px solid var(--line); background:#fff; cursor:pointer; font-weight:600; font-size:0.85rem; }
+.toggle-btn.on{ background:var(--good); color:#fff; border-color:var(--good); }
+.toggle-btn.off{ background:var(--bad); color:#fff; border-color:var(--bad); }
+#gridResult{ text-align:center; padding:16px; border-radius:10px; margin-top:10px; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); line-height:1.7; text-align:center; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Valid Says Nothing About True — Toggle the Premises Yourself</div>
+<div class="mb-sub">"All contracts signed under duress are legally void. This contract was signed under duress. Therefore, this contract is legally void." Toggle whether each premise is actually true, and watch validity and soundness respond completely differently.</div>
+<div class="mb-stage">
+<div class="arg-box">
+<strong>Premise 1:</strong> All contracts signed under duress are legally void.<br>
+<strong>Premise 2:</strong> This contract was signed under duress.<br>
+<strong>Conclusion:</strong> This contract is legally void.
+</div>
+<div class="toggle-row">
+<div class="toggle"><span>Premise 1 actually true?</span><button class="toggle-btn on" id="p1Btn" onclick="toggleP(1)">TRUE</button></div>
+<div class="toggle"><span>Premise 2 actually true?</span><button class="toggle-btn on" id="p2Btn" onclick="toggleP(2)">TRUE</button></div>
+</div>
+<div id="gridResult"></div>
+</div>
+<div class="aha" id="aha">Toggle the premises above.</div>
+<div class="mb-caption">Mathematics offers no general method for establishing which premises are actually, substantively true in a legal dispute — it can only sharpen the logical structure connecting stated premises to a conclusion.</div>
+</div>
+<script>
+let p1=true, p2=true;
+function toggleP(n){
+  if(n===1){ p1=!p1; document.getElementById('p1Btn').textContent=p1?'TRUE':'FALSE'; document.getElementById('p1Btn').className='toggle-btn '+(p1?'on':'off'); }
+  else { p2=!p2; document.getElementById('p2Btn').textContent=p2?'TRUE':'FALSE'; document.getElementById('p2Btn').className='toggle-btn '+(p2?'on':'off'); }
+  render();
+}
+function render(){
+  const valid = true; // logical structure never changes - always valid regardless of premise truth
+  const sound = valid && p1 && p2;
+  const div=document.getElementById('gridResult');
+  div.style.background = sound ? '#DCFCE7' : (valid ? '#FEF3C7' : '#FEE2E2');
+  div.innerHTML = '<strong>Validity: '+(valid?'VALID':'INVALID')+'</strong> (never changes \u2014 this is a fixed logical form)<br><strong>Soundness: '+(sound?'SOUND':'NOT SOUND')+'</strong> (depends entirely on whether both premises are actually true)';
+
+  const ahaEl=document.getElementById('aha');
+  if(sound){
+    ahaEl.innerHTML = "<strong>Aha:</strong> both premises true, and validity was never in question - the argument is genuinely SOUND, meaning the conclusion is actually, factually established. This is the only one of the four toggle combinations where you can trust the conclusion is true.";
+  } else if(p1 || p2){
+    ahaEl.innerHTML = "<strong>Aha:</strong> notice the argument stays VALID no matter what you just toggled - validity is a property of the logical FORM alone, fixed the moment the argument was written. But with at least one premise false, it is NOT SOUND, so the conclusion is not established as true, even though the reasoning connecting premises to conclusion remains flawless.";
+  } else {
+    ahaEl.innerHTML = "<strong>Aha:</strong> both premises false, yet the argument is STILL valid - validity never depended on the premises actually being true. This is the crucial, easily-missed distinction: a perfectly valid argument built on false premises proves nothing whatsoever about its conclusion's actual truth.";
+  }
+}
+render();
+</script>
+</body></html>

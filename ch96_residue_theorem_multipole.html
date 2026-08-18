@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#4338CA; --part-accent-light:#E0E7FF; --part-highlight:#BE185D;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#EEF2FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#residueSvg{ width:100%; height:auto; aspect-ratio:1.6/1; display:block; cursor:pointer; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Two Poles, Two Residues — Sum Them and Multiply by 2\u03c0i, Done</div>
+<div class="mb-sub">f(z) = z/((z-1)(z-2)), contour is a circle of radius 3, enclosing both poles at z=1 and z=2. Drag the contour radius and watch only ENCLOSED poles contribute to the answer.</div>
+<div class="mb-stage">
+<svg id="residueSvg" viewBox="0 0 300 200"></svg>
+<input type="range" id="radiusSlider" min="5" max="35" value="30" style="width:100%; margin-top:10px;">
+<div class="readout" id="readoutResidue"></div>
+</div>
+<div id="fbResidue" class="mb-feedback"></div>
+<div class="aha" id="ahaResidue"></div>
+<div class="mb-caption">A pole lying just outside the chosen contour, however close, contributes nothing whatsoever to that particular calculation — only genuinely enclosed poles ever matter.</div>
+</div>
+<script>
+function drawResidue(){
+  const radiusRaw=parseInt(document.getElementById('radiusSlider').value);
+  const radius=radiusRaw/10;
+  const svg=document.getElementById('residueSvg');
+  svg.innerHTML='';
+  const origin={x:60,y:100}, scale=40;
+
+  const circ=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  circ.setAttribute('cx',origin.x); circ.setAttribute('cy',origin.y); circ.setAttribute('r',radius*scale);
+  circ.setAttribute('fill','var(--part-accent-light)'); circ.setAttribute('stroke','var(--part-highlight)'); circ.setAttribute('stroke-width','2');
+  svg.appendChild(circ);
+
+  const poles=[[1,-1],[2,2]]; // [location, residue]
+  let enclosedSum=0;
+  poles.forEach(([loc,res])=>{
+    const enclosed = loc < radius;
+    if(enclosed) enclosedSum+=res;
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',origin.x+loc*scale); dot.setAttribute('cy',origin.y); dot.setAttribute('r',6);
+    dot.setAttribute('fill', enclosed?'var(--part-accent)':'#94A3B8');
+    svg.appendChild(dot);
+    const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',origin.x+loc*scale); lbl.setAttribute('y',origin.y-14); lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('font-size','9'); lbl.setAttribute('font-weight','700');
+    lbl.textContent='z='+loc+' (Res='+res+')';
+    svg.appendChild(lbl);
+  });
+
+  const integral = enclosedSum*2*Math.PI;
+  document.getElementById('readoutResidue').innerHTML =
+    'Contour radius: '+radius.toFixed(1)+'<br>'+
+    'Enclosed poles\u2019 residue sum: '+enclosedSum+'<br>'+
+    'Contour integral = 2\u03c0i \u00d7 '+enclosedSum+' = '+integral.toFixed(3)+'i';
+  document.getElementById('fbResidue').innerHTML = radius>2
+    ? 'Both poles are enclosed \u2014 sum both residues (-1)+(2)=1, giving 2\u03c0i.'
+    : (radius>1
+      ? 'Only the pole at z=1 is enclosed \u2014 the pole at z=2 lies outside and contributes nothing at all, even though it\u2019s close by.'
+      : 'Neither pole is enclosed \u2014 the integral is exactly zero, by Cauchy\u2019s simpler theorem from Chapter 95.');
+}
+document.getElementById('radiusSlider').addEventListener('input', drawResidue);
+drawResidue();
+document.getElementById('ahaResidue').innerHTML="<strong>Aha:</strong> drag the radius from small to large and watch the gray pole turn dark exactly as the contour grows to enclose it - and watch the computed integral value jump discretely each time. A pole sitting just barely outside the contour contributes literally nothing, no matter how close it is; a pole just barely inside contributes its full residue. This all-or-nothing enclosure test is exactly why correctly identifying which poles actually lie inside a chosen contour is the genuinely essential first step before ever applying the residue theorem's summation formula.";
+</script>
+</body></html>

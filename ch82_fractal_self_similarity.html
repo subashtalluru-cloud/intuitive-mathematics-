@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#1E3A8A; --part-accent-light:#DBEAFE; --part-highlight:#7C2D92;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#EFF6FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#fractalSvg{ width:100%; height:auto; aspect-ratio:2/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Zoom Into a Fractal Tree — the Small Branch Looks Exactly Like the Whole</div>
+<div class="mb-sub">Drag the recursion depth and watch a small handful of simple branching rules build increasingly rich, naturalistic-looking complexity — the exact same rule applied at every scale.</div>
+<div class="mb-stage">
+<svg id="fractalSvg" viewBox="0 0 400 200"></svg>
+<div class="slider-row"><label>Recursion depth: <span id="depthVal">3</span></label><input type="range" id="depthSlider" min="1" max="10" value="3"></div>
+<div class="readout" id="readoutFractal"></div>
+</div>
+<div class="aha" id="ahaFractal"></div>
+<div class="mb-caption">This same self-similar structure appears remarkably widely throughout the natural world — coastlines, mountain ranges, blood vessel networks — a genuinely important tool in generative art precisely because it produces rich complexity from remarkably simple rules.</div>
+</div>
+<script>
+function drawBranch(svg,x,y,angle,length,depth,maxDepth){
+  if(depth>maxDepth || length<2) return;
+  const x2=x+length*Math.cos(angle);
+  const y2=y-length*Math.sin(angle);
+  const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1',x); line.setAttribute('y1',y); line.setAttribute('x2',x2); line.setAttribute('y2',y2);
+  line.setAttribute('stroke','var(--part-accent)'); line.setAttribute('stroke-width',Math.max(0.5,(maxDepth-depth+1)*0.7));
+  svg.appendChild(line);
+  drawBranch(svg,x2,y2,angle-0.5,length*0.72,depth+1,maxDepth);
+  drawBranch(svg,x2,y2,angle+0.5,length*0.72,depth+1,maxDepth);
+}
+function drawFractal(){
+  const depth=parseInt(document.getElementById('depthSlider').value);
+  document.getElementById('depthVal').textContent=depth;
+  const svg=document.getElementById('fractalSvg');
+  svg.innerHTML='';
+  drawBranch(svg,200,195,Math.PI/2,55,0,depth);
+
+  const numBranches=Math.pow(2,depth+1)-1;
+  document.getElementById('readoutFractal').innerHTML =
+    'Recursion depth: '+depth+'<br>Total branch segments: '+numBranches+'<br>Rule applied: at every single node, split into 2 shorter branches at a fixed angle';
+}
+document.getElementById('depthSlider').addEventListener('input', drawFractal);
+drawFractal();
+document.getElementById('ahaFractal').innerHTML="<strong>Aha:</strong> drag depth up to 10 - a genuinely tree-like, naturalistic silhouette emerges from a rule stated in one short sentence: 'split into two shorter branches at a fixed angle, then repeat on each new branch.' Zoom into any single small branch and it looks exactly like a smaller copy of the whole tree - this is self-similarity made concrete, the exact same mechanism producing real coastlines, real blood vessel networks, and real mountain ranges from remarkably simple underlying physical rules.";
+</script>
+</body></html>

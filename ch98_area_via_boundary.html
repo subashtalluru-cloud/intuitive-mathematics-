@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#065F46; --part-accent-light:#D1FAE5; --part-highlight:#1D4ED8;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#ECFDF5; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#polySvg{ width:100%; height:auto; aspect-ratio:1.6/1; display:block; cursor:pointer; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Compute Area Without Ever Touching the Interior — Boundary Points Alone Suffice</div>
+<div class="mb-sub">Green's theorem gives Area = (1/2)\u222e(x dy - y dx). Click each shape and confirm this boundary-only formula matches the shape's own well-known area exactly, even for an irregular polygon.</div>
+<div class="mb-stage">
+<svg id="polySvg" viewBox="0 0 300 200"></svg>
+<div class="readout" id="readoutArea">Click a shape to compute its area via the boundary formula.</div>
+</div>
+<div id="fbArea" class="mb-feedback"></div>
+<div class="aha" id="ahaArea"></div>
+<div class="mb-caption">This exact technique is used directly and practically in surveying and computer-aided design software for computing an arbitrarily complicated polygon's own enclosed area, purely from its boundary vertices.</div>
+</div>
+<script>
+function areaViaBoundary(vertices){
+  let total=0;
+  const n=vertices.length;
+  for(let i=0;i<n;i++){
+    const [x1,y1]=vertices[i];
+    const [x2,y2]=vertices[(i+1)%n];
+    total += x1*y2-x2*y1;
+  }
+  return Math.abs(total)/2;
+}
+const shapes={
+  square: {vertices:[[0,0],[3,0],[3,3],[0,3]], name:'Unit-scaled square', expected:9},
+  triangle: {vertices:[[0,0],[4,0],[0,3]], name:'Right triangle', expected:6},
+  irregular: {vertices:[[0,0],[4,1],[3,4],[1,3]], name:'Irregular quadrilateral', expected:null}
+};
+function drawShapes(){
+  const svg=document.getElementById('polySvg');
+  svg.innerHTML='';
+  const origin={x:30,y:170}, scale=25;
+  const offsets={square:0, triangle:80, irregular:160};
+  Object.keys(shapes).forEach(key=>{
+    const {vertices}=shapes[key];
+    const offsetX=offsets[key];
+    let d='M';
+    vertices.forEach(([x,y])=>{ d+=(origin.x+offsetX+x*scale)+','+(origin.y-y*scale)+' L'; });
+    d+='Z';
+    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d',d); path.setAttribute('fill','var(--part-accent-light)'); path.setAttribute('stroke','var(--part-accent)'); path.setAttribute('stroke-width','2');
+    path.setAttribute('data-key',key); path.setAttribute('style','cursor:pointer');
+    svg.appendChild(path);
+  });
+}
+document.getElementById('polySvg').addEventListener('click', e=>{
+  if(e.target.tagName!=='path') return;
+  const key=e.target.getAttribute('data-key');
+  const shape=shapes[key];
+  const area=areaViaBoundary(shape.vertices);
+  document.getElementById('readoutArea').innerHTML =
+    shape.name+'<br>Area via boundary formula: '+area.toFixed(2)+
+    (shape.expected!==null ? ' (matches known formula: '+shape.expected+')' : ' (no simple direct formula, yet still computed exactly)');
+  document.getElementById('fbArea').innerHTML = shape.expected!==null
+    ? 'The boundary-only formula matches this shape\u2019s well-known area formula exactly \u2014 no interior calculation was ever needed.'
+    : 'This irregular shape has no simple textbook area formula, yet the same boundary-tracing formula still computes its exact area, purely from its four boundary vertices.';
+});
+drawShapes();
+document.getElementById('ahaArea').innerHTML="<strong>Aha:</strong> click all three shapes and notice the exact same boundary-only formula works identically well for a simple square, a triangle, and a genuinely irregular polygon with no textbook formula at all. This is Green's theorem's own genuinely elegant special case in direct action: an entire region's area, which sounds like it should require examining every interior point, is instead fully, exactly recoverable from nothing more than tracing its own boundary vertices in order.";
+</script>
+</body></html>

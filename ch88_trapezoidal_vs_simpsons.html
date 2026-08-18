@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#0E7490; --part-accent-light:#CFFAFE; --part-highlight:#7C2D92;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#ECFEFF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+@media (max-width:760px){ .two-col{ grid-template-columns:1fr; } }
+.panel{ background:#fff; border:2px solid var(--line); border-radius:12px; padding:16px; }
+.panel-header{ font-weight:700; text-align:center; margin-bottom:8px; font-size:clamp(0.9rem,1.05vw,1.02rem); }
+.panelSvg{ width:100%; height:auto; aspect-ratio:1.3/1; display:block; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.82rem,0.95vw,0.94rem); line-height:1.7; margin-top:8px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Same 2 Subintervals — Trapezoidal Overshoots, Simpson's Nails It Exactly</div>
+<div class="mb-sub">Integral of x² from 0 to 2, true value 8/3≈2.667. Compare a straight-sided trapezoid fit against a parabola fit for the exact same curve.</div>
+<div class="two-col">
+<div class="panel"><div class="panel-header" style="color:var(--part-accent);">Trapezoidal rule</div><svg class="panelSvg" id="trapSvg" viewBox="0 0 200 180"></svg><div class="readout" id="readoutTrap"></div></div>
+<div class="panel"><div class="panel-header" style="color:var(--good);">Simpson's rule</div><svg class="panelSvg" id="simpSvg" viewBox="0 0 200 180"></svg><div class="readout" id="readoutSimp"></div></div>
+</div>
+<div id="fbInt" class="mb-feedback"></div>
+<div class="aha" id="ahaInt"></div>
+<div class="mb-caption">This dramatic exactness reflects x² itself already being a parabola, matching Simpson's own underlying parabolic-fitting assumption perfectly — a more irregular function would still favor Simpson's rule, but not usually achieve zero error.</div>
+</div>
+</div>
+<script>
+function f(x){ return x*x; }
+function drawCurveAndApprox(svgId, mode){
+  const svg=document.getElementById(svgId);
+  svg.innerHTML='';
+  const scaleX=80, scaleY=25, origin={x:20,y:160};
+
+  let d='M';
+  for(let x=0;x<=2;x+=0.02){
+    const y=f(x);
+    d+=(origin.x+x*scaleX)+','+(origin.y-y*scaleY)+' L';
+  }
+  const curve=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve.setAttribute('d',d.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke','var(--part-highlight)'); curve.setAttribute('stroke-width','2');
+  svg.appendChild(curve);
+
+  const axis=document.createElementNS('http://www.w3.org/2000/svg','line');
+  axis.setAttribute('x1',origin.x); axis.setAttribute('y1',origin.y); axis.setAttribute('x2',180); axis.setAttribute('y2',origin.y);
+  axis.setAttribute('stroke','#94A3B8');
+  svg.appendChild(axis);
+
+  if(mode==='trap'){
+    const pts=[[0,f(0)],[1,f(1)],[2,f(2)]];
+    let ad='M'+(origin.x)+','+origin.y+' ';
+    pts.forEach(([x,y])=>{ ad+='L'+(origin.x+x*scaleX)+','+(origin.y-y*scaleY)+' '; });
+    ad+='L'+(origin.x+2*scaleX)+','+origin.y+' Z';
+    const area=document.createElementNS('http://www.w3.org/2000/svg','path');
+    area.setAttribute('d',ad); area.setAttribute('fill','var(--part-accent)'); area.setAttribute('fill-opacity','0.3'); area.setAttribute('stroke','var(--part-accent)'); area.setAttribute('stroke-width','2');
+    svg.appendChild(area);
+  } else {
+    // Simpson's parabolic area = exact curve fill since f itself is x^2
+    let ad='M'+(origin.x)+','+origin.y+' ';
+    for(let x=0;x<=2;x+=0.05){
+      ad+='L'+(origin.x+x*scaleX)+','+(origin.y-f(x)*scaleY)+' ';
+    }
+    ad+='L'+(origin.x+2*scaleX)+','+origin.y+' Z';
+    const area=document.createElementNS('http://www.w3.org/2000/svg','path');
+    area.setAttribute('d',ad); area.setAttribute('fill','var(--good)'); area.setAttribute('fill-opacity','0.3'); area.setAttribute('stroke','var(--good)'); area.setAttribute('stroke-width','2');
+    svg.appendChild(area);
+  }
+}
+drawCurveAndApprox('trapSvg','trap');
+drawCurveAndApprox('simpSvg','simp');
+
+const h=1;
+const trapResult = h/2*(f(0)+2*f(1)+f(2));
+const simpResult = h/3*(f(0)+4*f(1)+f(2));
+const exact = 8/3;
+document.getElementById('readoutTrap').innerHTML = 'Result: '+trapResult.toFixed(4)+'<br>Exact: '+exact.toFixed(4)+'<br>Error: '+(trapResult-exact).toFixed(4);
+document.getElementById('readoutSimp').innerHTML = 'Result: '+simpResult.toFixed(4)+'<br>Exact: '+exact.toFixed(4)+'<br>Error: '+(simpResult-exact).toFixed(4);
+document.getElementById('fbInt').innerHTML = 'Using the SAME 2 subintervals: trapezoidal overshoots by '+Math.abs(trapResult-exact).toFixed(3)+' (the straight top misses the curve\u2019s downward bulge), while Simpson\u2019s rule matches the true value to essentially zero error.';
+document.getElementById('ahaInt').innerHTML="<strong>Aha:</strong> the trapezoidal shape's straight top sits entirely ABOVE the true curve across each subinterval (since x\u00b2 curves downward-concave-up, a straight line between two points always sits above it) - this is exactly why trapezoidal systematically OVERSHOOTS here, every single time, not randomly. Simpson's rule fits a genuine parabola instead of a straight line, and since the target function IS a parabola, that fit is exact - zero error, not just smaller error. For a more irregular function neither shape matches perfectly, but Simpson's parabolic fit still typically tracks the true curve\u2019s curvature far more closely than trapezoidal\u2019s straight lines ever could.";
+</script>
+</body></html>

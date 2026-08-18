@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#9D174D; --part-accent-light:#FCE7F3; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FDF2F8; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin:4px; }
+.mb-btn:hover, .mb-btn.active{ background:var(--part-accent); color:#fff; }
+#contourSvg{ width:100%; height:auto; aspect-ratio:1.5/1; display:block; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">A Point That's a Peak in One Direction, a Valley in Another — Zero Gradient Doesn't Mean Extremum</div>
+<div class="mb-sub">The gradient vanishes at all three critical points below. Click each one to see the Hessian determinant reveal genuinely different behavior — including a type with no single-variable equivalent at all.</div>
+<div class="mb-stage">
+<button class="mb-btn active" onclick="showType('min',this)">f(x,y) = x\u00b2+y\u00b2</button>
+<button class="mb-btn" onclick="showType('max',this)">f(x,y) = -x\u00b2-y\u00b2</button>
+<button class="mb-btn" onclick="showType('saddle',this)">f(x,y) = x\u00b2-y\u00b2</button>
+<svg id="contourSvg" viewBox="0 0 300 220"></svg>
+<div class="readout" id="readoutSaddle"></div>
+</div>
+<div id="fbSaddle" class="mb-feedback"></div>
+<div class="aha" id="ahaSaddle"></div>
+<div class="mb-caption">A saddle point has no direct single-variable analog whatsoever — the Hessian-determinant test exists specifically, and is genuinely necessary, to distinguish this new possibility.</div>
+</div>
+<script>
+function drawContours(type){
+  const svg=document.getElementById('contourSvg');
+  svg.innerHTML='';
+  const origin={x:150,y:110}, scale=8;
+  const levels = type==='saddle' ? [-4,-2,0,2,4] : (type==='max' ? [-1,-4,-9,-16] : [1,4,9,16]);
+
+  levels.forEach(level=>{
+    let path='';
+    if(type==='min'){
+      const r=Math.sqrt(level);
+      if(!isNaN(r)) path=circlePath(origin,r*scale);
+    } else if(type==='max'){
+      const r=Math.sqrt(-level);
+      if(!isNaN(r)) path=circlePath(origin,r*scale);
+    } else {
+      path=hyperbolaPath(origin,scale,level);
+    }
+    if(path){
+      const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+      p.setAttribute('d',path); p.setAttribute('fill','none'); p.setAttribute('stroke','var(--part-accent)'); p.setAttribute('stroke-width','1.5');
+      svg.appendChild(p);
+    }
+  });
+  const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  dot.setAttribute('cx',origin.x); dot.setAttribute('cy',origin.y); dot.setAttribute('r',5); dot.setAttribute('fill','var(--ink)');
+  svg.appendChild(dot);
+}
+function circlePath(origin,r){
+  if(r<=0||isNaN(r)) return '';
+  return 'M'+(origin.x+r)+','+origin.y+' A'+r+','+r+' 0 1,0 '+(origin.x-r)+','+origin.y+' A'+r+','+r+' 0 1,0 '+(origin.x+r)+','+origin.y;
+}
+function hyperbolaPath(origin,scale,level){
+  let d='';
+  if(level===0){
+    d='M'+(origin.x-100)+','+(origin.y-100)+' L'+(origin.x+100)+','+(origin.y+100)+' M'+(origin.x-100)+','+(origin.y+100)+' L'+(origin.x+100)+','+(origin.y-100);
+    return d;
+  }
+  for(let sign=-1;sign<=1;sign+=2){
+    let piece='M';
+    for(let x=-5;x<=5;x+=0.1){
+      const y2 = x*x-level;
+      if(y2<0) continue;
+      const y=sign*Math.sqrt(y2);
+      piece+=(origin.x+x*scale)+','+(origin.y-y*scale)+' L';
+    }
+    d+=piece.slice(0,-1)+' ';
+  }
+  return d;
+}
+function showType(type,btn){
+  document.querySelectorAll('.mb-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  drawContours(type);
+  let det, fxx, classification, explain;
+  if(type==='min'){ det=4; fxx=2; classification='LOCAL MINIMUM'; explain='All contour circles nest around the center, getting smaller as the function value decreases toward the center \u2014 every direction leads uphill from this point.'; }
+  else if(type==='max'){ det=4; fxx=-2; classification='LOCAL MAXIMUM'; explain='All contour circles nest around the center, getting smaller as the function value increases toward the center \u2014 every direction leads downhill from this point.'; }
+  else { det=-4; fxx=2; classification='SADDLE POINT'; explain='The contours form hyperbolas, not circles \u2014 walking along one diagonal goes uphill, walking along the other goes downhill, simultaneously, from the exact same point.'; }
+  document.getElementById('readoutSaddle').innerHTML =
+    'Gradient at origin: (0, 0) \u2014 a genuine critical point<br>'+
+    'Hessian determinant: '+det+'<br>'+
+    'Classification: <strong>'+classification+'</strong>';
+  document.getElementById('fbSaddle').innerHTML = explain;
+}
+drawContours('min');
+showTypeInit();
+function showTypeInit(){
+  document.getElementById('readoutSaddle').innerHTML =
+    'Gradient at origin: (0, 0) \u2014 a genuine critical point<br>Hessian determinant: 4<br>Classification: <strong>LOCAL MINIMUM</strong>';
+  document.getElementById('fbSaddle').innerHTML = 'All contour circles nest around the center, getting smaller as the function value decreases toward the center \u2014 every direction leads uphill from this point.';
+}
+document.getElementById('ahaSaddle').innerHTML="<strong>Aha:</strong> click 'saddle' and notice the gradient is STILL exactly zero at the origin here too - yet this point is neither a peak nor a valley. Walking along the x-axis from this point, the function increases (it's a valley in that direction); walking along the y-axis, the function decreases (it's a peak in that direction). A single-variable function could never exhibit this behavior - a saddle point is a genuinely new phenomenon that only becomes possible once there's more than one direction to walk in, which is exactly why the Hessian determinant test exists: zero gradient alone is not enough information to know what kind of critical point you're looking at.";
+</script>
+</body></html>

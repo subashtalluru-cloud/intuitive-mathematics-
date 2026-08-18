@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#0E7490; --part-accent-light:#CFFAFE; --part-highlight:#7C2D92;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#ECFEFF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#eulerSvg{ width:100%; height:auto; aspect-ratio:2.3/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Straight Steps Chasing a Curve — Watch the Gap Shrink as Steps Get Smaller</div>
+<div class="mb-sub">dy/dx = y, y(0)=1 (true solution: e^x). Euler's method follows the local slope in short straight steps. Drag the step size and watch the approximation track the true exponential curve more or less closely.</div>
+<div class="mb-stage">
+<svg id="eulerSvg" viewBox="0 0 400 180"></svg>
+<div class="slider-row"><label>Step size h = <span id="hVal">0.5</span></label><input type="range" id="hSlider" min="5" max="100" value="50"></div>
+<div class="readout" id="readoutEuler2"></div>
+</div>
+<div id="fbEuler2" class="mb-feedback"></div>
+<div class="aha" id="ahaEuler2"></div>
+<div class="mb-caption">This identical finite-step-size philosophy directly parallels Newton's method's own tangent-following idea, now applied to tracing out an entire solution curve rather than finding a single root.</div>
+</div>
+<script>
+function drawEuler(){
+  const hRaw=parseInt(document.getElementById('hSlider').value);
+  const h=hRaw/100;
+  document.getElementById('hVal').textContent=h.toFixed(2);
+
+  const svg=document.getElementById('eulerSvg');
+  svg.innerHTML='';
+  const scaleX=90, scaleY=18, origin={x:30,y:160};
+
+  let dExact='M';
+  for(let x=0;x<=2;x+=0.02){
+    const y=Math.exp(x);
+    dExact+=(origin.x+x*scaleX)+','+(origin.y-y*scaleY)+' L';
+  }
+  const exactCurve=document.createElementNS('http://www.w3.org/2000/svg','path');
+  exactCurve.setAttribute('d',dExact.slice(0,-1)); exactCurve.setAttribute('fill','none'); exactCurve.setAttribute('stroke','var(--good)'); exactCurve.setAttribute('stroke-width','2'); exactCurve.setAttribute('stroke-dasharray','4,3');
+  svg.appendChild(exactCurve);
+
+  let x=0, y=1;
+  let dEuler='M'+(origin.x)+','+(origin.y-y*scaleY)+' ';
+  const numSteps=Math.round(2/h);
+  for(let i=0;i<numSteps;i++){
+    const dydx=y;
+    y=y+h*dydx;
+    x+=h;
+    dEuler+='L'+(origin.x+x*scaleX)+','+(origin.y-y*scaleY)+' ';
+  }
+  const eulerCurve=document.createElementNS('http://www.w3.org/2000/svg','path');
+  eulerCurve.setAttribute('d',dEuler); eulerCurve.setAttribute('fill','none'); eulerCurve.setAttribute('stroke','var(--part-accent)'); eulerCurve.setAttribute('stroke-width','2.5');
+  svg.appendChild(eulerCurve);
+
+  const axis=document.createElementNS('http://www.w3.org/2000/svg','line');
+  axis.setAttribute('x1',origin.x); axis.setAttribute('y1',origin.y); axis.setAttribute('x2',380); axis.setAttribute('y2',origin.y);
+  axis.setAttribute('stroke','#94A3B8');
+  svg.appendChild(axis);
+
+  const exactAt2=Math.exp(2);
+  document.getElementById('readoutEuler2').innerHTML =
+    'Step size h = '+h.toFixed(2)+' ('+numSteps+' total steps)<br>'+
+    'Euler estimate at x=2: '+y.toFixed(4)+'<br>'+
+    'True value e\u00b2 = '+exactAt2.toFixed(4)+'<br>'+
+    'Error: '+Math.abs(y-exactAt2).toFixed(4);
+  document.getElementById('fbEuler2').innerHTML = h>0.3
+    ? 'With this large a step size, the orange approximation visibly, systematically undershoots the true green exponential curve — each straight-line step ignores how much the slope itself increases within that step.'
+    : 'With this small a step size, the orange approximation now tracks the true curve quite closely — smaller steps mean the slope changes less within each individual step, reducing the systematic undershoot.';
+}
+document.getElementById('hSlider').addEventListener('input', drawEuler);
+drawEuler();
+document.getElementById('ahaEuler2').innerHTML="<strong>Aha:</strong> drag the step size down toward its smallest setting and watch the orange approximation hug the true exponential curve ever more closely. Euler's method always systematically UNDERSHOOTS this particular growing exponential curve, not randomly - because it follows the CURRENT slope in a straight line, while the true curve's slope is actually increasing throughout each step, meaning the true curve pulls away above the straight-line step every single time.";
+</script>
+</body></html>

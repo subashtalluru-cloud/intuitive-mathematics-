@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#065F46; --part-accent-light:#D1FAE5; --part-highlight:#1D4ED8;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#ECFDF5; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#hikeSvg{ width:100%; height:auto; aspect-ratio:1.8/1; display:block; cursor:pointer; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">A Hiker's Net Elevation Change Never Depends on the Route Taken</div>
+<div class="mb-sub">Click different routes between the same start and end point on this elevation surface (f=x\u00b2y). The gradient field's line integral always gives the identical net elevation change — start minus finish, regardless of any detour.</div>
+<div class="mb-stage">
+<svg id="hikeSvg" viewBox="0 0 300 180"></svg>
+<div class="readout" id="readoutHike">Click a route to compute its net elevation change.</div>
+</div>
+<div id="fbHike" class="mb-feedback"></div>
+<div class="aha" id="ahaHike"></div>
+<div class="mb-caption">This is exactly the same Fundamental-Theorem-style shortcut Chapter 40 introduced for ordinary integrals — the line integral of a gradient field depends only on where the path starts and ends, never on the specific winding route taken between them.</div>
+</div>
+<script>
+function f(x,y){ return x*x*y; }
+function drawHike(){
+  const svg=document.getElementById('hikeSvg');
+  svg.innerHTML='';
+  const origin={x:30,y:150}, scale=35;
+
+  const start=[0,0], end=[2,3];
+  const routes=[
+    {name:'Direct diagonal', points:[start,end], color:'var(--part-accent)'},
+    {name:'Right-angle detour', points:[start,[2,0],end], color:'var(--part-highlight)'}
+  ];
+  routes.forEach((route,idx)=>{
+    let d='M';
+    route.points.forEach(([x,y])=>{ d+=(origin.x+x*scale)+','+(origin.y-y*scale)+' L'; });
+    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d',d.slice(0,-1)); path.setAttribute('fill','none'); path.setAttribute('stroke',route.color); path.setAttribute('stroke-width','2.5');
+    path.setAttribute('data-idx',idx); path.setAttribute('style','cursor:pointer');
+    svg.appendChild(path);
+  });
+  [start,end].forEach(([x,y],i)=>{
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',origin.x+x*scale); dot.setAttribute('cy',origin.y-y*scale); dot.setAttribute('r',6); dot.setAttribute('fill','var(--ink)');
+    svg.appendChild(dot);
+    const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',origin.x+x*scale); lbl.setAttribute('y',origin.y-y*scale-12); lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('font-size','9'); lbl.setAttribute('font-weight','700');
+    lbl.textContent = i===0 ? 'start (0,0)' : 'end (2,3)';
+    svg.appendChild(lbl);
+  });
+}
+document.getElementById('hikeSvg').addEventListener('click', e=>{
+  if(e.target.tagName!=='path') return;
+  const idx=parseInt(e.target.getAttribute('data-idx'));
+  const routeNames=['Direct diagonal route','Right-angle detour route'];
+  const netChange = f(2,3)-f(0,0);
+  document.getElementById('readoutHike').innerHTML =
+    routeNames[idx]+' selected<br>'+
+    'Net elevation change = f(2,3) - f(0,0) = '+f(2,3)+' - '+f(0,0)+' = '+netChange;
+  document.getElementById('fbHike').innerHTML = 'Notice: regardless of which route was clicked, the computed net elevation change is identical \u2014 12 \u2014 exactly matching the elevation-gained-minus-elevation-lost cancellation this specific detour route genuinely involves.';
+});
+drawHike();
+document.getElementById('ahaHike').innerHTML="<strong>Aha:</strong> click both routes and confirm the reported net elevation change never changes, even though the right-angle detour clearly travels a longer, differently-shaped path than the direct diagonal. For a gradient field, the line integral genuinely only cares about the fixed endpoints - any uphill and downhill stretches along a longer detour must exactly cancel out in the final net total, which is precisely why this specific class of vector field enjoys such a dramatic path-independence shortcut.";
+</script>
+</body></html>

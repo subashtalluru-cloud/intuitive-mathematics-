@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#4C1D95; --part-accent-light:#EDE9FE; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#F5F3FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin:4px; }
+.mb-btn:hover{ background:var(--part-accent); color:#fff; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Easy to Check. Nobody Knows If It's Easy to Solve.</div>
+<div class="mb-sub">Try solving a genuinely hard puzzle yourself, then try just checking a given answer. The dramatic difference in effort between these two tasks is exactly what "P versus NP" asks about — and nobody has ever proven whether that gap is fundamental or illusory.</div>
+<div class="mb-stage">
+<button class="mb-btn" onclick="showMode('solve')">Try to SOLVE it</button>
+<button class="mb-btn" onclick="showMode('check')">Try to CHECK a given answer</button>
+<div class="readout" id="readoutPnp"></div>
+</div>
+<div id="fbPnp" class="mb-feedback"></div>
+<div class="aha" id="ahaPnp"></div>
+<div class="mb-caption">Modern cryptography depends directly on the widespread, strong suspicion that P does not equal NP — yet no one has ever rigorously proven this suspicion true, nor found a counterexample disproving it.</div>
+</div>
+<script>
+const target=8354917;
+// factors: 8354917 = 2003 * 4171 (both prime-ish for demo)
+function showMode(mode){
+  if(mode==='solve'){
+    document.getElementById('readoutPnp').innerHTML =
+      'TASK: find two factors of 8,354,917 that multiply to give this number.<br>'+
+      'You would need to try dividing by 2, 3, 5, 7, 11, 13... checking each candidate divisor one at a time, potentially thousands of attempts before finding the answer.';
+    document.getElementById('fbPnp').innerHTML = 'This is the SOLVING direction — genuinely hard, potentially requiring an enormous number of attempts for a large enough number, with no known shortcut.';
+  } else {
+    document.getElementById('readoutPnp').innerHTML =
+      'TASK: verify that 2677 \u00d7 3121 = 8,354,917.<br>'+
+      'Result: 2677 \u00d7 3121 = '+(2677*3121)+' \u2014 confirmed in a single multiplication, instantly.';
+    document.getElementById('fbPnp').innerHTML = 'This is the CHECKING direction — trivially fast, one multiplication, regardless of how hard finding those factors originally was.';
+  }
+}
+showMode('solve');
+document.getElementById('ahaPnp').innerHTML="<strong>Aha:</strong> click between SOLVE and CHECK and notice the wild asymmetry in effort - finding the factors could take real, substantial searching, but verifying a candidate answer takes one instant multiplication. Every problem in the class called NP has this same 'hard to solve, easy to check' character. P versus NP asks whether this asymmetry is fundamental and unavoidable, or whether some undiscovered clever method could make solving EVERY such problem just as fast as checking one. Nobody knows the answer - and this exact number-factoring asymmetry is precisely what protects your encrypted internet traffic today.";
+</script>
+</body></html>

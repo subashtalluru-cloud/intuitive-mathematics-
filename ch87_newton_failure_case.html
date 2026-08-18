@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#0E7490; --part-accent-light:#CFFAFE; --part-highlight:#7C2D92;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#ECFEFF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#failSvg{ width:100%; height:auto; aspect-ratio:2.2/1; display:block; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin-top:10px; }
+.mb-btn:hover{ background:var(--part-accent); color:#fff; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">A Starting Guess So Bad the Method Bounces Forever, Never Converging</div>
+<div class="mb-sub">f(x) = x^3 - 2x + 2, starting from x0=0. Click to iterate and watch this specific, genuinely poor starting choice trap Newton's method in an endless back-and-forth loop.</div>
+<div class="mb-stage">
+<svg id="failSvg" viewBox="0 0 400 160"></svg>
+<button class="mb-btn" onclick="nextFail()">Take next Newton step</button>
+<button class="mb-btn" onclick="resetFail()">Reset</button>
+<div class="readout" id="readoutFail"></div>
+</div>
+<div id="fbFail" class="mb-feedback"></div>
+<div class="aha" id="ahaFail"></div>
+<div class="mb-caption">A genuinely careful practitioner first sketches or roughly estimates the function's behavior before committing to a specific starting guess, and always verifies the final computed root directly by substitution.</div>
+</div>
+<script>
+function g(x){ return x*x*x - 2*x + 2; }
+function gprime(x){ return 3*x*x - 2; }
+let failIterations=[0];
+function drawFail(){
+  const svg=document.getElementById('failSvg');
+  svg.innerHTML='';
+  const scaleX=90, scaleY=25, origin={x:200,y:80};
+
+  let d='M';
+  for(let x=-2;x<=2;x+=0.02){
+    const y=g(x);
+    d+=(origin.x+x*scaleX)+','+(origin.y-y*scaleY)+' L';
+  }
+  const curve=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curve.setAttribute('d',d.slice(0,-1)); curve.setAttribute('fill','none'); curve.setAttribute('stroke','var(--part-accent)'); curve.setAttribute('stroke-width','2.5');
+  svg.appendChild(curve);
+  const axis=document.createElementNS('http://www.w3.org/2000/svg','line');
+  axis.setAttribute('x1',20); axis.setAttribute('y1',origin.y); axis.setAttribute('x2',380); axis.setAttribute('y2',origin.y);
+  axis.setAttribute('stroke','#94A3B8');
+  svg.appendChild(axis);
+
+  failIterations.forEach((x,i)=>{
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',origin.x+x*scaleX); dot.setAttribute('cy',origin.y); dot.setAttribute('r',5);
+    dot.setAttribute('fill', i===failIterations.length-1 ? 'var(--bad)' : '#94A3B8');
+    svg.appendChild(dot);
+    const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',origin.x+x*scaleX); lbl.setAttribute('y',origin.y+18); lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('font-size','9');
+    lbl.textContent='x'+i;
+    svg.appendChild(lbl);
+  });
+
+  const current=failIterations[failIterations.length-1];
+  document.getElementById('readoutFail').innerHTML =
+    'x'+(failIterations.length-1)+' = '+current.toFixed(4)+'<br>'+
+    'Sequence so far: '+failIterations.map(x=>x.toFixed(2)).join(' \u2192 ');
+  document.getElementById('fbFail').innerHTML = failIterations.length>=3 && (Math.abs(current-0)<0.001 || Math.abs(current-1)<0.001)
+    ? 'This is a genuine, non-converging oscillation — the iterates are bouncing back and forth between 0 and 1 forever, never settling near the true root (which lies elsewhere, well outside this trapped cycle).'
+    : 'Click to continue iterating.';
+}
+function nextFail(){
+  if(failIterations.length>6) return;
+  const x=failIterations[failIterations.length-1];
+  const xNext = x - g(x)/gprime(x);
+  failIterations.push(xNext);
+  drawFail();
+}
+function resetFail(){
+  failIterations=[0];
+  drawFail();
+}
+drawFail();
+document.getElementById('ahaFail').innerHTML="<strong>Aha:</strong> click through several iterations and watch the sequence bounce exactly between 0 and 1, forever, never converging to anything. This isn't a rare pathological curiosity - it's exactly the kind of failure Section 7 warns about: this specific starting guess sits precisely where the tangent line's own zero-crossing loops back to where it started, trapping the iteration in an endless cycle. A careful practitioner who sketched this function first would have noticed the danger and chosen a different starting point.";
+</script>
+</body></html>

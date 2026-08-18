@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#B91C1C; --part-accent-light:#FEE2E2; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#9A3412;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FEF2F2; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+@media (max-width:760px){ .two-col{ grid-template-columns:1fr; } }
+.panel{ background:#fff; border:2px solid var(--line); border-radius:12px; padding:16px; }
+.panel-header{ font-weight:700; text-align:center; margin-bottom:8px; font-size:clamp(0.9rem,1.05vw,1.02rem); }
+.panelSvg{ width:100%; height:auto; aspect-ratio:1.3/1; display:block; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.82rem,0.95vw,0.94rem); line-height:1.7; margin-top:8px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Two Lines, Both With "Zero Total Error" — Only One Actually Fits</div>
+<div class="mb-sub">A flat line at the data's average also has residuals summing to exactly zero, canceling out — yet it's a genuinely terrible fit. This is exactly why least squares squares the residuals first.</div>
+<div class="two-col">
+<div class="panel"><div class="panel-header" style="color:var(--good);">True best fit</div><svg class="panelSvg" id="goodSvg" viewBox="0 0 200 200"></svg><div class="readout" id="readoutGood"></div></div>
+<div class="panel"><div class="panel-header" style="color:var(--bad);">Flat line at the mean</div><svg class="panelSvg" id="flatSvg" viewBox="0 0 200 200"></svg><div class="readout" id="readoutFlat"></div></div>
+</div>
+<div id="fbSquare" class="mb-feedback"></div>
+<div class="aha" id="ahaSquare"></div>
+<div class="mb-caption">Squaring makes every residual positive, so residuals above and below the line never simply cancel out — only the squared sum correctly, reliably distinguishes a genuinely good fit from a genuinely bad one.</div>
+</div>
+<script>
+const dataX=[1,2,3,4], dataY=[3,5,6,9];
+function drawFit(svgId,slope,intercept){
+  const svg=document.getElementById(svgId);
+  svg.innerHTML='';
+  const scaleX=35, scaleY=13, origin={x:20,y:180};
+  let d='M';
+  for(let x=0;x<=5;x+=0.5){
+    const y=slope*x+intercept;
+    d+=(origin.x+x*scaleX)+','+(origin.y-y*scaleY)+' L';
+  }
+  const line=document.createElementNS('http://www.w3.org/2000/svg','path');
+  line.setAttribute('d',d.slice(0,-1)); line.setAttribute('fill','none'); line.setAttribute('stroke','var(--part-highlight)'); line.setAttribute('stroke-width','2');
+  svg.appendChild(line);
+  dataX.forEach((x,i)=>{
+    const px=origin.x+x*scaleX, py=origin.y-dataY[i]*scaleY;
+    const predY=slope*x+intercept, ppy=origin.y-predY*scaleY;
+    const resid=document.createElementNS('http://www.w3.org/2000/svg','line');
+    resid.setAttribute('x1',px); resid.setAttribute('y1',py); resid.setAttribute('x2',px); resid.setAttribute('y2',ppy);
+    resid.setAttribute('stroke','var(--bad)'); resid.setAttribute('stroke-dasharray','2,2');
+    svg.appendChild(resid);
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',px); dot.setAttribute('cy',py); dot.setAttribute('r',5); dot.setAttribute('fill','var(--ink)');
+    svg.appendChild(dot);
+  });
+  const rawSum = dataX.reduce((s,x,i)=>s+(dataY[i]-(slope*x+intercept)),0);
+  const sqSum = dataX.reduce((s,x,i)=>s+Math.pow(dataY[i]-(slope*x+intercept),2),0);
+  return {rawSum,sqSum};
+}
+const good=drawFit('goodSvg',1.9,1.0);
+document.getElementById('readoutGood').innerHTML = 'Sum of raw residuals: '+good.rawSum.toFixed(2)+'<br>Sum of SQUARED residuals: '+good.sqSum.toFixed(2);
+const flat=drawFit('flatSvg',0,5.75);
+document.getElementById('readoutFlat').innerHTML = 'Sum of raw residuals: '+flat.rawSum.toFixed(2)+'<br>Sum of SQUARED residuals: '+flat.sqSum.toFixed(2);
+document.getElementById('fbSquare').innerHTML = 'Both lines have a raw residual sum of essentially zero — the positive and negative residuals cancel out either way. But the squared-residual sum tells a completely different story: '+good.sqSum.toFixed(1)+' for the genuinely good fit versus '+flat.sqSum.toFixed(1)+' for the clearly bad one — only squaring correctly distinguishes them.';
+document.getElementById('ahaSquare').innerHTML="<strong>Aha:</strong> both lines' raw residuals sum to essentially zero - if least squares minimized THAT quantity, it couldn't tell these two lines apart at all, and might even prefer the flat line by pure coincidence. Squaring every residual before summing eliminates this blind spot completely: positive and negative errors can no longer hide each other, and the squared sum correctly, reliably favors the line that's actually closer to the data overall.";
+</script>
+</body></html>

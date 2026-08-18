@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#B91C1C; --part-accent-light:#FEE2E2; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FEF2F2; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#r0Svg{ width:100%; height:auto; aspect-ratio:2.4/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">R₀=2 Needs Half the Population Immune. R₀=15 Needs Almost Everyone.</div>
+<div class="mb-sub">The herd immunity threshold grows dramatically FASTER than R₀ itself. Drag R₀ and watch the required immune fraction climb — not proportionally, but with sharply diminishing room left as R₀ rises.</div>
+<div class="mb-stage">
+<svg id="r0Svg" viewBox="0 0 400 160"></svg>
+<div class="slider-row"><label>Basic reproduction number R₀ = <span id="r0Val">2.0</span></label><input type="range" id="r0Slider" min="11" max="150" value="20"></div>
+<div class="readout" id="readoutR0"></div>
+</div>
+<div id="fb4" class="mb-feedback"></div>
+<div class="aha" id="aha4"></div>
+<div class="mb-caption">Herd immunity is a population-level, statistical statement about an epidemic's overall sustained growth capacity — not an individual-level guarantee; susceptible individuals remain individually vulnerable even after the threshold is reached.</div>
+</div>
+<script>
+function draw11(){
+  const raw=parseInt(document.getElementById('r0Slider').value);
+  const R0=raw/10;
+  document.getElementById('r0Val').textContent=R0.toFixed(1);
+  const threshold=1-1/R0;
+
+  const svg=document.getElementById('r0Svg');
+  svg.innerHTML='';
+  const barWidth=threshold*320;
+  const bar=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  bar.setAttribute('x',30); bar.setAttribute('y',50); bar.setAttribute('width',barWidth); bar.setAttribute('height',40);
+  bar.setAttribute('fill', threshold>0.85 ? 'var(--part-accent)' : 'var(--part-highlight)');
+  svg.appendChild(bar);
+  const remainBar=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  remainBar.setAttribute('x',30+barWidth); remainBar.setAttribute('y',50); remainBar.setAttribute('width',320-barWidth); remainBar.setAttribute('height',40);
+  remainBar.setAttribute('fill','#E2E8F0');
+  svg.appendChild(remainBar);
+
+  document.getElementById('readoutR0').innerHTML =
+    'R\u2080 = '+R0.toFixed(1)+'<br>'+
+    'Herd immunity threshold = 1 - 1/R\u2080 = '+(threshold*100).toFixed(1)+'% of the population';
+  document.getElementById('fb4').innerHTML = R0<2.5
+    ? 'A relatively mild R\u2080 — only a modest fraction of the population needs immunity before spread is halted.'
+    : (R0>10
+      ? 'An extremely contagious disease — nearly the ENTIRE population must be immune, a genuinely demanding, sometimes practically unattainable public health target.'
+      : 'A moderately contagious disease — a solid majority of the population must be immune, a substantial but achievable vaccination target.');
+}
+document.getElementById('r0Slider').addEventListener('input', draw11);
+draw11();
+document.getElementById('aha4').innerHTML="<strong>Aha:</strong> drag R0 from 2 up to 5 - the threshold jumps from 50% to 80%, already a big change. But drag from 5 up to 15 (only 3x further) and the threshold barely moves past 93% - there simply isn't much room left between 80% and 100%. This nonlinear 1-1/R0 relationship means small differences in a disease's contagiousness near the low end matter far less than the SAME numerical difference near the high end - a highly contagious disease demands a qualitatively harder public health challenge, not merely a proportionally bigger one.";
+</script>
+</body></html>

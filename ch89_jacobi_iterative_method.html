@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#0E7490; --part-accent-light:#CFFAFE; --part-highlight:#7C2D92;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#ECFEFF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#jacobiSvg{ width:100%; height:auto; aspect-ratio:1.5/1; display:block; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin-top:10px; }
+.mb-btn:hover{ background:var(--part-accent); color:#fff; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">No Matrix Inversion — Just Repeated Guessing, Spiraling to the Answer</div>
+<div class="mb-sub">4x+y=9, x+3y=10. Start from a rough guess (0,0) and watch the Jacobi method spiral progressively closer to the true intersection point, using only simple algebra at each step.</div>
+<div class="mb-stage">
+<svg id="jacobiSvg" viewBox="0 0 300 300"></svg>
+<button class="mb-btn" onclick="jacobiStep()">Take next Jacobi iteration</button>
+<button class="mb-btn" onclick="jacobiReset()">Reset to (0,0)</button>
+<div class="readout" id="readoutJacobi"></div>
+</div>
+<div id="fbJacobi" class="mb-feedback"></div>
+<div class="aha" id="ahaJacobi"></div>
+<div class="mb-caption">This directly extends Chapter 87's root-finding philosophy from a single equation to an entire system at once — the same iterative-refinement idea, now genuinely multidimensional.</div>
+</div>
+<script>
+let jx=0, jy=0;
+let jacobiHistory=[[0,0]];
+function drawJacobi(){
+  const svg=document.getElementById('jacobiSvg');
+  svg.innerHTML='';
+  const scaleX=70, scaleY=70, origin={x:30,y:270};
+  const trueX=1.54545, trueY=2.81818;
+
+  // draw line 4x+y=9 -> y=9-4x
+  let d1='M';
+  for(let x=-0.5;x<=3.5;x+=0.1){
+    const y=9-4*x;
+    d1+=(origin.x+x*scaleX)+','+(origin.y-y*scaleY)+' L';
+  }
+  const line1=document.createElementNS('http://www.w3.org/2000/svg','path');
+  line1.setAttribute('d',d1.slice(0,-1)); line1.setAttribute('fill','none'); line1.setAttribute('stroke','var(--part-accent)'); line1.setAttribute('stroke-width','1.5');
+  svg.appendChild(line1);
+
+  // draw line x+3y=10 -> y=(10-x)/3
+  let d2='M';
+  for(let x=-0.5;x<=3.5;x+=0.1){
+    const y=(10-x)/3;
+    d2+=(origin.x+x*scaleX)+','+(origin.y-y*scaleY)+' L';
+  }
+  const line2=document.createElementNS('http://www.w3.org/2000/svg','path');
+  line2.setAttribute('d',d2.slice(0,-1)); line2.setAttribute('fill','none'); line2.setAttribute('stroke','var(--part-highlight)'); line2.setAttribute('stroke-width','1.5');
+  svg.appendChild(line2);
+
+  const trueDot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  trueDot.setAttribute('cx',origin.x+trueX*scaleX); trueDot.setAttribute('cy',origin.y-trueY*scaleY); trueDot.setAttribute('r',6); trueDot.setAttribute('fill','var(--good)');
+  svg.appendChild(trueDot);
+
+  jacobiHistory.forEach(([x,y],i)=>{
+    if(i>0){
+      const [px,py]=jacobiHistory[i-1];
+      const connector=document.createElementNS('http://www.w3.org/2000/svg','line');
+      connector.setAttribute('x1',origin.x+px*scaleX); connector.setAttribute('y1',origin.y-py*scaleY);
+      connector.setAttribute('x2',origin.x+x*scaleX); connector.setAttribute('y2',origin.y-y*scaleY);
+      connector.setAttribute('stroke','#94A3B8'); connector.setAttribute('stroke-dasharray','2,2');
+      svg.appendChild(connector);
+    }
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',origin.x+x*scaleX); dot.setAttribute('cy',origin.y-y*scaleY); dot.setAttribute('r',5);
+    dot.setAttribute('fill', i===jacobiHistory.length-1 ? '#B91C1C' : '#94A3B8');
+    svg.appendChild(dot);
+  });
+}
+function jacobiStep(){
+  if(jacobiHistory.length>8) return;
+  const xNew = (9-jy)/4;
+  const yNew = (10-jx)/3;
+  jx=xNew; jy=yNew;
+  jacobiHistory.push([jx,jy]);
+  drawJacobi();
+  const trueX=1.54545, trueY=2.81818;
+  const dist=Math.sqrt((jx-trueX)**2+(jy-trueY)**2);
+  document.getElementById('readoutJacobi').innerHTML =
+    'Iteration '+(jacobiHistory.length-1)+': x='+jx.toFixed(4)+', y='+jy.toFixed(4)+'<br>'+
+    'True solution: x='+trueX.toFixed(4)+', y='+trueY.toFixed(4)+'<br>'+
+    'Distance from true solution: '+dist.toFixed(4);
+  document.getElementById('fbJacobi').innerHTML = 'Each new estimate used ONLY the previous iteration\u2019s values on the right-hand side — never mixing in an already-updated value from within the same step, exactly Section 7\u2019s Jacobi rule.';
+}
+function jacobiReset(){
+  jx=0; jy=0;
+  jacobiHistory=[[0,0]];
+  drawJacobi();
+  document.getElementById('readoutJacobi').innerHTML = 'Starting guess: (0, 0)';
+}
+drawJacobi();
+document.getElementById('ahaJacobi').innerHTML="<strong>Aha:</strong> click through several iterations and watch the red dot spiral progressively closer to the true intersection point (green), never touching either straight line directly but converging toward where BOTH lines cross. No matrix was ever explicitly inverted here - just simple algebra, repeated. This exact philosophy - refine a guess repeatedly rather than compute an exact answer directly - is precisely why iterative methods scale to systems with millions of unknowns where Gaussian elimination or matrix inversion would be computationally hopeless.";
+</script>
+</body></html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#4338CA; --part-accent-light:#E0E7FF; --part-highlight:#BE185D;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#EEF2FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin:4px; }
+.mb-btn:hover, .mb-btn.active{ background:var(--part-accent); color:#fff; }
+table{ width:100%; border-collapse:collapse; font-size:clamp(0.82rem,0.95vw,0.94rem); margin-top:14px; }
+td,th{ border:1px solid var(--line); padding:10px; text-align:center; }
+th{ background:var(--part-accent-light); }
+.match{ color:var(--good); font-weight:700; }
+.mismatch{ color:var(--bad); font-weight:700; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Two Simple-Looking Functions — One Passes, One Fails, Everywhere</div>
+<div class="mb-sub">f(z)=z\u00b2 and f(z)=conjugate(z) both look like elementary algebra. Click each to check the Cauchy-Riemann equations directly and see which one is actually holomorphic.</div>
+<div class="mb-stage">
+<button class="mb-btn active" onclick="showFunc('square',this)">f(z) = z\u00b2</button>
+<button class="mb-btn" onclick="showFunc('conj',this)">f(z) = conjugate(z)</button>
+<table id="crTable"></table>
+</div>
+<div class="aha" id="ahaCR"></div>
+<div class="mb-caption">Holomorphy is a genuine, substantive additional requirement — it must be actively, explicitly verified for any specific function, never simply assumed from a formula's superficial algebraic simplicity alone.</div>
+</div>
+<script>
+function showFunc(type,btn){
+  document.querySelectorAll('.mb-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const table=document.getElementById('crTable');
+  if(type==='square'){
+    table.innerHTML = '<tr><th></th><th>u = x\u00b2-y\u00b2</th><th>v = 2xy</th></tr>'+
+      '<tr><td>\u2202u/\u2202x = 2x</td><td colspan="2">\u2202v/\u2202y = 2x &nbsp; <span class="match">MATCH \u2713</span></td></tr>'+
+      '<tr><td>\u2202u/\u2202y = -2y</td><td colspan="2">-\u2202v/\u2202x = -2y &nbsp; <span class="match">MATCH \u2713</span></td></tr>'+
+      '<tr><td colspan="3"><strong style="color:var(--good);">Both Cauchy-Riemann equations hold everywhere \u2014 HOLOMORPHIC</strong></td></tr>';
+  } else {
+    table.innerHTML = '<tr><th></th><th>u = x</th><th>v = -y</th></tr>'+
+      '<tr><td>\u2202u/\u2202x = 1</td><td colspan="2">\u2202v/\u2202y = -1 &nbsp; <span class="mismatch">MISMATCH \u2717</span></td></tr>'+
+      '<tr><td>\u2202u/\u2202y = 0</td><td colspan="2">-\u2202v/\u2202x = 0 &nbsp; <span class="match">match</span></td></tr>'+
+      '<tr><td colspan="3"><strong style="color:var(--bad);">First equation fails everywhere (1\u2260-1) \u2014 NOWHERE HOLOMORPHIC</strong></td></tr>';
+  }
+  document.getElementById('ahaCR').innerHTML = type==='square'
+    ? "<strong>Aha:</strong> z\u00b2 passes both equations at EVERY point in the complex plane, with no exception - a genuinely strong, global property. This single check unlocks a remarkable guarantee: once holomorphic, a function is automatically infinitely differentiable, forever, with no further checking needed - something ordinary real calculus never promises."
+    : "<strong>Aha:</strong> complex conjugation is about as simple an operation as exists - just flip the sign of the imaginary part - yet it fails the very first Cauchy-Riemann equation at literally every single point, with zero exceptions. Real and imaginary parts each individually being perfectly smooth functions of x and y is NOT enough; holomorphy demands a genuine coupling between them that conjugation simply doesn't have.";
+}
+showFunc('square',document.querySelector('.mb-btn'));
+</script>
+</body></html>

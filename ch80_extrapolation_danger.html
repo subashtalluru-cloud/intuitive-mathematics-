@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#B91C1C; --part-accent-light:#FEE2E2; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#9A3412;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FEF2F2; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#extrapSvg{ width:100%; height:auto; aspect-ratio:2.3/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">R²=0.96 Inside the Data — Zero Guarantee Outside It</div>
+<div class="mb-sub">This fitted line explains 96% of the variation within its original x=1 to x=4 data range. Drag the prediction point beyond that range and watch confidence quietly evaporate, even though the line itself never changes.</div>
+<div class="mb-stage">
+<svg id="extrapSvg" viewBox="0 0 400 180"></svg>
+<div class="slider-row"><label>Predict at x = <span id="xVal3">4</span></label><input type="range" id="xSlider3" min="1" max="10" step="0.5" value="4"></div>
+<div class="readout" id="readoutExtrap"></div>
+</div>
+<div id="fbExtrap" class="mb-feedback"></div>
+<div class="aha" id="ahaExtrap"></div>
+<div class="mb-caption">The original data provides no direct evidence one way or the other about whether the identical straight-line relationship continues to hold outside the observed range — a genuinely careful modeler flags extrapolated predictions explicitly.</div>
+</div>
+<script>
+const dataX=[1,2,3,4], dataY=[3,5,6,9];
+const slope=1.9, intercept=1.0;
+function drawExtrap(){
+  const xPred=parseFloat(document.getElementById('xSlider3').value);
+  document.getElementById('xVal3').textContent=xPred;
+  const isExtrapolated = xPred<1 || xPred>4;
+
+  const svg=document.getElementById('extrapSvg');
+  svg.innerHTML='';
+  const scaleX=35, scaleY=13, origin={x:20,y:160};
+
+  const shadedIn=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  shadedIn.setAttribute('x',origin.x+1*scaleX); shadedIn.setAttribute('y',10); shadedIn.setAttribute('width',3*scaleX); shadedIn.setAttribute('height',150);
+  shadedIn.setAttribute('fill','var(--good)'); shadedIn.setAttribute('fill-opacity','0.08');
+  svg.appendChild(shadedIn);
+
+  let d='M';
+  for(let x=0;x<=10;x+=0.5){
+    const y=slope*x+intercept;
+    d+=(origin.x+x*scaleX)+','+(origin.y-y*scaleY)+' L';
+  }
+  const line=document.createElementNS('http://www.w3.org/2000/svg','path');
+  line.setAttribute('d',d.slice(0,-1)); line.setAttribute('fill','none'); line.setAttribute('stroke','var(--part-highlight)'); line.setAttribute('stroke-width','2');
+  svg.appendChild(line);
+
+  dataX.forEach((x,i)=>{
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',origin.x+x*scaleX); dot.setAttribute('cy',origin.y-dataY[i]*scaleY); dot.setAttribute('r',5); dot.setAttribute('fill','var(--ink)');
+    svg.appendChild(dot);
+  });
+
+  const predY=slope*xPred+intercept;
+  const predDot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  predDot.setAttribute('cx',origin.x+xPred*scaleX); predDot.setAttribute('cy',origin.y-predY*scaleY); predDot.setAttribute('r',7);
+  predDot.setAttribute('fill', isExtrapolated?'var(--bad)':'var(--good)');
+  svg.appendChild(predDot);
+
+  document.getElementById('readoutExtrap').innerHTML =
+    'Fitted line: y = 1.9x + 1.0 (R\u00b2 = 0.963, computed from data x=1 to x=4)<br>'+
+    'Prediction at x='+xPred+': y = '+predY.toFixed(2)+'<br>'+
+    'Status: '+(isExtrapolated ? 'EXTRAPOLATED \u2014 outside original data range' : 'within original data range');
+  document.getElementById('fbExtrap').innerHTML = isExtrapolated
+    ? 'This prediction sits outside the shaded region where R\u00b2=0.963 was actually computed. The line itself hasn\u2019t changed, but the confidence that number represented was NEVER established out here — the fit could be excellent, or could break down completely, and the original data offers no evidence either way.'
+    : 'This prediction falls within the original x=1 to x=4 data range (shaded green) — exactly where the reported R\u00b2=0.963 genuinely applies.';
+}
+document.getElementById('xSlider3').addEventListener('input', drawExtrap);
+drawExtrap();
+document.getElementById('ahaExtrap').innerHTML="<strong>Aha:</strong> drag the prediction point out to x=10 - the dot turns red, well outside the shaded region where the R\u00b2=0.963 confidence figure was actually earned. The straight line keeps extending obediently in both directions since it's just algebra, but the STATISTICAL justification for trusting it does not extend along with it. A high R\u00b2 inside the data says nothing whatsoever about what happens outside it - extrapolation is a genuinely different, considerably less certain kind of claim than interpolation, even using the exact same fitted formula.";
+</script>
+</body></html>

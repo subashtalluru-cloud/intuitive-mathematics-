@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#B91C1C; --part-accent-light:#FEE2E2; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B45309;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FEF2F2; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#popSvg{ width:100%; height:auto; aspect-ratio:2.2/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Two Models Agree at First — Then One Predicts Impossibly More Animals Than the Reserve Can Hold</div>
+<div class="mb-sub">Carrying capacity K=5000, starting population 50, growth rate 0.4/year. Drag time forward and watch pure exponential growth barrel straight past the reserve's physical limit while the logistic model correctly bends and levels off.</div>
+<div class="mb-stage">
+<svg id="popSvg" viewBox="0 0 400 180"></svg>
+<div class="slider-row"><label>Years elapsed: <span id="tVal2">0</span></label><input type="range" id="tSlider2" min="0" max="20" step="0.5" value="0"></div>
+<div class="readout" id="readoutPop"></div>
+</div>
+<div id="fb2" class="mb-feedback"></div>
+<div class="aha" id="aha2"></div>
+<div class="mb-caption">The exponential model remains reasonably accurate only while the population stays genuinely small relative to K — using it once the population approaches carrying capacity produces a manifestly unrealistic result.</div>
+</div>
+<script>
+const K=5000, P0=50, r=0.4;
+function logistic(t){
+  const A=(K-P0)/P0;
+  return K/(1+A*Math.exp(-r*t));
+}
+function exponential(t){
+  return P0*Math.exp(r*t);
+}
+function drawPop(){
+  const tMax=parseFloat(document.getElementById('tSlider2').value);
+  document.getElementById('tVal2').textContent=tMax;
+
+  const svg=document.getElementById('popSvg');
+  svg.innerHTML='';
+  const scaleX=18, scaleY=0.024, origin={x:20,y:150};
+
+  const kLine=document.createElementNS('http://www.w3.org/2000/svg','line');
+  kLine.setAttribute('x1',origin.x); kLine.setAttribute('y1',origin.y-K*scaleY); kLine.setAttribute('x2',380); kLine.setAttribute('y2',origin.y-K*scaleY);
+  kLine.setAttribute('stroke','var(--good)'); kLine.setAttribute('stroke-dasharray','4,3'); kLine.setAttribute('stroke-width','2');
+  svg.appendChild(kLine);
+  const kLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  kLbl.setAttribute('x',370); kLbl.setAttribute('y',origin.y-K*scaleY-6); kLbl.setAttribute('text-anchor','end'); kLbl.setAttribute('font-size','9'); kLbl.setAttribute('fill','var(--good)');
+  kLbl.textContent='K=5000 (carrying capacity)';
+  svg.appendChild(kLbl);
+
+  let dLog='M', dExp='M';
+  for(let t=0;t<=tMax;t+=0.2){
+    const pL=Math.min(logistic(t),8000);
+    const pE=Math.min(exponential(t),8000);
+    dLog+=(origin.x+t*scaleX)+','+(origin.y-pL*scaleY)+' L';
+    dExp+=(origin.x+t*scaleX)+','+(origin.y-pE*scaleY)+' L';
+  }
+  const curveExp=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curveExp.setAttribute('d',dExp.slice(0,-1)); curveExp.setAttribute('fill','none'); curveExp.setAttribute('stroke','var(--bad)'); curveExp.setAttribute('stroke-width','2');
+  svg.appendChild(curveExp);
+  const curveLog=document.createElementNS('http://www.w3.org/2000/svg','path');
+  curveLog.setAttribute('d',dLog.slice(0,-1)); curveLog.setAttribute('fill','none'); curveLog.setAttribute('stroke','var(--part-accent)'); curveLog.setAttribute('stroke-width','2.5');
+  svg.appendChild(curveLog);
+
+  const pLog=logistic(tMax), pExp=exponential(tMax);
+  document.getElementById('readoutPop').innerHTML =
+    't = '+tMax+' years<br>'+
+    'Logistic model: '+pLog.toFixed(0)+' individuals ('+(pLog/K*100).toFixed(1)+'% of capacity)<br>'+
+    'Pure exponential: '+pExp.toFixed(0)+' individuals'+(pExp>K?' \u2014 EXCEEDS the reserve\u2019s actual capacity!':'');
+  document.getElementById('fb2').innerHTML = pExp>K
+    ? 'The pure exponential model now predicts more animals than the reserve can physically hold — a manifestly impossible result, exactly why the carrying-capacity correction is genuinely necessary, not merely a mathematical refinement.'
+    : 'Both models still agree closely — the population remains small relative to K, so the carrying-capacity correction hasn\u2019t started mattering yet.';
+}
+document.getElementById('tSlider2').addEventListener('input', drawPop);
+drawPop();
+document.getElementById('aha2').innerHTML="<strong>Aha:</strong> drag time up to 12 years - the red exponential curve rockets past the green K=5000 dashed line, predicting over 6,000 animals in a reserve that can only sustain 5,000. The orange logistic curve, tracking the same starting conditions, correctly bends and approaches K smoothly instead. Both models agreed almost perfectly for the first several years - this divergence is Chapter 77's modeling cycle made concrete: the simple exponential model was found genuinely inadequate, motivating this deliberate, principled refinement.";
+</script>
+</body></html>

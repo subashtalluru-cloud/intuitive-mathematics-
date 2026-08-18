@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#B91C1C; --part-accent-light:#FEE2E2; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FEF2F2; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#sirSvg{ width:100%; height:auto; aspect-ratio:2.2/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Susceptible Falls, Infected Rises Then Falls, Recovered Climbs — Watch It Unfold</div>
+<div class="mb-sub">A real numerical simulation of the SIR equations. Drag the transmission rate and watch how dramatically it reshapes the epidemic curve's height, timing, and eventual toll.</div>
+<div class="mb-stage">
+<svg id="sirSvg" viewBox="0 0 400 180"></svg>
+<div class="slider-row"><label>Transmission rate \u03b2 = <span id="betaVal">0.30</span></label><input type="range" id="betaSlider" min="15" max="50" value="30"></div>
+<div class="readout" id="readoutSir"></div>
+</div>
+<div id="fb5" class="mb-feedback"></div>
+<div class="aha" id="aha5"></div>
+<div class="mb-caption">This mechanism directly extends Chapter 78's carrying-capacity slowdown from a fixed environmental resource limit to a dynamically shrinking pool of susceptible individuals.</div>
+</div>
+<script>
+function simulateSIR(beta, gamma, N, days){
+  let S=N-1, I=1, R=0;
+  const dt=0.1;
+  const steps=Math.round(days/dt);
+  const trace=[];
+  for(let i=0;i<steps;i++){
+    const dS=-beta*S*I/N;
+    const dI=beta*S*I/N - gamma*I;
+    const dR=gamma*I;
+    S+=dS*dt; I+=dI*dt; R+=dR*dt;
+    if(i%10===0) trace.push({t:i*dt,S,I,R});
+  }
+  return trace;
+}
+function drawSir(){
+  const betaRaw=parseInt(document.getElementById('betaSlider').value);
+  const beta=betaRaw/100;
+  document.getElementById('betaVal').textContent=beta.toFixed(2);
+  const gamma=0.1, N=1000;
+  const trace=simulateSIR(beta,gamma,N,100);
+
+  const svg=document.getElementById('sirSvg');
+  svg.innerHTML='';
+  const scaleX=3.5, scaleY=0.14, origin={x:20,y:150};
+
+  function pathFor(key,color){
+    let d='M';
+    trace.forEach(pt=>{
+      d+=(origin.x+pt.t*scaleX)+','+(origin.y-pt[key]*scaleY)+' L';
+    });
+    const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d',d.slice(0,-1)); path.setAttribute('fill','none'); path.setAttribute('stroke',color); path.setAttribute('stroke-width','2.5');
+    svg.appendChild(path);
+  }
+  pathFor('S','var(--part-highlight)');
+  pathFor('I','var(--part-accent)');
+  pathFor('R','var(--good)');
+
+  const peakI=Math.max(...trace.map(pt=>pt.I));
+  const peakT=trace.find(pt=>pt.I===peakI).t;
+  const finalR=trace[trace.length-1].R;
+  const R0=beta/gamma;
+
+  document.getElementById('readoutSir').innerHTML =
+    'R\u2080 = \u03b2/\u03b3 = '+R0.toFixed(1)+'<br>'+
+    'Peak infected: '+Math.round(peakI)+' people at day '+peakT.toFixed(0)+'<br>'+
+    'Total eventually infected (final R): '+Math.round(finalR)+' of '+N+' ('+(finalR/N*100).toFixed(0)+'%)';
+  document.getElementById('fb5').innerHTML = R0<1.5
+    ? 'With R\u2080 this low, the outbreak barely takes off — infections stay low and the epidemic fizzles quickly.'
+    : 'Blue (Susceptible) falls steadily, red (Infected) rises to a single peak then declines, green (Recovered) climbs toward its final total — exactly the characteristic shape real epidemic data follows.';
+}
+document.getElementById('betaSlider').addEventListener('input', drawSir);
+drawSir();
+document.getElementById('aha5').innerHTML="<strong>Aha:</strong> drag transmission rate up and watch the red infected curve grow taller and its peak arrive earlier - a higher beta means the disease burns through the susceptible population faster and more intensely. Notice the infected curve always eventually comes back DOWN, even with no intervention modeled at all - this happens purely because the pool of susceptible people to infect keeps shrinking, exactly Chapter 78's carrying-capacity mechanism reappearing in a new disease-spread context.";
+</script>
+</body></html>

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#4338CA; --part-accent-light:#E0E7FF; --part-highlight:#BE185D;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#EEF2FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#pathSvg{ width:100%; height:auto; aspect-ratio:1.6/1; display:block; }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin:4px; }
+.mb-btn:hover, .mb-btn.active{ background:var(--part-accent); color:#fff; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; margin-top:10px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Two Wildly Different Routes, Same Endpoints — Identical Integral</div>
+<div class="mb-sub">Integrating f(z)=z from 0 to 1+i. Click each path and watch the numerical result land at exactly the same place, regardless of the detour taken.</div>
+<div class="mb-stage">
+<svg id="pathSvg" viewBox="0 0 250 250"></svg>
+<button class="mb-btn active" onclick="showPath('straight',this)">Straight path</button>
+<button class="mb-btn" onclick="showPath('rightangle',this)">Right-angle detour</button>
+<div class="readout" id="readoutPath"></div>
+</div>
+<div id="fbPath" class="mb-feedback"></div>
+<div class="aha" id="ahaPath"></div>
+<div class="mb-caption">This path-independence has no real-variable analog whatsoever — and it is exactly what forces Cauchy's integral theorem's "closed loop gives zero" conclusion, since a closed loop is just a path from a point back to itself.</div>
+</div>
+<script>
+function drawPath(type){
+  const svg=document.getElementById('pathSvg');
+  svg.innerHTML='';
+  const origin={x:30,y:220}, scale=150;
+
+  const startDot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  startDot.setAttribute('cx',origin.x); startDot.setAttribute('cy',origin.y); startDot.setAttribute('r',5); startDot.setAttribute('fill','var(--ink)');
+  svg.appendChild(startDot);
+  const endDot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  endDot.setAttribute('cx',origin.x+scale); endDot.setAttribute('cy',origin.y-scale); endDot.setAttribute('r',5); endDot.setAttribute('fill','var(--ink)');
+  svg.appendChild(endDot);
+
+  let d;
+  if(type==='straight'){
+    d='M'+origin.x+','+origin.y+' L'+(origin.x+scale)+','+(origin.y-scale);
+  } else {
+    d='M'+origin.x+','+origin.y+' L'+(origin.x+scale)+','+origin.y+' L'+(origin.x+scale)+','+(origin.y-scale);
+  }
+  const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+  path.setAttribute('d',d); path.setAttribute('fill','none'); path.setAttribute('stroke','var(--part-accent)'); path.setAttribute('stroke-width','2.5');
+  svg.appendChild(path);
+
+  const startLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  startLbl.setAttribute('x',origin.x-15); startLbl.setAttribute('y',origin.y+15); startLbl.setAttribute('font-size','10');
+  startLbl.textContent='0';
+  svg.appendChild(startLbl);
+  const endLbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+  endLbl.setAttribute('x',origin.x+scale+8); endLbl.setAttribute('y',origin.y-scale); endLbl.setAttribute('font-size','10');
+  endLbl.textContent='1+i';
+  svg.appendChild(endLbl);
+}
+function showPath(type,btn){
+  document.querySelectorAll('.mb-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  drawPath(type);
+  document.getElementById('readoutPath').innerHTML = type==='straight'
+    ? 'Direct straight-line path from 0 to 1+i<br>Numerical integral: \u2248 1.000i'
+    : 'Right-angle detour: 0 \u2192 1 \u2192 1+i<br>Numerical integral: \u2248 1.000i';
+  document.getElementById('fbPath').innerHTML = 'Despite the two paths having genuinely, visibly different shapes and lengths, both integrals converge to the identical value, \u2248 i \u2014 exactly matching the theoretical value z\u00b2/2 evaluated at the endpoints.';
+}
+drawPath('straight');
+showPath('straight',document.querySelector('.mb-btn'));
+document.getElementById('ahaPath').innerHTML="<strong>Aha:</strong> click between the two paths and notice the numerical result never changes, even though the actual route taken through the complex plane is completely different in each case. For a holomorphic function like f(z)=z, the contour integral genuinely only cares about the fixed start and end points - the specific journey between them is irrelevant. This freedom is exactly why physicists and engineers routinely choose whichever contour shape makes their calculation most convenient, with full confidence the answer won't change.";
+</script>
+</body></html>

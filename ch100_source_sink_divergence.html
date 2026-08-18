@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#065F46; --part-accent-light:#D1FAE5; --part-highlight:#1D4ED8;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D; --bad:#B91C1C;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#ECFDF5; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+#divSvg{ width:100%; height:auto; aspect-ratio:2.5/1; display:block; }
+.slider-row{ display:flex; flex-direction:column; gap:4px; margin-bottom:14px; }
+.slider-row label{ font-size:0.85rem; font-weight:600; color:var(--ink-soft); }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.85rem,1vw,0.98rem); background:var(--part-accent-light); color:var(--part-accent); border-radius:10px; padding:14px 16px; line-height:1.7; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">Same Field, Different Points — Source Here, Sink There</div>
+<div class="mb-sub">F=(x\u00b2,y,-z) has divergence 2x — genuinely varying from point to point. Drag x and watch this single field switch between acting like a source and acting like a sink.</div>
+<div class="mb-stage">
+<svg id="divSvg" viewBox="0 0 400 140"></svg>
+<div class="slider-row"><label>Position x = <span id="xValDiv">2</span></label><input type="range" id="xSliderDiv" min="-30" max="30" value="20"></div>
+<div class="readout" id="readoutSS"></div>
+</div>
+<div id="fbSS" class="mb-feedback"></div>
+<div class="aha" id="ahaSS"></div>
+<div class="mb-caption">A vector field's divergence need not be a single global constant — it can genuinely vary from point to point, describing a spatially-distributed pattern of sources and sinks throughout a region.</div>
+</div>
+<script>
+function drawSS(){
+  const xRaw=parseInt(document.getElementById('xSliderDiv').value);
+  const x=xRaw/10;
+  document.getElementById('xValDiv').textContent=x.toFixed(1);
+  const divVal=2*x;
+
+  const svg=document.getElementById('divSvg');
+  svg.innerHTML='';
+  const cx=200,cy=70;
+  const isSource=divVal>0;
+  const numArrows=8;
+  for(let i=0;i<numArrows;i++){
+    const angle=(i/numArrows)*2*Math.PI;
+    const len=Math.min(50,Math.abs(divVal)*10+5);
+    const x1= isSource ? cx+10*Math.cos(angle) : cx+(len+10)*Math.cos(angle);
+    const y1= isSource ? cy+10*Math.sin(angle) : cy+(len+10)*Math.sin(angle);
+    const x2= isSource ? cx+(len+10)*Math.cos(angle) : cx+10*Math.cos(angle);
+    const y2= isSource ? cy+(len+10)*Math.sin(angle) : cy+10*Math.sin(angle);
+    const arrow=document.createElementNS('http://www.w3.org/2000/svg','line');
+    arrow.setAttribute('x1',x1); arrow.setAttribute('y1',y1); arrow.setAttribute('x2',x2); arrow.setAttribute('y2',y2);
+    arrow.setAttribute('stroke', isSource?'var(--bad)':'var(--part-highlight)'); arrow.setAttribute('stroke-width','2.5');
+    svg.appendChild(arrow);
+  }
+  const centerDot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  centerDot.setAttribute('cx',cx); centerDot.setAttribute('cy',cy); centerDot.setAttribute('r',6); centerDot.setAttribute('fill','var(--ink)');
+  svg.appendChild(centerDot);
+
+  document.getElementById('readoutSS').innerHTML =
+    'div(F) at x='+x.toFixed(1)+' = 2\u00d7'+x.toFixed(1)+' = '+divVal.toFixed(1)+'<br>'+
+    'Behavior: '+(divVal>0.1 ? 'SOURCE (arrows point outward)' : (divVal<-0.1 ? 'SINK (arrows point inward)' : 'neutral (near zero)'));
+  document.getElementById('fbSS').innerHTML = divVal>0.1
+    ? 'Positive divergence \u2014 fluid genuinely appears to be created at this point, flowing outward in every direction.'
+    : (divVal<-0.1
+      ? 'Negative divergence \u2014 fluid genuinely appears to be absorbed at this point, flowing inward from every direction.'
+      : 'Near zero divergence \u2014 this point is close to being neither a source nor a sink.');
+}
+document.getElementById('xSliderDiv').addEventListener('input', drawSS);
+drawSS();
+document.getElementById('ahaSS').innerHTML="<strong>Aha:</strong> drag x from positive to negative and watch the exact same field F switch character entirely - arrows pointing outward (a source) on one side, arrows pointing inward (a sink) on the other, with a neutral point exactly at x=0. This is exactly Section 3's original physical intuition made rigorous: divergence measures whether fluid is being created or destroyed at a SPECIFIC point, and a single field can genuinely act as a source in one region of space while simultaneously acting as a sink somewhere else entirely.";
+</script>
+</body></html>

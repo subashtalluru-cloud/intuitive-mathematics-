@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#1E3A8A; --part-accent-light:#DBEAFE; --part-highlight:#7C2D92;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#EFF6FF; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.mb-stage{ background:#fff; border:1px solid var(--line); border-radius:12px; padding:clamp(16px,2vw,28px); }
+.mb-btn{ font-size:0.9rem; padding:10px 18px; border-radius:8px; border:1px solid var(--part-accent); background:#fff; color:var(--part-accent); cursor:pointer; font-weight:600; margin-top:10px; }
+.mb-btn:hover{ background:var(--part-accent); color:#fff; }
+.person-box{ background:var(--part-accent-light); border-radius:10px; padding:14px; margin:10px 0; font-size:0.9rem; line-height:1.6; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">"Is This AI Intelligent?" — Two People Disagree. Or Do They?</div>
+<div class="mb-sub">Click through the mathematician's habit of demanding a precise definition before continuing any dispute — watch an apparently deep disagreement dissolve into something else entirely.</div>
+<div class="mb-stage" id="stageContent">
+<div class="person-box"><strong>Person A:</strong> "This AI is definitely intelligent — it beats every human at this specific game."</div>
+<div class="person-box"><strong>Person B:</strong> "No, it's not intelligent at all — it has no genuine understanding or subjective experience."</div>
+<button class="mb-btn" onclick="reveal()">Apply the precise-definition discipline</button>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">Much of the genuine, substantive difficulty in resolving a hard dispute traces directly back to a key term being used ambiguously or inconsistently by the different disputing parties.</div>
+</div>
+</div>
+<script>
+function reveal(){
+  document.getElementById('stageContent').innerHTML =
+    '<div class="person-box"><strong>Person A\'s actual definition:</strong> "Intelligent" = successful performance on a specific class of hard tasks.</div>' +
+    '<div class="person-box"><strong>Person B\'s actual definition:</strong> "Intelligent" = possessing genuine subjective experience and understanding.</div>';
+  document.getElementById('fb').innerHTML = 'Once each definition is made explicit, notice: Person A is correct under THEIR definition (the AI does perform successfully at the task), and Person B is correct under THEIR definition (the AI likely has no subjective experience). The apparent disagreement about the AI itself was actually a disagreement about which definition of "intelligent" to use — both people can be simultaneously correct once this is made clear.';
+}
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> click 'apply the precise-definition discipline' and watch what looked like a deep, possibly unresolvable disagreement about the AI's actual nature turn out to be a shallower definitional disagreement in disguise. This exact discipline - demanding a precise, checkable definition before proceeding, exactly the habit mathematics demands of every one of its own technical terms - often reveals that two people arguing past each other actually agree entirely once a single shared definition is settled on, even though genuinely hard cases with real substantive disagreement do remain even after definitions are made fully precise.";
+</script>
+</body></html>

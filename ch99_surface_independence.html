@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#065F46; --part-accent-light:#D1FAE5; --part-highlight:#1D4ED8;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#ECFDF5; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+@media (max-width:760px){ .two-col{ grid-template-columns:1fr; } }
+.panel{ background:#fff; border:2px solid var(--line); border-radius:12px; padding:16px; text-align:center; }
+.panel-header{ font-weight:700; margin-bottom:8px; font-size:clamp(0.9rem,1.05vw,1.02rem); }
+.panelSvg{ width:100%; height:auto; aspect-ratio:1.3/1; display:block; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">A Flat Disk or a Bulging Dome — Same Boundary Circle, Same Surface Integral</div>
+<div class="mb-sub">Two completely different surfaces, both bounded by the identical circle. Stokes' theorem guarantees their curl-surface-integrals must agree exactly — practitioners exploit this to pick whichever surface makes the actual calculation easiest.</div>
+<div class="two-col">
+<div class="panel"><div class="panel-header" style="color:var(--part-accent);">Flat disk</div><svg class="panelSvg" id="diskSvg" viewBox="0 0 200 160"></svg></div>
+<div class="panel"><div class="panel-header" style="color:var(--part-highlight);">Bulging dome</div><svg class="panelSvg" id="domeSvg" viewBox="0 0 200 160"></svg></div>
+</div>
+<div class="mb-feedback">Both surfaces share the IDENTICAL boundary circle (shown in black) — despite their dramatically different shapes, Stokes' theorem guarantees \u222c curl(F)\u00b7dS across each surface must equal the exact same value.</div>
+<div class="aha" id="ahaSurf"></div>
+<div class="mb-caption">This is exactly why the specific choice of enclosed surface does not actually matter — only the shared boundary curve determines the result, directly paralleling Chapter 95's own path-independence result for complex contour integrals.</div>
+</div>
+</div>
+<script>
+function drawDisk(){
+  const svg=document.getElementById('diskSvg');
+  svg.innerHTML='';
+  const cx=100,cy=90,r=60;
+  const ellipse=document.createElementNS('http://www.w3.org/2000/svg','ellipse');
+  ellipse.setAttribute('cx',cx); ellipse.setAttribute('cy',cy); ellipse.setAttribute('rx',r); ellipse.setAttribute('ry',r*0.35);
+  ellipse.setAttribute('fill','var(--part-accent-light)'); ellipse.setAttribute('stroke','#000'); ellipse.setAttribute('stroke-width','2.5');
+  svg.appendChild(ellipse);
+}
+function drawDome(){
+  const svg=document.getElementById('domeSvg');
+  svg.innerHTML='';
+  const cx=100,cy=90,r=60;
+  const domePath=document.createElementNS('http://www.w3.org/2000/svg','path');
+  domePath.setAttribute('d','M'+(cx-r)+','+cy+' A'+r+','+(r*0.35)+' 0 0,0 '+(cx+r)+','+cy+' A'+r+','+r+' 0 0,0 '+(cx-r)+','+cy);
+  domePath.setAttribute('fill','#DBEAFE'); domePath.setAttribute('stroke','var(--part-highlight)'); domePath.setAttribute('stroke-width','2');
+  svg.appendChild(domePath);
+  const boundary=document.createElementNS('http://www.w3.org/2000/svg','ellipse');
+  boundary.setAttribute('cx',cx); boundary.setAttribute('cy',cy); boundary.setAttribute('rx',r); boundary.setAttribute('ry',r*0.35);
+  boundary.setAttribute('fill','none'); boundary.setAttribute('stroke','#000'); boundary.setAttribute('stroke-width','2.5');
+  svg.appendChild(boundary);
+}
+drawDisk();
+drawDome();
+document.getElementById('ahaSurf').innerHTML="<strong>Aha:</strong> the flat disk and the bulging dome look nothing alike as surfaces - one is perfectly flat, the other billows upward dramatically - yet both share the exact same black boundary circle. Stokes' theorem's own left-hand side (circulation around that shared boundary) never changes, so the right-hand side (the curl-surface-integral) is mathematically FORCED to give the identical answer for both surfaces. This is a genuinely powerful practical freedom: when a calculation looks hard on one surface, choosing a different, more convenient surface with the same boundary is always a legitimate, guaranteed-correct shortcut.";
+</script>
+</body></html>

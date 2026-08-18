@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><style>
+:root{ --part-accent:#B91C1C; --part-accent-light:#FEE2E2; --part-highlight:#0369A1;
+--ink:#1A202C; --ink-soft:#4A5568; --paper:#FAFAF7; --line:#D6D3CB; --good:#15803D;
+--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; --font-mono:'SF Mono','Cascadia Code',Menlo,monospace; }
+*{box-sizing:border-box;} html,body{height:100%;}
+body{ margin:0; padding:clamp(16px,3vw,40px); background:#FEF2F2; font-family:var(--font-sans); color:var(--ink);
+display:flex; align-items:flex-start; justify-content:center; }
+.mb-widget{ background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2.5vw,36px); width:100%; max-width:1150px; }
+.mb-title{ font-size:clamp(1.3rem,2vw,1.7rem); font-weight:700; color:var(--part-accent); margin:0 0 6px 0; }
+.mb-sub{ font-size:clamp(0.9rem,1.1vw,1.05rem); color:var(--ink-soft); margin-bottom:20px; line-height:1.5; max-width:950px; }
+.two-col{ display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+@media (max-width:760px){ .two-col{ grid-template-columns:1fr; } }
+.panel{ background:#fff; border:2px solid var(--line); border-radius:12px; padding:16px; cursor:pointer; }
+.panel.active{ border-color:var(--part-accent); }
+.panel-header{ font-weight:700; text-align:center; margin-bottom:8px; font-size:clamp(0.9rem,1.05vw,1.02rem); }
+.panelSvg{ width:100%; height:auto; aspect-ratio:1.3/1; display:block; }
+.readout{ font-family:var(--font-mono); font-size:clamp(0.82rem,0.95vw,0.94rem); line-height:1.6; margin-top:8px; }
+.mb-feedback{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:16px; line-height:1.65; background:var(--part-accent-light); color:var(--part-accent); border:1px solid var(--line); }
+.aha{ font-size:clamp(1.05rem,1.3vw,1.25rem); padding:16px 20px; border-radius:10px; margin-top:14px; line-height:1.65; background:#FFF7ED; color:#9A3412; border:1px solid #FED7AA; }
+.aha strong{ color:#C2410C; }
+.mb-caption{ font-size:clamp(0.95rem,1.05vw,1.05rem); color:var(--ink-soft); margin-top:12px; font-style:italic; line-height:1.6; }
+</style></head>
+<body>
+<div class="mb-widget">
+<div class="mb-title">The "Wrong" Map That's Far More Useful Than the "Right" One</div>
+<div class="mb-sub">Same 5 stations. One map is geographically accurate; the other deliberately distorts distances and curves into straight lines. Click each to compare which actually helps a rider navigate.</div>
+<div class="two-col">
+<div class="panel active" id="panelGeo" onclick="show('geo')"><div class="panel-header" style="color:var(--part-highlight);">Geographically accurate</div><svg class="panelSvg" id="geoSvg" viewBox="0 0 200 200"></svg></div>
+<div class="panel" id="panelSubway" onclick="show('subway')"><div class="panel-header" style="color:var(--part-accent);">Subway-map simplified</div><svg class="panelSvg" id="subwaySvg" viewBox="0 0 200 200"></svg></div>
+</div>
+<div id="fb" class="mb-feedback"></div>
+<div class="aha" id="aha"></div>
+<div class="mb-caption">A model deliberately omits real-world details that don't meaningfully affect the specific question being asked, in order to make the remaining essential structure clear enough to actually work with.</div>
+</div>
+<script>
+const geoPositions=[[40,170],[70,120],[95,60],[150,90],[175,30]];
+const subwayPositions=[[30,170],[70,170],[110,170],[150,170],[190,170]];
+const names=['A','B','C','D','E'];
+function drawGeo(){
+  const svg=document.getElementById('geoSvg');
+  svg.innerHTML='';
+  for(let i=0;i<geoPositions.length-1;i++){
+    const line=document.createElementNS('http://www.w3.org/2000/svg','path');
+    const [x1,y1]=geoPositions[i], [x2,y2]=geoPositions[i+1];
+    const midX=(x1+x2)/2+15, midY=(y1+y2)/2-10;
+    line.setAttribute('d','M'+x1+','+y1+' Q'+midX+','+midY+' '+x2+','+y2);
+    line.setAttribute('fill','none'); line.setAttribute('stroke','var(--part-highlight)'); line.setAttribute('stroke-width','2.5');
+    svg.appendChild(line);
+  }
+  geoPositions.forEach((p,i)=>{
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',p[0]); dot.setAttribute('cy',p[1]); dot.setAttribute('r',7); dot.setAttribute('fill','var(--part-highlight)');
+    svg.appendChild(dot);
+    const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',p[0]); lbl.setAttribute('y',p[1]-12); lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('font-size','10'); lbl.setAttribute('font-weight','700');
+    lbl.textContent=names[i];
+    svg.appendChild(lbl);
+  });
+}
+function drawSubway(){
+  const svg=document.getElementById('subwaySvg');
+  svg.innerHTML='';
+  const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1',30); line.setAttribute('y1',170); line.setAttribute('x2',190); line.setAttribute('y2',170);
+  line.setAttribute('stroke','var(--part-accent)'); line.setAttribute('stroke-width','4');
+  svg.appendChild(line);
+  subwayPositions.forEach((p,i)=>{
+    const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    dot.setAttribute('cx',p[0]); dot.setAttribute('cy',p[1]); dot.setAttribute('r',7); dot.setAttribute('fill','var(--part-accent)');
+    svg.appendChild(dot);
+    const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+    lbl.setAttribute('x',p[0]); lbl.setAttribute('y',p[1]-15); lbl.setAttribute('text-anchor','middle'); lbl.setAttribute('font-size','10'); lbl.setAttribute('font-weight','700');
+    lbl.textContent=names[i];
+    svg.appendChild(lbl);
+  });
+}
+function show(which){
+  document.getElementById('panelGeo').classList.toggle('active', which==='geo');
+  document.getElementById('panelSubway').classList.toggle('active', which==='subway');
+  document.getElementById('fb').innerHTML = which==='geo'
+    ? 'This map is geographically precise — but the curving lines and uneven station spacing actually make it HARDER to quickly answer "how many stops until my station?"'
+    : 'This map distorts real geography entirely — evenly-spaced stations, perfectly straight lines — yet answers "how many stops until my station?" instantly and clearly, exactly the question a rider actually needs answered.';
+}
+drawGeo();
+drawSubway();
+show('geo');
+document.getElementById('aha').innerHTML="<strong>Aha:</strong> the subway map is, in a strict geometric sense, WRONG - real distances and curves are completely distorted. Yet it is dramatically more useful for its actual purpose. This is exactly George Box's famous observation in miniature: 'all models are wrong, but some are useful' - a model's value was never about photographic realism, it's about capturing exactly the structure relevant to the question actually being asked, while deliberately discarding the details that would only clutter the picture.";
+</script>
+</body></html>
